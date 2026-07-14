@@ -1,0 +1,27 @@
+{
+  "name": "KUMA CHESS",
+  "short_name": "KUMA CHESS",
+  "description": "동물 왕국의 체스 퍼즐과 AI, 로컬 대전을 즐기는 세로형 체스 게임",
+  "lang": "ko-KR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff8ea",
+  "theme_color": "#fff8ea",
+  "categories": ["games", "education"],
+  "icons": [
+    {
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
