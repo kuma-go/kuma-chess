@@ -10,12 +10,23 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="KUMA CHESS" />
     <meta name="format-detection" content="telephone=no" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="description" content="왕관을 쓴 동물 기물과 함께 즐기는 체스 퍼즐, AI 대전, 로컬 2인 대전 게임" />
+    <meta property="og:title" content="KUMA CHESS" />
+    <meta property="og:description" content="체스 퍼즐과 AI 대전으로 전술을 배우고, 한 기기에서 로컬 대전도 즐겨보세요." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://kumachess.com/" />
+    <meta property="og:image" content="https://kumachess.com/assets/icons/icon-512.png" />
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://pagead2.googlesyndication.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://*.googlesyndication.com https://*.googleusercontent.com; connect-src 'self' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://fundingchoicesmessages.google.com; frame-src https://googleads.g.doubleclick.net https://*.googlesyndication.com https://fundingchoicesmessages.google.com; worker-src 'self'; manifest-src 'self'" />
     <title>KUMA CHESS</title>
+    <link rel="canonical" href="https://kumachess.com/" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
     <link rel="preload" href="./assets/fonts/PretendardVariable.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="preload" href="./assets/fonts/NotoSerifKR-Variable.ttf" as="font" type="font/ttf" crossorigin />
+    <script id="kuma-adsense-script" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7173992156420612" crossorigin="anonymous"></script>
     <style>
       @font-face {
         font-family: "Pretendard";
@@ -39,9 +50,26 @@
         overscroll-behavior: none;
         -webkit-tap-highlight-color: transparent;
       }
+      :root { --kuma-ad-height: 0px; }
+      body.ad-visible { --kuma-ad-height: clamp(50px, 9dvh, 90px); }
+      #ad-shell {
+        position: fixed;
+        inset: 0 0 auto 0;
+        height: var(--kuma-ad-height);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: #fff8ea;
+        border-bottom: 1px solid rgba(189, 161, 127, 0.35);
+        z-index: 20;
+        overflow: hidden;
+      }
+      body.ad-visible #ad-shell { display: flex; }
+      #ad-shell .adsbygoogle { width: min(100%, 720px); height: 100%; }
       #game-container {
-        width: 100vw; height: 100vh;
-        width: 100dvw; height: 100dvh;
+        width: 100vw; height: calc(100vh - var(--kuma-ad-height));
+        width: 100dvw; height: calc(100dvh - var(--kuma-ad-height));
+        margin-top: var(--kuma-ad-height);
         box-sizing: border-box;
         padding-top: env(safe-area-inset-top, 0px);
         padding-right: env(safe-area-inset-right, 0px);
@@ -57,16 +85,14 @@
     </style>
   </head>
   <body>
+    <aside id="ad-shell" aria-label="광고" hidden></aside>
     <div id="game-container"></div>
 
     <!-- Phaser (local) -->
     <script src="./phaser.js"></script>
+    <script src="./ads-config.js"></script>
     <!-- Main -->
-    <script type="module" src="./src/main.js?v=20260714-layout22"></script>
-    <script>
-      if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
-        window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
-      }
-    </script>
+    <script type="module" src="./src/main.js?v=20260715-domain04"></script>
+    <script src="./app-init.js"></script>
   </body>
 </html>

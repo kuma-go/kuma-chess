@@ -7,10 +7,18 @@ export const REWARDS = {
   aiWin: 15,
 };
 
+export const AI_DIFFICULTIES = Object.freeze({
+  easy: Object.freeze({ id: "easy", reward: 5 }),
+  normal: Object.freeze({ id: "normal", reward: 15 }),
+  hard: Object.freeze({ id: "hard", reward: 35 }),
+});
+
+export const DEFAULT_AI_DIFFICULTY = "normal";
+
 export const SKIN_SHOP = [
   { id: "classic", nameKo: "기본", nameEn: "CLASSIC", cost: 0 },
-  { id: "bear", nameKo: "곰", nameEn: "BEAR", cost: 80 },
-  { id: "rabbit", nameKo: "토끼", nameEn: "RABBIT", cost: 80 },
+  { id: "bear", nameKo: "곰", nameEn: "BEAR", cost: 80, colorCosts: { w: 40, b: 80 } },
+  { id: "rabbit", nameKo: "토끼", nameEn: "RABBIT", cost: 80, colorCosts: { w: 80, b: 40 } },
   { id: "cat", nameKo: "고양이", nameEn: "CAT", cost: 140 },
   { id: "wolf", nameKo: "늑대", nameEn: "WOLF", cost: 180 },
   { id: "sheep", nameKo: "양", nameEn: "SHEEP", cost: 220 },
@@ -18,6 +26,19 @@ export const SKIN_SHOP = [
   { id: "owl", nameKo: "부엉이", nameEn: "OWL", cost: 300 },
   { id: "capybara", nameKo: "카피바라", nameEn: "CAPYBARA", cost: 340 },
 ];
+
+const EMPTY_RESULT_STATS = Object.freeze({ wins: 0, losses: 0, draws: 0, played: 0 });
+
+function createDefaultStats() {
+  return {
+    ai: {
+      easy: { ...EMPTY_RESULT_STATS },
+      normal: { ...EMPTY_RESULT_STATS },
+      hard: { ...EMPTY_RESULT_STATS },
+    },
+    pvp: { wWins: 0, bWins: 0, draws: 0, played: 0 },
+  };
+}
 
 const DEFAULT_STATE = {
   coins: 100,
@@ -27,6 +48,7 @@ const DEFAULT_STATE = {
   language: "ko",
   soundEnabled: true,
   vibrationEnabled: true,
+  stats: createDefaultStats(),
 };
 
 function cloneDefaultState() {
@@ -34,6 +56,7 @@ function cloneDefaultState() {
     ...DEFAULT_STATE,
     unlockedSkinColors: [...DEFAULT_STATE.unlockedSkinColors],
     rewardClaims: [...DEFAULT_STATE.rewardClaims],
+    stats: createDefaultStats(),
   };
 }
 
@@ -58,13 +81,100 @@ function normalizeState(state) {
   next.language = ["ko", "en", "ja"].includes(next.language) ? next.language : "ko";
   next.soundEnabled = next.soundEnabled !== false;
   next.vibrationEnabled = next.vibrationEnabled !== false;
+  const sourceStats = state?.stats || {};
+  const defaults = createDefaultStats();
+  next.stats = {
+    ai: {},
+    pvp: normalizePvpStats(sourceStats.pvp, defaults.pvp),
+  };
+  for (const difficulty of Object.keys(AI_DIFFICULTIES)) {
+    next.stats.ai[difficulty] = normalizeResultStats(sourceStats.ai?.[difficulty], defaults.ai[difficulty]);
+  }
   return next;
+}
+
+function safeCount(value) {
+  return Math.max(0, Math.floor(Number(value) || 0));
+}
+
+function normalizeResultStats(stats, fallback = EMPTY_RESULT_STATS) {
+  const next = { ...fallback, ...(stats || {}) };
+  next.wins = safeCount(next.wins);
+  next.losses = safeCount(next.losses);
+  next.draws = safeCount(next.draws);
+  next.played = Math.max(safeCount(next.played), next.wins + next.losses + next.draws);
+  return next;
+}
+
+function normalizePvpStats(stats, fallback) {
+  const next = { ...fallback, ...(stats || {}) };
+  next.wWins = safeCount(next.wWins);
+  next.bWins = safeCount(next.bWins);
+  next.draws = safeCount(next.draws);
+  next.played = Math.max(safeCount(next.played), next.wWins + next.bWins + next.draws);
+  return next;
+}
+
+function totalAiPlayed(stats) {
+  return Object.values(stats.ai).reduce((sum, item) => sum + item.played, 0);
+}
+
+function questDefinition(skinId, color) {
+  const key = skinColorKey(skinId, color);
+  if (key === "cat:w") {
+    return { type: "puzzle", target: 12 };
+  }
+  if (key === "cat:b") {
+    return { type: "aiPlayed", target: 20 };
+  }
+  return null;
+}
+
+function questProgress(quest, state) {
+  if (quest.type === "puzzle") return getClearedPuzzleIds().length;
+  if (quest.type === "aiPlayed") return totalAiPlayed(state.stats);
+  return 0;
+}
+
+function questLabel(quest, progress, language) {
+  const capped = Math.min(progress, quest.target);
+  if (language === "en") {
+    return quest.type === "puzzle"
+      ? `Puzzles ${capped}/${quest.target}`
+      : `AI plays ${capped}/${quest.target}`;
+  }
+  if (language === "ja") {
+    return quest.type === "puzzle"
+      ? `パズル ${capped}/${quest.target}`
+      : `AI対戦 ${capped}/${quest.target}回`;
+  }
+  return quest.type === "puzzle"
+    ? `퍼즐 ${capped}/${quest.target}`
+    : `AI 대전 ${capped}/${quest.target}회`;
+}
+
+function syncQuestUnlocks(state) {
+  let changed = false;
+  for (const [skinId, color] of [["cat", "w"], ["cat", "b"]]) {
+    const quest = questDefinition(skinId, color);
+    const key = skinColorKey(skinId, color);
+    if (!state.unlockedSkinColors.includes(key) && questProgress(quest, state) >= quest.target) {
+      state.unlockedSkinColors.push(key);
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 export function readPlayerState() {
   try {
     const raw = window.localStorage.getItem(PLAYER_STATE_KEY);
-    return normalizeState(raw ? JSON.parse(raw) : null);
+    const state = normalizeState(raw ? JSON.parse(raw) : null);
+    if (syncQuestUnlocks(state)) {
+      window.localStorage.setItem(PLAYER_STATE_KEY, JSON.stringify(state));
+      window.dispatchEvent(new CustomEvent("kuma-state-changed", { detail: state }));
+    }
+    return state;
   } catch (e) {
     return cloneDefaultState();
   }
@@ -72,6 +182,7 @@ export function readPlayerState() {
 
 export function writePlayerState(state) {
   const next = normalizeState(state);
+  syncQuestUnlocks(next);
   try {
     window.localStorage.setItem(PLAYER_STATE_KEY, JSON.stringify(next));
     window.dispatchEvent(new CustomEvent("kuma-state-changed", { detail: next }));
@@ -131,8 +242,34 @@ export function getSkinInfo(skinId) {
   return SKIN_SHOP.find((skin) => skin.id === skinId) || SKIN_SHOP[0];
 }
 
+export function getAIDifficulty(id = DEFAULT_AI_DIFFICULTY) {
+  return AI_DIFFICULTIES[id] || AI_DIFFICULTIES[DEFAULT_AI_DIFFICULTY];
+}
+
+export function getSkinCost(skinId, color = "w") {
+  const skin = getSkinInfo(skinId);
+  return safeCount(skin.colorCosts?.[color === "b" ? "b" : "w"] ?? skin.cost);
+}
+
+export function getSkinUnlockState(skinId, color = "w") {
+  const normalizedColor = color === "b" ? "b" : "w";
+  const state = readPlayerState();
+  const key = skinColorKey(skinId, normalizedColor);
+  const unlocked = state.unlockedSkinColors.includes(key);
+  const quest = questDefinition(skinId, normalizedColor);
+  const progress = quest ? questProgress(quest, state) : 0;
+  return {
+    unlocked,
+    purchasable: !unlocked && !quest,
+    questLabel: quest ? questLabel(quest, progress, state.language) : "",
+    progress,
+    target: quest?.target || 0,
+    cost: getSkinCost(skinId, normalizedColor),
+  };
+}
+
 export function isSkinUnlocked(skinId, color = "w") {
-  return readPlayerState().unlockedSkinColors.includes(skinColorKey(skinId, color));
+  return getSkinUnlockState(skinId, color).unlocked;
 }
 
 export function unlockSkin(skinId, color = "w") {
@@ -142,14 +279,63 @@ export function unlockSkin(skinId, color = "w") {
   if (state.unlockedSkinColors.includes(key)) {
     return { ok: true, alreadyUnlocked: true, coins: state.coins, skin };
   }
-  if (state.coins < skin.cost) {
-    return { ok: false, reason: "coins", coins: state.coins, skin };
+  const quest = questDefinition(skinId, color);
+  if (quest) {
+    return { ok: false, reason: "quest", coins: state.coins, skin };
+  }
+  const cost = getSkinCost(skinId, color);
+  if (state.coins < cost) {
+    return { ok: false, reason: "coins", coins: state.coins, skin, cost };
   }
 
-  state.coins -= skin.cost;
+  state.coins -= cost;
   state.unlockedSkinColors.push(key);
   const saved = writePlayerState(state);
-  return { ok: true, alreadyUnlocked: false, coins: saved.coins, skin };
+  return { ok: true, alreadyUnlocked: false, coins: saved.coins, skin, cost };
+}
+
+export function getPlayStats() {
+  const stats = readPlayerState().stats;
+  return JSON.parse(JSON.stringify(stats));
+}
+
+export function recordGameResult(modeOrRecord, resultArg, optionsArg = {}) {
+  const record = typeof modeOrRecord === "object" && modeOrRecord !== null
+    ? modeOrRecord
+    : { mode: modeOrRecord, result: resultArg, ...optionsArg };
+  const mode = record.mode === "pvp" ? "pvp" : "ai";
+  const saved = updatePlayerState((state) => {
+    if (mode === "ai") {
+      const difficulty = AI_DIFFICULTIES[record.difficulty] ? record.difficulty : DEFAULT_AI_DIFFICULTY;
+      const bucket = state.stats.ai[difficulty];
+      const result = normalizeAiResult(record.result, record.playerColor);
+      bucket[result] += 1;
+      bucket.played += 1;
+      return;
+    }
+
+    const result = normalizePvpResult(record.result, record.winnerColor);
+    state.stats.pvp[result] += 1;
+    state.stats.pvp.played += 1;
+  });
+  return JSON.parse(JSON.stringify(saved.stats));
+}
+
+function normalizeAiResult(result, playerColor = "w") {
+  if (result === "draw" || result === "draws") return "draws";
+  if (result === "win" || result === "wins") return "wins";
+  if (result === "loss" || result === "losses") return "losses";
+  if (result === "w_win" || result === "b_win") {
+    return result[0] === (playerColor === "b" ? "b" : "w") ? "wins" : "losses";
+  }
+  return "draws";
+}
+
+function normalizePvpResult(result, winnerColor) {
+  const value = winnerColor || result;
+  if (value === "w" || value === "white" || value === "w_win" || value === "wWins") return "wWins";
+  if (value === "b" || value === "black" || value === "b_win" || value === "bWins") return "bWins";
+  return "draws";
 }
 
 export function getClearedPuzzleIds() {

@@ -1,8 +1,9 @@
-import { Chess } from "../vendor-chess.js";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260714-layout22";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260714-layout22";
-import { getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260714-layout22";
-import { SpriteButton } from "../ui/SpriteButton.js";
+import { Chess } from "../vendor-chess.js?v=20260715-domain04";
+import { readPlayerState } from "../playerState.js?v=20260715-domain04";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260715-domain04";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260715-domain04";
+import { getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260715-domain04";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-domain04";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -14,7 +15,7 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260714-layout22";
+} from "../ui/KumaUi.js?v=20260715-domain04";
 
 const FILES = "abcdefgh";
 
@@ -42,6 +43,13 @@ export class Puzzle extends Phaser.Scene {
     this.solved = false;
     this.conceptEnabled = true;
     this.responseTimer = null;
+    this.dragging = false;
+    this.dragOffset = { dx: 0, dy: 0 };
+    this._dragCandidate = false;
+    this._dragStart = { x: 0, y: 0 };
+    this._dragThreshold = 8;
+    this._moveBusy = false;
+    this._feedbackLine = null;
   }
 
   init(data) {
@@ -56,6 +64,11 @@ export class Puzzle extends Phaser.Scene {
     this.promotionLayer = null;
     this.glossaryLayer = null;
     this.responseTimer = null;
+    this.dragging = false;
+    this.dragOffset = { dx: 0, dy: 0 };
+    this._dragCandidate = false;
+    this._moveBusy = false;
+    this._feedbackLine = null;
   }
 
   create() {
@@ -74,6 +87,9 @@ export class Puzzle extends Phaser.Scene {
     this.updateProgress();
 
     this.input.on("pointerdown", (p) => this.onPointerDown(p));
+    this.input.on("pointermove", (p) => this.onPointerMove(p));
+    this.input.on("pointerup", (p) => this.onPointerUp(p));
+    this.input.on("pointerupoutside", (p) => this.onPointerUp(p));
   }
 
   layout() {
@@ -291,7 +307,7 @@ export class Puzzle extends Phaser.Scene {
   }
 
   onPointerDown(pointer) {
-    if (this.solved) return;
+    if (this.solved || this._moveBusy) return;
     if (this.promotionLayer || this.glossaryLayer) return;
     if (this.game.turn() !== this.puzzle.playerColor) return;
 
@@ -303,15 +319,64 @@ export class Puzzle extends Phaser.Scene {
 
     if (piece && piece.color === this.game.turn() && view) {
       this.selectPiece(square, view);
+      this._dragCandidate = true;
+      this.dragging = false;
+      this._dragStart.x = pointer.x;
+      this._dragStart.y = pointer.y;
+      this.dragOffset = { dx: 0, dy: 0 };
       return;
     }
 
     if (this.selected) this.tryMove(this.selected.square, square);
   }
 
+  onPointerMove(pointer) {
+    if (this.solved || this._moveBusy || this.promotionLayer || this.glossaryLayer) return;
+    if (this.game.turn() !== this.puzzle.playerColor || !this.selected?.view) return;
+
+    if (this._dragCandidate && !this.dragging) {
+      const dx = pointer.x - this._dragStart.x;
+      const dy = pointer.y - this._dragStart.y;
+      if (Math.hypot(dx, dy) >= this._dragThreshold) {
+        this.dragging = true;
+        const view = this.selected.view;
+        this.dragOffset = { dx: view.x - pointer.x, dy: view.y - pointer.y };
+      }
+    }
+
+    if (this.dragging) {
+      const view = this.selected.view;
+      view.x = pointer.x + this.dragOffset.dx;
+      view.y = pointer.y + this.dragOffset.dy;
+    }
+  }
+
+  onPointerUp(pointer) {
+    if (this.promotionLayer || this.glossaryLayer) return;
+
+    const wasDragging = this.dragging;
+    this._dragCandidate = false;
+    this.dragging = false;
+    this.dragOffset = { dx: 0, dy: 0 };
+
+    if (!wasDragging || this.solved || this._moveBusy) return;
+
+    const from = this.selected?.square;
+    const to = this.pointerToSquare(pointer);
+    this.snapSelectedBack();
+
+    if (!from || !to || from === to) {
+      this.showMoveFailure(t("puzzle.illegal"));
+      return;
+    }
+
+    this.tryMove(from, to);
+  }
+
   selectPiece(square, view) {
     this.clearSelection(false);
     this.selected = { square, view };
+    this.tweens.killTweensOf(view);
     setSelectedOutline(view, true);
     view.setDepth(110);
 
@@ -320,10 +385,35 @@ export class Puzzle extends Phaser.Scene {
     }
   }
 
+  snapSelectedBack() {
+    if (!this.selected?.view || !this.selected?.square) return;
+    const { x, y } = this.squareToCenter(this.selected.square);
+    this.selected.view.x = x;
+    this.selected.view.y = y;
+  }
+
+  bounceSelectedBack(keepSelected = true) {
+    const selected = this.selected;
+    if (!selected?.view || !selected?.square) return;
+    const { x, y } = this.squareToCenter(selected.square);
+    this.tweens.killTweensOf(selected.view);
+    this.tweens.add({
+      targets: selected.view,
+      x,
+      y,
+      duration: 130,
+      ease: "Quad.Out",
+      onComplete: () => {
+        if (!keepSelected) this.clearSelection();
+      },
+    });
+  }
+
   tryMove(from, to) {
     const candidates = this.game.moves({ square: from, verbose: true }).filter((m) => m.to === to);
     if (!candidates.length) {
-      this.flashMessage(t("puzzle.tryAnother"), "#fecaca");
+      this.bounceSelectedBack(true);
+      this.showMoveFailure(t("puzzle.illegal"));
       return;
     }
 
@@ -349,7 +439,8 @@ export class Puzzle extends Phaser.Scene {
     try {
       move = this.game.move(payload);
     } catch (e) {
-      this.flashMessage(t("puzzle.illegal"), "#fecaca");
+      this.bounceSelectedBack(true);
+      this.showMoveFailure(t("puzzle.illegal"));
       return;
     }
 
@@ -359,15 +450,19 @@ export class Puzzle extends Phaser.Scene {
       this.game.undo();
       this.clearSelection();
       this.renderAll();
-      this.flashMessage(t("puzzle.wrong"), "#fecaca");
+      this.showMoveFailure(t("puzzle.wrong"));
       return;
     }
 
+    this._moveBusy = true;
     this.stepIndex += 1;
     this.clearSelection();
     this.renderAll();
     this.updateProgress();
     this.flashMessage(move.san.includes("#") ? "CHECKMATE!" : t("puzzle.correct"), "#bbf7d0");
+    this.playImpactEffect(move.to, !!move.captured, true, () => {
+      this._moveBusy = false;
+    });
 
     if (this.stepIndex >= this.puzzle.solutionSteps.length) {
       this.completePuzzle();
@@ -512,8 +607,9 @@ export class Puzzle extends Phaser.Scene {
       const next = this.puzzle.solutionSteps[this.stepIndex]?.[0];
       if (!next) return;
 
+      let moved = null;
       try {
-        this.game.move({
+        moved = this.game.move({
           from: next.slice(0, 2),
           to: next.slice(2, 4),
           promotion: next[4],
@@ -525,7 +621,114 @@ export class Puzzle extends Phaser.Scene {
       this.stepIndex += 1;
       this.renderAll();
       this.updateProgress();
+      this.playImpactEffect(next.slice(2, 4), !!moved?.captured, false);
     }
+  }
+
+  showMoveFailure(message) {
+    if (this._feedbackLine?.scene) this._feedbackLine.destroy();
+    this._feedbackLine = showRewardLine(this, message, {
+      y: this.scale.height * 0.52,
+      hold: 1750,
+      showCoin: false,
+      tone: "failure",
+      particleScale: 1.15,
+      particleCount: 10,
+    });
+  }
+
+  vibrateImpact(strong = false) {
+    if (!readPlayerState().vibrationEnabled) return;
+    try {
+      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        navigator.vibrate(strong ? [28, 18, 44] : 18);
+      }
+    } catch (e) {
+      // Vibration is optional and may be blocked by the browser or device policy.
+    }
+  }
+
+  playImpactEffect(square, isCapture, isCorrect = false, onDone = null) {
+    const view = this.pieceViews.get(square);
+    const { x, y } = this.squareToCenter(square);
+    const strong = isCapture || isCorrect;
+    let finished = false;
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      onDone?.();
+    };
+
+    this.vibrateImpact(strong);
+    this.cameras.main.shake(strong ? 85 : 50, strong ? 0.005 : 0.0025);
+
+    const ring = this.add.graphics().setDepth(997).setPosition(x, y);
+    ring.lineStyle(strong ? 5 : 3, strong ? 0xe0b353 : 0xbda17f, 0.9);
+    ring.strokeCircle(0, 0, this.squareSize * 0.2);
+    ring.setScale(0.55);
+    this.tweens.add({
+      targets: ring,
+      scaleX: 1.8,
+      scaleY: 1.8,
+      alpha: 0,
+      duration: strong ? 330 : 260,
+      ease: "Quad.Out",
+      onComplete: () => ring.destroy(),
+    });
+
+    const textureKey = "puzzle_fx_dust_dot";
+    if (!this.textures.exists(textureKey)) {
+      const texture = this.make.graphics({ x: 0, y: 0, add: false });
+      texture.fillStyle(0xffffff, 1);
+      texture.fillCircle(8, 8, 8);
+      texture.generateTexture(textureKey, 16, 16);
+      texture.destroy();
+    }
+
+    const count = strong ? 14 : 9;
+    for (let i = 0; i < count; i += 1) {
+      const angle = Phaser.Math.FloatBetween(-Math.PI, Math.PI);
+      const speed = Phaser.Math.FloatBetween(strong ? 95 : 65, strong ? 205 : 145);
+      const dust = this.add.image(x, y + this.squareSize * 0.2, textureKey)
+        .setDepth(996)
+        .setTint(i % 2 ? 0xe0b353 : 0xc7aa82)
+        .setAlpha(Phaser.Math.FloatBetween(0.28, 0.58))
+        .setScale(Phaser.Math.FloatBetween(0.24, 0.55));
+      this.tweens.add({
+        targets: dust,
+        x: x + Math.cos(angle) * speed,
+        y: dust.y + Math.sin(angle) * speed * 0.58 - Phaser.Math.FloatBetween(12, 38),
+        alpha: 0,
+        scaleX: dust.scaleX * 1.8,
+        scaleY: dust.scaleY * 1.8,
+        duration: Phaser.Math.Between(230, 370),
+        ease: "Quad.Out",
+        onComplete: () => dust.destroy(),
+      });
+    }
+
+    if (view) {
+      const baseX = view.scaleX;
+      const baseY = view.scaleY;
+      this.tweens.killTweensOf(view);
+      this.tweens.add({
+        targets: view,
+        scaleX: baseX * 1.08,
+        scaleY: baseY * 0.9,
+        duration: 95,
+        ease: "Quad.Out",
+        yoyo: true,
+        hold: 20,
+        onComplete: () => {
+          view.scaleX = baseX;
+          view.scaleY = baseY;
+          done();
+        },
+      });
+    } else {
+      this.time.delayedCall(240, done);
+    }
+    this.time.delayedCall(500, done);
   }
 
   completePuzzle() {
@@ -575,11 +778,12 @@ export class Puzzle extends Phaser.Scene {
   }
 
   updateProgress() {
-    const total = this.puzzle.solutionSteps.length;
+    const total = Math.ceil(this.puzzle.solutionSteps.length / 2);
+    const current = Math.min(Math.floor(this.stepIndex / 2) + 1, total);
     this.progressText.setText(t("puzzle.progress", {
       current: this.puzzleIndex + 1,
       total: PUZZLES.length,
-      step: Math.min(this.stepIndex + 1, total),
+      step: current,
       steps: total,
     }));
   }
@@ -647,6 +851,9 @@ export class Puzzle extends Phaser.Scene {
       this.selected.view.setDepth(this.selected.view._baseDepth ?? 20);
     }
     this.selected = null;
+    this._dragCandidate = false;
+    this.dragging = false;
+    this.dragOffset = { dx: 0, dy: 0 };
   }
 
   isViewFlipped() {

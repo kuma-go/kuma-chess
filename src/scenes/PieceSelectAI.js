@@ -1,6 +1,15 @@
-import { createPieceView } from "../pieceStyles.js?v=20260714-layout22";
-import { isSkinUnlocked, readPlayerState, SKIN_SHOP, unlockSkin } from "../playerState.js";
-import { skinName, t } from "../i18n.js?v=20260714-layout22";
+import { createPieceView } from "../pieceStyles.js?v=20260715-domain04";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260715-domain04";
+import {
+  AI_DIFFICULTIES,
+  DEFAULT_AI_DIFFICULTY,
+  getSkinUnlockState,
+  isSkinUnlocked,
+  readPlayerState,
+  SKIN_SHOP,
+  unlockSkin,
+} from "../playerState.js?v=20260715-domain04";
+import { skinName, t } from "../i18n.js?v=20260715-domain04";
 import {
   addBackButton,
   addCoinPill,
@@ -16,10 +25,44 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
+  showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260714-layout22";
+} from "../ui/KumaUi.js?v=20260715-domain04";
 
 const SHOP = SKIN_SHOP;
+
+const DIFFICULTY_COPY = {
+  ko: {
+    title: "AI 난이도 선택",
+    guide: "대전 할 AI의 수준을 고르세요.",
+    cancel: "취소",
+    start: "시작",
+    reward: "승리보상",
+    easy: { audience: "초보자", name: "쉬움" },
+    normal: { audience: "일반인", name: "보통" },
+    hard: { audience: "고수", name: "어려움" },
+  },
+  en: {
+    title: "AI DIFFICULTY",
+    guide: "Choose the strength of your opponent.",
+    cancel: "CANCEL",
+    start: "START",
+    reward: "WIN REWARD",
+    easy: { audience: "BEGINNER", name: "EASY" },
+    normal: { audience: "PLAYER", name: "NORMAL" },
+    hard: { audience: "EXPERT", name: "HARD" },
+  },
+  ja: {
+    title: "AI難易度選択",
+    guide: "対戦するAIの強さを選んでください。",
+    cancel: "キャンセル",
+    start: "開始",
+    reward: "勝利報酬",
+    easy: { audience: "初心者", name: "かんたん" },
+    normal: { audience: "一般", name: "ふつう" },
+    hard: { audience: "上級者", name: "むずかしい" },
+  },
+};
 
 export class PieceSelectAI extends Phaser.Scene {
   constructor() {
@@ -37,23 +80,15 @@ export class PieceSelectAI extends Phaser.Scene {
     this.playerColor = this.registry.get("playerColor") || "w";
     this.playerSkin = savedSkin[this.playerColor] || "classic";
     if (!this.isUnlocked(this.playerSkin, this.playerColor)) this.playerSkin = "classic";
+    const savedDifficulty = this.registry.get("aiDifficulty");
+    this.aiDifficulty = AI_DIFFICULTIES[savedDifficulty] ? savedDifficulty : DEFAULT_AI_DIFFICULTY;
+    this.registry.set("aiDifficulty", this.aiDifficulty);
     this.listLayer = null;
     this.message = null;
     this.renderList();
 
     addBackButton(this, () => this.scene.start("Start"), 67, height - 68);
-    addLargeTextButton(this, width / 2, 1129, t("select.startAI"), "", () => {
-      const aiColor = this.playerColor === "w" ? "b" : "w";
-      const availableAI = SHOP.filter((skin) => this.isUnlocked(skin.id, aiColor));
-      const aiSkin = (Phaser.Utils.Array.GetRandom(availableAI) || SHOP[0]).id;
-      const skins = { w: savedSkin.w || "classic", b: savedSkin.b || "classic" };
-      skins[this.playerColor] = this.playerSkin;
-      skins[aiColor] = aiSkin;
-      this.registry.set("gameMode", "ai");
-      this.registry.set("playerColor", this.playerColor);
-      this.registry.set("pieceSkin", skins);
-      this.scene.start("Game");
-    }, {
+    addLargeTextButton(this, width / 2, 1129, t("select.startAI"), "", () => this.showDifficultyModal(savedSkin), {
       width: 447,
       height: 108,
       fontSize: 43,
@@ -63,6 +98,33 @@ export class PieceSelectAI extends Phaser.Scene {
       depth: 120,
     });
     addFooter(this, true);
+  }
+
+  async startGame(savedSkin) {
+    if (this._startingGame) return;
+    this._startingGame = true;
+      const aiColor = this.playerColor === "w" ? "b" : "w";
+      const availableAI = SHOP.filter((skin) => this.isUnlocked(skin.id, aiColor));
+      const aiSkin = (Phaser.Utils.Array.GetRandom(availableAI) || SHOP[0]).id;
+      const skins = { w: savedSkin.w || "classic", b: savedSkin.b || "classic" };
+      skins[this.playerColor] = this.playerSkin;
+      skins[aiColor] = aiSkin;
+      const loading = this.add.text(this.scale.width / 2, 1068, "LOADING...", {
+        fontFamily: KUMA_FONT_SANS,
+        fontSize: "17px",
+        color: KUMA_COLORS.ink,
+        fontStyle: "700",
+      }).setOrigin(0.5).setDepth(160);
+      await ensurePieceSetsLoaded(this, [
+        { skin: skins.w, color: "w" },
+        { skin: skins.b, color: "b" },
+      ]);
+      loading.destroy();
+      this.registry.set("gameMode", "ai");
+      this.registry.set("aiDifficulty", this.aiDifficulty);
+      this.registry.set("playerColor", this.playerColor);
+      this.registry.set("pieceSkin", skins);
+      this.scene.start("Game");
   }
 
   renderList() {
@@ -81,7 +143,8 @@ export class PieceSelectAI extends Phaser.Scene {
   }
 
   drawSkinRow(cx, cy, width, skin, color) {
-    const unlocked = this.isUnlocked(skin.id, color);
+    const unlockState = getSkinUnlockState(skin.id, color);
+    const unlocked = unlockState.unlocked;
     const selected = unlocked && this.playerColor === color && this.playerSkin === skin.id;
     const colorName = t(`color.${color}`);
     const alpha = unlocked ? 1 : 0.34;
@@ -114,19 +177,32 @@ export class PieceSelectAI extends Phaser.Scene {
     this.listLayer.add([hit, icon, label]);
 
     if (!unlocked) {
-      const affordable = readPlayerState().coins >= skin.cost;
+      const affordable = unlockState.purchasable && readPlayerState().coins >= unlockState.cost;
       const lock = addLock(this, cx - hitW / 2 + 42, cy + 10, 32, 80);
-      const coin = addMiniCoin(this, cx - hitW / 2 + 85, cy + 24, skin.cost, 80);
-      coin.setAlpha(affordable ? 1 : alpha);
-      this.listLayer.add([lock, coin]);
+      this.listLayer.add(lock);
+      if (unlockState.purchasable) {
+        const coin = addMiniCoin(this, cx - hitW / 2 + 85, cy + 24, unlockState.cost, 80);
+        coin.setAlpha(affordable ? 1 : alpha);
+        this.listLayer.add(coin);
+      } else {
+        const quest = this.add.text(cx - hitW / 2 + 85, cy + 24, unlockState.questLabel, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: "16px",
+          color: KUMA_COLORS.ink,
+          fontStyle: "500",
+        }).setOrigin(0, 0.5).setAlpha(0.78);
+        this.listLayer.add(quest);
+      }
     }
   }
 
   handlePick(skin, color) {
-    if (!this.isUnlocked(skin.id, color)) {
+    const unlockState = getSkinUnlockState(skin.id, color);
+    if (!unlockState.unlocked && unlockState.purchasable) {
       this.showPurchaseModal(skin, color);
       return;
     }
+    if (!unlockState.unlocked) return;
     this.playerColor = color;
     this.playerSkin = skin.id;
     this.renderList();
@@ -134,6 +210,9 @@ export class PieceSelectAI extends Phaser.Scene {
 
   showPurchaseModal(skin, color) {
     if (this.purchaseLayer) return;
+    const unlockState = getSkinUnlockState(skin.id, color);
+    if (!unlockState.purchasable) return;
+    const cost = unlockState.cost;
     const { width, height } = this.scale;
     const backdrop = createModalBackdrop(this, 9990);
     const layer = this.add.container(0, 0).setDepth(10000);
@@ -156,7 +235,7 @@ export class PieceSelectAI extends Phaser.Scene {
     const colorName = t(`color.${color}`);
     const localizedSkin = skinName(skin);
     const message = this.add.text(px, py + 52, t("select.purchaseMessage", {
-      cost: skin.cost,
+      cost,
       color: colorName,
       skin: localizedSkin,
     }), {
@@ -184,13 +263,19 @@ export class PieceSelectAI extends Phaser.Scene {
       this.refreshCoins();
       close();
       if (!result.ok) {
-        this.flash(t("select.notEnough", { coins: result.coins, cost: skin.cost }), "#9b2d20");
+        showRewardLine(this, t("select.notEnough", { coins: result.coins, cost }), {
+          tone: "failure",
+          showCoin: false,
+        });
         return;
       }
       this.playerColor = color;
       this.playerSkin = skin.id;
       this.renderList();
-      this.flash(t("select.purchased", { color: colorName, skin: localizedSkin }), KUMA_COLORS.teal);
+      showRewardLine(this, t("select.purchased", { color: colorName, skin: localizedSkin }), {
+        showCoin: false,
+        particleScale: 1.3,
+      });
     }, {
       width: 195,
       height: 81,
@@ -201,30 +286,117 @@ export class PieceSelectAI extends Phaser.Scene {
     layer.add([panel, title, divider, preview, message, cancel.button, cancel.title, buy.button, buy.title]);
   }
 
-  flash(message, color) {
-    this.message?.destroy();
-    this.message = this.add.text(this.scale.width / 2, 182, message, {
-      fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
-      fontSize: "19px",
-      color,
-      fontStyle: "900",
-      stroke: "#fff8ea",
-      strokeThickness: 4,
-    }).setOrigin(0.5).setDepth(400);
-    this.tweens.add({
-      targets: this.message,
-      alpha: 0,
-      duration: 420,
-      delay: 1200,
-      onComplete: () => {
-        this.message?.destroy();
-        this.message = null;
-      },
-    });
-  }
-
   isUnlocked(skinId, color) {
     return isSkinUnlocked(skinId, color);
+  }
+
+  showDifficultyModal(savedSkin) {
+    if (this.difficultyModalLayer || this._startingGame) return;
+    const { width, height } = this.scale;
+    const language = readPlayerState().language;
+    const copy = DIFFICULTY_COPY[language] || DIFFICULTY_COPY.ko;
+    const px = width / 2;
+    const py = height / 2 + 4;
+    const panelW = Math.min(527, width * 0.82);
+    const panelH = 660;
+    let selectedDifficulty = this.aiDifficulty;
+    const backdrop = createModalBackdrop(this, 9990);
+    const layer = this.add.container(0, 0).setDepth(10000);
+    this.difficultyModalLayer = layer;
+
+    const panel = addPanel(this, px, py, panelW, panelH, 10001);
+    const title = this.add.text(px, py - 201, copy.title, {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "28px",
+      color: KUMA_COLORS.ink,
+      fontStyle: "900",
+    }).setOrigin(0.5).setDepth(10002);
+    const divider = this.add.rectangle(px, py - 175, panelW * 0.72, 2, 0xc69d72)
+      .setDepth(10002);
+    const guide = this.add.text(px, py - 112, copy.guide, {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: language === "en" ? "21px" : "23px",
+      color: KUMA_COLORS.ink,
+      fontStyle: "500",
+      align: "center",
+    }).setOrigin(0.5).setDepth(10002);
+    const cards = this.add.container(0, 0).setDepth(10003);
+    layer.add([panel, title, divider, guide, cards]);
+
+    const renderCards = () => {
+      cards.removeAll(true);
+      ["easy", "normal", "hard"].forEach((id, index) => {
+        const x = [px - 127, px, px + 127][index];
+        const y = py + 45;
+        const selected = id === selectedDifficulty;
+        const box = this.add.graphics();
+        box.fillStyle(selected ? 0xfff0c0 : 0xfff8e9, selected ? 0.62 : 0.42);
+        box.fillRoundedRect(x - 60, y - 110, 120, 220, 7);
+        box.lineStyle(2, selected ? 0xd2a55f : 0xc49f78, 1);
+        box.strokeRoundedRect(x - 60, y - 110, 120, 220, 7);
+        box.setInteractive(
+          new Phaser.Geom.Rectangle(x - 60, y - 110, 120, 220),
+          Phaser.Geom.Rectangle.Contains
+        );
+        box.input.cursor = "pointer";
+        box.on("pointerdown", () => {
+          selectedDifficulty = id;
+          renderCards();
+        });
+        const audience = this.add.text(x, y - 85, copy[id].audience, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: language === "en" ? "14px" : "16px",
+          color: selected ? KUMA_COLORS.teal : "#846f59",
+          fontStyle: "500",
+        }).setOrigin(0.5);
+        const name = this.add.text(x, y - 2, copy[id].name, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: language === "en" ? "23px" : "25px",
+          color: selected ? KUMA_COLORS.teal : KUMA_COLORS.ink,
+          fontStyle: "900",
+        }).setOrigin(0.5);
+        const reward = this.add.text(x, y + 72, copy.reward, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: language === "en" ? "12px" : "14px",
+          color: "#846f59",
+          fontStyle: "500",
+        }).setOrigin(0.5);
+        const coin = this.add.image(x - 15, y + 94, "kuma_ui_coin_small").setDisplaySize(18, 18);
+        const amount = this.add.text(x - 2, y + 94, `+${AI_DIFFICULTIES[id].reward}`, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: "17px",
+          color: KUMA_COLORS.ink,
+          fontStyle: "700",
+        }).setOrigin(0, 0.5);
+        cards.add([box, audience, name, reward, coin, amount]);
+      });
+    };
+
+    const close = () => {
+      backdrop.cleanup();
+      layer.destroy();
+      this.difficultyModalLayer = null;
+    };
+    const cancel = addLargeTextButton(this, px - 106, py + 239, copy.cancel, "", close, {
+      width: 187,
+      height: 81,
+      fontSize: 24,
+      depth: 10004,
+    });
+    const start = addLargeTextButton(this, px + 103, py + 239, copy.start, "", () => {
+      this.aiDifficulty = selectedDifficulty;
+      this.registry.set("aiDifficulty", selectedDifficulty);
+      close();
+      this.startGame(savedSkin);
+    }, {
+      width: 195,
+      height: 81,
+      fontSize: 24,
+      dark: true,
+      depth: 10004,
+    });
+    layer.add([cancel.button, cancel.title, start.button, start.title]);
+    renderCards();
   }
 
   refreshCoins() {

@@ -1,11 +1,11 @@
-import { Boot } from "./scenes/Boot.js?v=20260714-layout22";
-import { Start } from "./scenes/Start.js?v=20260714-layout22";
-import { PieceSelect } from "./scenes/PieceSelect.js?v=20260714-layout22";
-import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260714-layout22";
-import { Game } from "./scenes/Game.js?v=20260714-layout22";
-import { Result } from "./scenes/Result.js?v=20260714-layout22";
-import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260714-layout22";
-import { Puzzle } from "./scenes/Puzzle.js?v=20260714-layout22";
+import { Boot } from "./scenes/Boot.js?v=20260715-domain04";
+import { Start } from "./scenes/Start.js?v=20260715-domain04";
+import { PieceSelect } from "./scenes/PieceSelect.js?v=20260715-domain04";
+import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260715-domain04";
+import { Game } from "./scenes/Game.js?v=20260715-domain04";
+import { Result } from "./scenes/Result.js?v=20260715-domain04";
+import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260715-domain04";
+import { Puzzle } from "./scenes/Puzzle.js?v=20260715-domain04";
 
 const config = {
   type: Phaser.AUTO,

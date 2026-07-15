@@ -1,6 +1,6 @@
-import { SpriteButton } from "./SpriteButton.js";
-import { t as translate } from "../i18n.js?v=20260714-layout22";
-import { createModalBackdrop, KUMA_FONT_SANS } from "./KumaUi.js?v=20260714-layout22";
+import { SpriteButton } from "./SpriteButton.js?v=20260715-domain04";
+import { t as translate } from "../i18n.js?v=20260715-domain04";
+import { createModalBackdrop, KUMA_FONT_SANS } from "./KumaUi.js?v=20260715-domain04";
 
 /**
  * 공용 Confirm Popup

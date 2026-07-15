@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js";
+import { readPlayerState } from "./playerState.js?v=20260715-domain04";
 
 const TEXT = {
   ko: {
@@ -100,9 +100,9 @@ const PUZZLES = {
   castle_safe: { en: ["Castle to Safety", "WHITE: Protect the king by castling.", "Move the king two squares right for kingside castling."], ja: ["安全にキャスリング", "WHITE：キャスリングでキングを守りましょう。", "キングを右へ2マス動かします。"] },
   promotion_queen: { en: ["Promotion", "WHITE: Advance the pawn and promote it to a queen.", "Move the a-pawn to a8 and choose Queen."], ja: ["昇格", "WHITE：ポーンを進めてクイーンに昇格させましょう。", "aポーンをa8へ進め、クイーンを選びます。"] },
   rook_file_mate: { en: ["Open-File Mate", "WHITE: Raise the rook to the last rank and trap the king.", "The a-file is completely open."], ja: ["オープンファイルメイト", "WHITE：ルークを最終列へ進めてキングを閉じ込めましょう。", "aファイルが完全に開いています。"] },
-  black_back_rank: { en: ["Black Back-Rank", "BLACK: Pin the white king to the last rank with your rook.", "Move down the e-file; the king has no escape."], ja: ["黒のバックランク", "BLACK：ルークで白キングを最終列に閉じ込めましょう。", "eファイルを下がると逃げ場がありません。"] },
+  black_back_rank: { en: ["Queen Back-Rank Mate", "BLACK: Invade the first rank with the queen and mate the boxed-in white king.", "Qd1# controls both side escapes while the three pawns block the king's front squares."], ja: ["クイーンのバックランクメイト", "BLACK：クイーンで1段目に侵入し、閉じ込められた白キングをメイトしてください。", "Qd1#なら3つのポーンが前方をふさぎ、クイーンが左右の逃げ道を支配します。"] },
   bishop_takes_queen: { en: ["Bishop Diagonal", "WHITE: Capture the most valuable piece on the diagonal.", "The bishop on c4 attacks d5."], ja: ["ビショップの対角線", "WHITE：対角線上の最も価値の高い駒を取りましょう。", "c4のビショップはd5を攻撃します。"] },
-  black_promotion: { en: ["Black Promotion", "BLACK: Advance the pawn and promote it to a queen.", "Move the a-pawn to a1 and choose Queen."], ja: ["黒の昇格", "BLACK：ポーンを進めてクイーンに昇格させましょう。", "aポーンをa1へ進め、クイーンを選びます。"] },
+  black_promotion: { en: ["Black Knight Underpromotion Fork", "BLACK: Promote to a knight and attack the king and queen at once.", "c1=N+ checks the king on e2 while also attacking the queen on b3."], ja: ["黒のナイト・アンダープロモーション", "BLACK：ナイトに昇格し、キングとクイーンを同時に攻撃してください。", "c1=N+はe2のキングにチェックしながらb3のクイーンも攻撃します。"] },
   queen_takes_rook: { en: ["Queen Takes Rook", "WHITE: Answer the check while capturing the rook.", "The queen can move to e2."], ja: ["クイーンでルークを取る", "WHITE：チェックを防ぎながらルークを取りましょう。", "クイーンをe2へ動かせます。"] },
   knight_takes_rook: { en: ["Knight Counterattack", "WHITE: Capture the attacking piece with the knight.", "The knight can jump from d4 to e2."], ja: ["ナイトの反撃", "WHITE：ナイトで攻撃している駒を取りましょう。", "ナイトはd4からe2へ跳べます。"] },
   rook_defense: { en: ["Rook Defense", "WHITE: Stop the check and remove the enemy rook.", "Capture e2 with the rook on the same file."], ja: ["ルークで防御", "WHITE：チェックを防ぎながら相手のルークを取りましょう。", "同じファイルのルークでe2を取ります。"] },
@@ -114,13 +114,30 @@ const PUZZLES = {
   queen_double_attack: { en: ["Queen Double Attack", "WHITE: Give check while attacking the rook at the same time.", "Move the queen to h5 to target the king and h8 rook."], ja: ["クイーンの両取り", "WHITE：チェックと同時にルークも攻撃しましょう。", "クイーンをh5へ動かします。"] },
   discovered_check: { en: ["Discovered Check", "WHITE: Move the bishop and open the rook's attack on the king.", "Move the bishop from e4 to b7 to clear the e-file."], ja: ["ディスカバードチェック", "WHITE：ビショップを動かし、後ろのルークの攻撃路を開きましょう。", "e4のビショップをb7へ動かします。"] },
   knight_underpromotion: { en: ["Knight Underpromotion", "WHITE: Promote the pawn to a knight to give immediate check.", "Choose Knight, not Queen, on e8."], ja: ["ナイトへのアンダープロモーション", "WHITE：ポーンをナイトに昇格させてチェックしましょう。", "e8ではクイーンではなくナイトを選びます。"] },
-  black_castle_long: { en: ["Black Queenside Castling", "BLACK: Castle toward the queen to move the king to safety.", "Move the king from e8 two squares to c8."], ja: ["黒のロングキャスリング", "BLACK：クイーン側へキャスリングしてキングを安全にしましょう。", "e8のキングをc8へ2マス動かします。"] },
+  black_castle_long: { en: ["Queenside Castling Check", "BLACK: Castle queenside to move the king and open a rook check at the same time.", "O-O-O+ places the king on c8 and the rook on d8, checking the white king on d1."], ja: ["チェックになるロングキャスリング", "BLACK：ロングキャスリングでキングを動かし、同時にルークのチェックを開いてください。", "O-O-O+でキングはc8、ルークはd8へ移動し、d1の白キングをチェックします。"] },
 };
 
 const SKIN_JA = { classic: "基本", bear: "クマ", rabbit: "ウサギ", cat: "ネコ", wolf: "オオカミ", sheep: "ヒツジ", eagle: "ワシ", owl: "フクロウ", capybara: "カピバラ" };
 const TAGS = {
-  en: { beginner: "beginner", capture: "capture", check: "check", fork: "fork", knight: "knight", rule: "rule", castle: "castle", promotion: "promotion", rook: "rook", bishop: "bishop", queen: "queen", "en-passant": "en passant", pin: "pin", skewer: "skewer", "double-attack": "double attack", "discovered-check": "discovered check", underpromotion: "underpromotion" },
-  ja: { beginner: "初級", capture: "駒取り", check: "チェック", fork: "フォーク", knight: "ナイト", rule: "ルール", castle: "キャスリング", promotion: "昇格", rook: "ルーク", bishop: "ビショップ", queen: "クイーン", "en-passant": "アンパッサン", pin: "ピン", skewer: "スキュアー", "double-attack": "両取り", "discovered-check": "ディスカバードチェック", underpromotion: "アンダープロモーション" },
+  en: { beginner: "beginner", capture: "capture", check: "check", fork: "fork", knight: "knight", rule: "rule", castle: "castle", promotion: "promotion", rook: "rook", bishop: "bishop", queen: "queen", "en-passant": "en passant", pin: "pin", skewer: "skewer", "double-attack": "double attack", "discovered-check": "discovered check", underpromotion: "underpromotion", "two-step": "two-step", sacrifice: "sacrifice", deflection: "deflection", removal: "remove defender", clearance: "clearance", attack: "attack", "mate-in-2": "mate in 2", "back-rank": "back rank", invasion: "invasion" },
+  ja: { beginner: "初級", capture: "駒取り", check: "チェック", fork: "フォーク", knight: "ナイト", rule: "ルール", castle: "キャスリング", promotion: "昇格", rook: "ルーク", bishop: "ビショップ", queen: "クイーン", "en-passant": "アンパッサン", pin: "ピン", skewer: "スキュアー", "double-attack": "両取り", "discovered-check": "ディスカバードチェック", underpromotion: "アンダープロモーション", "two-step": "2手", sacrifice: "サクリファイス", deflection: "そらし", removal: "守備駒の排除", clearance: "クリアランス", attack: "攻撃", "mate-in-2": "2手メイト", "back-rank": "バックランク", invasion: "侵入" },
+};
+
+const TAG_GLOSSARY = {
+  castle: "castling",
+  promotion: "promotion",
+  rook: "rook",
+  bishop: "bishop",
+  queen: "queen",
+  knight: "knight",
+  fork: "knightFork",
+  "en-passant": "enPassant",
+  pin: "pin",
+  skewer: "skewer",
+  "double-attack": "doubleAttack",
+  "discovered-check": "discoveredCheck",
+  underpromotion: "underpromotion",
+  "back-rank": "backRankMate",
 };
 
 const PUZZLE_GLOSSARY = {
@@ -233,7 +250,9 @@ export function skinName(skin, language = getLanguage()) {
 export function puzzleText(puzzle, field, language = getLanguage()) {
   if (language === "ko") return puzzle[field];
   const index = field === "title" ? 0 : field === "prompt" ? 1 : 2;
-  return PUZZLES[puzzle.id]?.[language]?.[index] ?? puzzle[field];
+  return puzzle.localized?.[language]?.[field]
+    ?? PUZZLES[puzzle.id]?.[language]?.[index]
+    ?? puzzle[field];
 }
 
 export function puzzleTags(tags, language = getLanguage()) {
@@ -242,7 +261,8 @@ export function puzzleTags(tags, language = getLanguage()) {
 }
 
 export function puzzleGlossary(puzzle, language = getLanguage()) {
-  const termId = PUZZLE_GLOSSARY[puzzle?.id];
+  const termId = PUZZLE_GLOSSARY[puzzle?.id]
+    ?? puzzle?.tags?.map((tag) => TAG_GLOSSARY[tag]).find(Boolean);
   const localized = GLOSSARY[language]?.[termId] ?? GLOSSARY.ko[termId];
   if (!localized) return null;
   return { id: termId, title: localized[0], description: localized[1] };

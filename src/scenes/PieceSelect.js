@@ -1,7 +1,14 @@
-import { createPieceView } from "../pieceStyles.js?v=20260714-layout22";
-import { isSkinUnlocked, readPlayerState, SKIN_SHOP, unlockSkin } from "../playerState.js";
-import { skinName, t } from "../i18n.js?v=20260714-layout22";
-import { SpriteButton } from "../ui/SpriteButton.js";
+import { createPieceView } from "../pieceStyles.js?v=20260715-domain04";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260715-domain04";
+import {
+  getSkinUnlockState,
+  isSkinUnlocked,
+  readPlayerState,
+  SKIN_SHOP,
+  unlockSkin,
+} from "../playerState.js?v=20260715-domain04";
+import { skinName, t } from "../i18n.js?v=20260715-domain04";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-domain04";
 import {
   addBackButton,
   addCoinPill,
@@ -17,8 +24,9 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
+  showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260714-layout22";
+} from "../ui/KumaUi.js?v=20260715-domain04";
 
 const SHOP = SKIN_SHOP;
 
@@ -43,11 +51,7 @@ export class PieceSelect extends Phaser.Scene {
     this.renderList();
 
     addBackButton(this, () => this.scene.start("Start"), 67, height - 68);
-    addLargeTextButton(this, width / 2, 1129, t("select.start"), "", () => {
-      this.registry.set("gameMode", "pvp");
-      this.registry.set("pieceSkin", { w: this.skinW, b: this.skinB });
-      this.scene.start("Game");
-    }, {
+    addLargeTextButton(this, width / 2, 1129, t("select.start"), "", () => this.startGame(), {
       width: 447,
       height: 108,
       fontSize: 43,
@@ -57,6 +61,25 @@ export class PieceSelect extends Phaser.Scene {
       depth: 120,
     });
     addFooter(this, true);
+  }
+
+  async startGame() {
+    if (this._startingGame) return;
+    this._startingGame = true;
+    const loading = this.add.text(this.scale.width / 2, 1068, "LOADING...", {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "17px",
+      color: KUMA_COLORS.ink,
+      fontStyle: "700",
+    }).setOrigin(0.5).setDepth(160);
+    await ensurePieceSetsLoaded(this, [
+      { skin: this.skinW, color: "w" },
+      { skin: this.skinB, color: "b" },
+    ]);
+    loading.destroy();
+    this.registry.set("gameMode", "pvp");
+    this.registry.set("pieceSkin", { w: this.skinW, b: this.skinB });
+    this.scene.start("Game");
   }
 
   renderList() {
@@ -76,7 +99,8 @@ export class PieceSelect extends Phaser.Scene {
   }
 
   drawSkinRow(cx, cy, width, skin, color) {
-    const unlocked = this.isUnlocked(skin.id, color);
+    const unlockState = getSkinUnlockState(skin.id, color);
+    const unlocked = unlockState.unlocked;
     const selected = unlocked && (color === "w" ? this.skinW === skin.id : this.skinB === skin.id);
     const colorName = t(`color.${color}`);
     const alpha = unlocked ? 1 : 0.34;
@@ -111,19 +135,32 @@ export class PieceSelect extends Phaser.Scene {
     this.listLayer.add([hit, icon, label]);
 
     if (!unlocked) {
-      const affordable = readPlayerState().coins >= skin.cost;
+      const affordable = unlockState.purchasable && readPlayerState().coins >= unlockState.cost;
       const lock = addLock(this, cx - hitW / 2 + 42, cy + 10, 32, 80);
-      const coin = addMiniCoin(this, cx - hitW / 2 + 85, cy + 24, skin.cost, 80);
-      coin.setAlpha(affordable ? 1 : alpha);
-      this.listLayer.add([lock, coin]);
+      this.listLayer.add(lock);
+      if (unlockState.purchasable) {
+        const coin = addMiniCoin(this, cx - hitW / 2 + 85, cy + 24, unlockState.cost, 80);
+        coin.setAlpha(affordable ? 1 : alpha);
+        this.listLayer.add(coin);
+      } else {
+        const quest = this.add.text(cx - hitW / 2 + 85, cy + 24, unlockState.questLabel, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: "16px",
+          color: KUMA_COLORS.ink,
+          fontStyle: "500",
+        }).setOrigin(0, 0.5).setAlpha(0.78);
+        this.listLayer.add(quest);
+      }
     }
   }
 
   handlePick(skin, color) {
-    if (!this.isUnlocked(skin.id, color)) {
+    const unlockState = getSkinUnlockState(skin.id, color);
+    if (!unlockState.unlocked && unlockState.purchasable) {
       this.showPurchaseModal(skin, color);
       return;
     }
+    if (!unlockState.unlocked) return;
     if (color === "w") this.skinW = skin.id;
     else this.skinB = skin.id;
     this.renderList();
@@ -131,6 +168,9 @@ export class PieceSelect extends Phaser.Scene {
 
   showPurchaseModal(skin, color) {
     if (this.purchaseLayer) return;
+    const unlockState = getSkinUnlockState(skin.id, color);
+    if (!unlockState.purchasable) return;
+    const cost = unlockState.cost;
     const { width, height } = this.scale;
     const backdrop = createModalBackdrop(this, 9990);
     const layer = this.add.container(0, 0).setDepth(10000);
@@ -153,7 +193,7 @@ export class PieceSelect extends Phaser.Scene {
     const colorName = t(`color.${color}`);
     const localizedSkin = skinName(skin);
     const message = this.add.text(px, py + 52, t("select.purchaseMessage", {
-      cost: skin.cost,
+      cost,
       color: colorName,
       skin: localizedSkin,
     }), {
@@ -181,13 +221,19 @@ export class PieceSelect extends Phaser.Scene {
       this.refreshCoins();
       close();
       if (!result.ok) {
-        this.flash(t("select.notEnough", { coins: result.coins, cost: skin.cost }), "#9b2d20");
+        showRewardLine(this, t("select.notEnough", { coins: result.coins, cost }), {
+          tone: "failure",
+          showCoin: false,
+        });
         return;
       }
       if (color === "w") this.skinW = skin.id;
       else this.skinB = skin.id;
       this.renderList();
-      this.flash(t("select.purchased", { color: colorName, skin: localizedSkin }), KUMA_COLORS.teal);
+      showRewardLine(this, t("select.purchased", { color: colorName, skin: localizedSkin }), {
+        showCoin: false,
+        particleScale: 1.3,
+      });
     }, {
       width: 195,
       height: 81,
@@ -196,28 +242,6 @@ export class PieceSelect extends Phaser.Scene {
       depth: 10002,
     });
     layer.add([panel, title, divider, preview, message, cancel.button, cancel.title, buy.button, buy.title]);
-  }
-
-  flash(message, color) {
-    this.message?.destroy();
-    this.message = this.add.text(this.scale.width / 2, 182, message, {
-      fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
-      fontSize: "19px",
-      color,
-      fontStyle: "900",
-      stroke: "#fff8ea",
-      strokeThickness: 4,
-    }).setOrigin(0.5).setDepth(400);
-    this.tweens.add({
-      targets: this.message,
-      alpha: 0,
-      duration: 420,
-      delay: 1200,
-      onComplete: () => {
-        this.message?.destroy();
-        this.message = null;
-      },
-    });
   }
 
   isUnlocked(skinId, color) {

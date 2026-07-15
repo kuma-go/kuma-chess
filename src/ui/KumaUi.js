@@ -1,6 +1,6 @@
-import { readPlayerState, writePlayerState } from "../playerState.js";
-import { t } from "../i18n.js?v=20260714-layout22";
-import { SpriteButton } from "./SpriteButton.js";
+import { readPlayerState, writePlayerState } from "../playerState.js?v=20260715-domain04";
+import { t } from "../i18n.js?v=20260715-domain04";
+import { SpriteButton } from "./SpriteButton.js?v=20260715-domain04";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
@@ -326,11 +326,29 @@ export function showRewardLine(scene, message, options = {}) {
   const depth = options.depth ?? 7000;
   const showCoin = options.showCoin !== false;
   const particleScale = options.particleScale ?? 1;
+  const tone = options.tone ?? "success";
+  const isFailure = tone === "failure";
+  const palette = isFailure
+    ? {
+        band: 0x321b1b,
+        edge: 0xc94b43,
+        text: "#ffb5ad",
+        stroke: "#541711",
+        particles: [0xc94b43, 0xe8776d, 0x8f302b],
+      }
+    : {
+        band: 0x2f251a,
+        edge: 0xe0b353,
+        text: "#fff4cf",
+        stroke: "#4b2e12",
+        particles: [0xf4c65d, 0xfff4cf, 0x22a7be, 0xd94c42, 0x66a85f],
+      };
+  const particleCount = options.particleCount ?? (isFailure ? 8 : 22);
   const group = scene.add.container(width / 2, y).setDepth(depth);
 
-  const band = scene.add.rectangle(0, 0, width, 84, 0x2f251a, 0.94).setScale(0.04, 1);
-  const edgeTop = scene.add.rectangle(0, -42, width, 3, 0xe0b353, 1).setScale(0.04, 1);
-  const edgeBottom = scene.add.rectangle(0, 42, width, 3, 0xe0b353, 1).setScale(0.04, 1);
+  const band = scene.add.rectangle(0, 0, width, 84, palette.band, 0.94).setScale(0.04, 1);
+  const edgeTop = scene.add.rectangle(0, -42, width, 3, palette.edge, 1).setScale(0.04, 1);
+  const edgeBottom = scene.add.rectangle(0, 42, width, 3, palette.edge, 1).setScale(0.04, 1);
   const coin = scene.add.image(-170, 0, "kuma_ui_coin_nomal")
     .setDisplaySize(46, 46)
     .setAlpha(0)
@@ -338,9 +356,9 @@ export function showRewardLine(scene, message, options = {}) {
   const label = scene.add.text(showCoin ? 18 : 0, 0, message, {
     fontFamily: KUMA_FONT_SANS,
     fontSize: "29px",
-    color: "#fff4cf",
+    color: palette.text,
     fontStyle: "900",
-    stroke: "#4b2e12",
+    stroke: palette.stroke,
     strokeThickness: 3,
   }).setOrigin(0.5).setAlpha(0).setScale(0.82);
   group.add([band, edgeTop, edgeBottom, coin, label]);
@@ -374,14 +392,13 @@ export function showRewardLine(scene, message, options = {}) {
     ease: "Cubic.Out",
   });
 
-  const colors = [0xf4c65d, 0xfff4cf, 0x22a7be, 0xd94c42, 0x66a85f];
-  for (let i = 0; i < 22; i += 1) {
+  for (let i = 0; i < particleCount; i += 1) {
     const spark = scene.add.rectangle(
       Phaser.Math.Between(-250, 250),
       Phaser.Math.Between(-18, 18),
       Phaser.Math.Between(Math.round(4 * particleScale), Math.round(9 * particleScale)),
       Phaser.Math.Between(Math.round(3 * particleScale), Math.round(6 * particleScale)),
-      colors[i % colors.length],
+      palette.particles[i % palette.particles.length],
       1
     ).setAlpha(0).setAngle(Phaser.Math.Between(0, 180));
     group.add(spark);

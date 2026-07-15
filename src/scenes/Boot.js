@@ -1,3 +1,5 @@
+import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260715-domain04";
+
 export class Boot extends Phaser.Scene {
   constructor() {
     super("Boot");
@@ -27,7 +29,7 @@ export class Boot extends Phaser.Scene {
       "main_logo_B", "main_img", "main_bottom_bg",
       "coin_bg", "coin_nomal", "coin_small", "lock", "lock_bg",
       "btn_start_normal", "btn_start_hover", "btn_start_click",
-      "btn_seting", "btn_home", "btn_back", "btn_hint",
+      "btn_seting", "btn_rank", "btn_home", "btn_back", "btn_hint",
       "btn_radio_on", "btn_radio_off", "btn_sound_on", "btn_sound_off",
       "btn_vibration_on", "btn_vibration_off", "btn_c_normal",
       "btn_pop_w_normal", "btn_pop_b_normal",
@@ -42,21 +44,7 @@ export class Boot extends Phaser.Scene {
       this.load.image(`kuma_ui_${name}`, `${uiRoot}${name}.png`);
     }
 
-    const pieceRoot = "assets/kuma/pieces/";
-    const skins = ["classic", "rabbit", "bear", "cat", "wolf", "sheep", "eagle", "owl", "capybara"];
-    const types = ["p", "n", "b", "r", "q", "k"];
-    for (const skin of skins) {
-      for (const color of ["w", "b"]) {
-        for (const type of types) {
-          for (const facing of ["front", "back"]) {
-            this.load.image(
-              `kuma_piece_${skin}_${color}_${type}_${facing}`,
-              `${pieceRoot}${skin}_${color}_${type}_${facing}.png`
-            );
-          }
-        }
-      }
-    }
+    queueInitialPieceAssets(this);
   }
 
   create() {

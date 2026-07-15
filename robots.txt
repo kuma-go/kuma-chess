@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /assets/kuma/
+Disallow: /src/
+
+Sitemap: https://kumachess.com/sitemap.xml

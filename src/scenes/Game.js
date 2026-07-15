@@ -1,8 +1,9 @@
-import { Chess } from "../vendor-chess.js";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260714-layout22";
-import { t } from "../i18n.js?v=20260714-layout22";
-import { SpriteButton } from "../ui/SpriteButton.js";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260714-layout22";
+import { Chess } from "../vendor-chess.js?v=20260715-domain04";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260715-domain04";
+import { t } from "../i18n.js?v=20260715-domain04";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-domain04";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260715-domain04";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260715-domain04";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -13,9 +14,11 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260714-layout22";
+} from "../ui/KumaUi.js?v=20260715-domain04";
 
 const FILES = "abcdefgh";
+const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
+const HARD_AI_LIMITS = Object.freeze({ rootMoves: 12, replyMoves: 12, nodes: 180, thinkMs: 48 });
 
 export class Game extends Phaser.Scene {
   constructor() {
@@ -73,6 +76,8 @@ export class Game extends Phaser.Scene {
     this._gameOverTimers = [];
     this._modalOpen = false;
     this.gameSessionId = "";
+    this.aiDifficulty = "normal";
+    this._resultRecorded = false;
 
 
   }
@@ -91,6 +96,7 @@ export class Game extends Phaser.Scene {
     this._turnFlipBusy = false;
     this._perspectiveTurn = "w";
     this._modalOpen = false;
+    this._resultRecorded = false;
 
     this._lineFxLayer = null;
     this._lastCheckKey = null;
@@ -110,6 +116,9 @@ export class Game extends Phaser.Scene {
     // --- mode ---
     this.mode = this.registry.get("gameMode") || "pvp";
     this.playerColor = this.registry.get("playerColor") || "w";
+    const requestedDifficulty = this.registry.get("aiDifficulty") || "normal";
+    this.aiDifficulty = AI_DIFFICULTY_IDS.has(requestedDifficulty) ? requestedDifficulty : "normal";
+    if (this.isAIMode()) this.registry.set("aiDifficulty", this.aiDifficulty);
     this.gameSessionId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
     this.game = new Chess(); // White 선공
@@ -252,6 +261,32 @@ export class Game extends Phaser.Scene {
     return this.conceptEnabled ? this.skins[color] : "icon";
   }
 
+  getPieceFacing(color, perspectiveTurn = null) {
+    const viewerColor = this.isAIMode()
+      ? (this.isViewFlipped() ? "b" : "w")
+      : (perspectiveTurn ?? this._perspectiveTurn ?? this.game?.turn?.() ?? "w");
+    return color === viewerColor ? "back" : "front";
+  }
+
+  setPieceViewFacing(view, perspectiveTurn = null) {
+    if (!view || !view._color || !view._type) return;
+
+    const skin = view._skin ?? this.getRenderSkin(view._color);
+    const size = view._pieceSize ?? Math.floor(this.squareSize * 1.02);
+    const facing = this.getPieceFacing(view._color, perspectiveTurn);
+    const image = view._pieceImage;
+
+    if (skin !== "icon" && image?.setTexture) {
+      const textureKey = `kuma_piece_${skin}_${view._color}_${view._type}_${facing}`;
+      if (this.textures.exists(textureKey) && image.texture?.key !== textureKey) {
+        image.setTexture(textureKey);
+      }
+    }
+
+    alignBoardPieceView(view, size, skin, facing);
+    view._facing = facing;
+  }
+
   undoLastTurn() {
     if (!this.game || this._promoLayer || this._modalOpen || this._turnFlipBusy) return;
 
@@ -308,9 +343,8 @@ export class Game extends Phaser.Scene {
         const displayRow = this.squareToRC(square).r;
 
         const skin = this.getRenderSkin(piece.color);
-        const bottomColor = this.isViewFlipped() ? "b" : "w";
         const size = Math.floor(this.squareSize * 1.02);
-        const facing = piece.color === bottomColor ? "back" : "front";
+        const facing = this.getPieceFacing(piece.color, perspectiveTurn);
         const view = createPieceView(
           this,
           x,
@@ -328,6 +362,8 @@ export class Game extends Phaser.Scene {
         view._square = square;
         view._color = piece.color;
         view._type = piece.type;
+        view._skin = skin;
+        view._pieceSize = size;
 
         this.setPieceViewOrientation(view, perspectiveTurn);
 
@@ -349,6 +385,7 @@ export class Game extends Phaser.Scene {
     view.scaleX = mag;
     view.scaleY = mag;
     const turn = perspectiveTurn ?? this._perspectiveTurn ?? this.game?.turn?.() ?? "w";
+    this.setPieceViewFacing(view, turn);
     view.setAngle(!this.isAIMode() && turn === "b" ? 180 : 0);
 
     if (!this.isAIMode() && view._square) {
@@ -388,14 +425,19 @@ export class Game extends Phaser.Scene {
       arr.forEach((p, i) => {
         const x = startX + i * gap;
         const skin = this.getRenderSkin(p.color);
-        const v = createPieceView(this, x, baseY, 58, skin, p.color, p.type, "front");
+        const facing = this.getPieceFacing(p.color, this._perspectiveTurn);
+        const v = createPieceView(this, x, baseY, 58, skin, p.color, p.type, facing);
+        v._color = p.color;
+        v._type = p.type;
+        v._skin = skin;
+        v._pieceSize = 58;
         const image = v._pieceImage;
         if (image && typeof image.setDisplaySize === "function") {
           image.setPosition(0, 0);
           image.setDisplaySize(artWidth, skin === "icon" ? artWidth : artWidth * 1.5);
         }
         v.setDepth(91);
-        this.setPieceViewOrientation(v, this._perspectiveTurn);
+        v.setAngle(!this.isAIMode() && this._perspectiveTurn === "b" ? 180 : 0);
         this._capLayer.add(v);
       });
     };
@@ -679,6 +721,7 @@ export class Game extends Phaser.Scene {
         skins: { ...this.skins },
         mode: this.mode,
         playerColor: this.playerColor,
+        difficulty: this.isAIMode() ? this.aiDifficulty : null,
         gameSessionId: this.gameSessionId,
       };
     }
@@ -691,6 +734,7 @@ export class Game extends Phaser.Scene {
         skins: { ...this.skins },
         mode: this.mode,
         playerColor: this.playerColor,
+        difficulty: this.isAIMode() ? this.aiDifficulty : null,
         gameSessionId: this.gameSessionId,
       };
     }
@@ -702,8 +746,46 @@ export class Game extends Phaser.Scene {
       skins: { ...this.skins },
       mode: this.mode,
       playerColor: this.playerColor,
+      difficulty: this.isAIMode() ? this.aiDifficulty : null,
       gameSessionId: this.gameSessionId,
     };
+  }
+
+  recordResultOnce(payload) {
+    if (this._resultRecorded || !payload) return;
+    this._resultRecorded = true;
+
+    if (this.isAIMode()) {
+      recordGameResult({
+        mode: "ai",
+        result: payload.result,
+        difficulty: this.aiDifficulty,
+        playerColor: this.playerColor,
+      });
+      return;
+    }
+
+    recordGameResult({
+      mode: "pvp",
+      result: payload.result,
+      winnerColor: payload.winnerColor,
+    });
+  }
+
+  awardResultOnce(payload) {
+    if (this._rewardResolved || !payload) return;
+    this._rewardResolved = true;
+    const playerWonAI = this.isAIMode()
+      && payload.winnerColor
+      && payload.winnerColor === this.playerColor;
+    payload.reward = playerWonAI
+      ? grantCoinsOnce(`ai-win:${this.gameSessionId}`, getAIDifficulty(this.aiDifficulty).reward)
+      : { awarded: false, amount: 0 };
+  }
+
+  finishToResult(payload) {
+    this.recordResultOnce(payload);
+    this.scene.start("Result", payload);
   }
 
 
@@ -713,6 +795,8 @@ export class Game extends Phaser.Scene {
     this._ending = true;
 
     const payload = this.getResultPayload();
+    this.recordResultOnce(payload);
+    this.awardResultOnce(payload);
     if (payload.reason === "checkmate") {
       const loser = this.game.turn();
       const winner = loser === "w" ? "b" : "w";
@@ -727,7 +811,7 @@ export class Game extends Phaser.Scene {
 
       // 라인 연출을 충분히 본 다음 결과 화면으로 넘어가도록 딜레이를 늘린다.
       const timer = this.time.delayedCall(3200, () => {
-        this.scene.start("Result", payload);
+        this.finishToResult(payload);
       });
       this._gameOverTimers.push(timer);
       return;
@@ -736,7 +820,7 @@ export class Game extends Phaser.Scene {
     // Draw / 기타 종료
     this.showLineText("DRAW", { duration: 900, stay: 700, y: this.scale.height * 0.4 });
     const timer = this.time.delayedCall(1800, () => {
-      this.scene.start("Result", payload);
+      this.finishToResult(payload);
     });
     this._gameOverTimers.push(timer);
   }
@@ -905,6 +989,7 @@ export class Game extends Phaser.Scene {
     const finalize = () => {
       if (finished) return;
       finished = true;
+      facingEvt?.remove(false);
 
       for (const v of this.pieceViews.values()) {
         this.tweens.killTweensOf(v);
@@ -920,6 +1005,11 @@ export class Game extends Phaser.Scene {
     };
 
     const timeoutEvt = this.time.delayedCall(520, finalize);
+    // Swap the illustrated front/back resource at the midpoint of the turn.
+    // Board coordinates remain untouched; only each piece's local presentation changes.
+    const facingEvt = this.time.delayedCall(150, () => {
+      for (const v of pieces) this.setPieceViewFacing(v, turn);
+    });
     let rotated = 0;
     for (const v of pieces) {
       this.tweens.killTweensOf(v);
@@ -987,6 +1077,45 @@ export class Game extends Phaser.Scene {
       }
     }
     return sum;
+  }
+
+  movePayload(move) {
+    const payload = { from: move.from, to: move.to };
+    if (move.promotion) payload.promotion = move.promotion;
+    else if (typeof move.flags === "string" && move.flags.includes("p")) payload.promotion = "q";
+    return payload;
+  }
+
+  evaluatePosition(chess, perspectiveColor) {
+    if (chess.isCheckmate()) {
+      return chess.turn() === perspectiveColor ? -1000000 : 1000000;
+    }
+    if (chess.isDraw()) return 0;
+
+    let score = this.evaluateMaterial(chess, perspectiveColor);
+    if (chess.isCheck()) score += chess.turn() === perspectiveColor ? -135 : 135;
+
+    const mobility = chess.moves().length;
+    score += (chess.turn() === perspectiveColor ? mobility : -mobility) * 1.5;
+    return score;
+  }
+
+  moveOrderScore(move) {
+    let score = 0;
+    if (move.captured) score += this.pieceValue(move.captured) * 10 - this.pieceValue(move.piece);
+    if (move.promotion) score += this.pieceValue(move.promotion) * 8;
+    if (typeof move.san === "string") {
+      if (move.san.includes("#")) score += 1000000;
+      else if (move.san.includes("+")) score += 900;
+    }
+    if (move.flags?.includes("k") || move.flags?.includes("q")) score += 80;
+    return score;
+  }
+
+  orderedMoves(chess, limit) {
+    return chess.moves({ verbose: true })
+      .sort((a, b) => this.moveOrderScore(b) - this.moveOrderScore(a))
+      .slice(0, limit);
   }
 
   // 아주 가벼운 1-ply 평가: (캡처/체크 우선) + 수를 둔 뒤의 재료 밸런스 + 상대 최대 캡처 위험 패널티
@@ -1074,6 +1203,79 @@ export class Game extends Phaser.Scene {
     return Phaser.Utils.Array.GetRandom(best);
   }
 
+  pickHardAIMove(aiColor) {
+    const search = new Chess(this.game.fen());
+    const roots = this.orderedMoves(search, HARD_AI_LIMITS.rootMoves);
+    if (!roots.length) return null;
+
+    const deadline = performance.now() + HARD_AI_LIMITS.thinkMs;
+    let nodes = 0;
+    let bestScore = -Infinity;
+    let bestMoves = [];
+
+    for (const root of roots) {
+      if (performance.now() >= deadline || nodes >= HARD_AI_LIMITS.nodes) break;
+      let made = null;
+      try { made = search.move(this.movePayload(root)); } catch (e) { made = null; }
+      if (!made) continue;
+      nodes += 1;
+
+      let score;
+      if (search.isGameOver()) {
+        score = this.evaluatePosition(search, aiColor);
+      } else {
+        const replies = this.orderedMoves(search, HARD_AI_LIMITS.replyMoves);
+        let worstReply = Infinity;
+        let evaluatedReplies = 0;
+
+        for (const reply of replies) {
+          // Once a root move is started, evaluate at least one legal reply so Hard
+          // never silently degrades to the one-ply Normal policy on slower devices.
+          if (evaluatedReplies > 0 && (performance.now() >= deadline || nodes >= HARD_AI_LIMITS.nodes)) break;
+          let response = null;
+          try { response = search.move(this.movePayload(reply)); } catch (e) { response = null; }
+          if (!response) continue;
+          nodes += 1;
+          evaluatedReplies += 1;
+          worstReply = Math.min(worstReply, this.evaluatePosition(search, aiColor));
+          search.undo();
+        }
+
+        score = evaluatedReplies > 0
+          ? worstReply
+          : this.evaluatePosition(search, aiColor);
+      }
+
+      // Preserve a small tactical preference when minimax scores are otherwise tied.
+      score += this.moveOrderScore(root) * 0.015;
+      search.undo();
+
+      if (score > bestScore + 0.0001) {
+        bestScore = score;
+        bestMoves = [root];
+      } else if (Math.abs(score - bestScore) <= 0.0001) {
+        bestMoves.push(root);
+      }
+    }
+
+    return bestMoves.length
+      ? Phaser.Utils.Array.GetRandom(bestMoves)
+      : this.pickBestAIMove(aiColor);
+  }
+
+  pickAIMove(aiColor) {
+    const difficulty = getAIDifficulty(this.aiDifficulty)?.id || this.aiDifficulty;
+    if (difficulty === "easy") {
+      const moves = this.game.moves({ verbose: true });
+      if (!moves.length) return null;
+      return Math.random() < 0.75
+        ? Phaser.Utils.Array.GetRandom(moves)
+        : this.pickBestAIMove(aiColor);
+    }
+    if (difficulty === "hard") return this.pickHardAIMove(aiColor);
+    return this.pickBestAIMove(aiColor);
+  }
+
 isViewFlipped() {
     if (this.isAIMode()) return this.playerColor === "b";
     return false;
@@ -1096,8 +1298,8 @@ maybeAIMove(force = false) {
     this.clearSelection();
     this.clearHighlights();
 
-    // 간단한 평가 AI (캡처/체크 우선 + 재료 밸런스 + 상대 최대 캡처 위험)
-    const thinkMs = 380;
+    const difficulty = getAIDifficulty(this.aiDifficulty) || AI_DIFFICULTIES?.normal;
+    const thinkMs = difficulty?.id === "easy" ? 300 : difficulty?.id === "hard" ? 620 : 380;
     this._aiTimer = this.time.delayedCall(thinkMs, () => {
       try {
         this._aiTimer = null;
@@ -1107,19 +1309,12 @@ maybeAIMove(force = false) {
         if (this.game.turn() !== aiColor) return;
         if (this.game.fen() !== fenAtSchedule) return;
 
-        const pick = this.pickBestAIMove(aiColor);
+        const pick = this.pickAIMove(aiColor);
         if (!pick) {
           this._aiBusy = false;
           return;
         }
-        const payload = {
-          from: pick.from,
-          to: pick.to,
-        };
-
-        // 승급은 무조건 Queen으로(가장 자연스러운 기본값)
-        if (pick.promotion) payload.promotion = pick.promotion;
-        else if (typeof pick.flags === "string" && pick.flags.includes("p")) payload.promotion = "q";
+        const payload = this.movePayload(pick);
 
         let moved = null;
         try {

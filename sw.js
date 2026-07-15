@@ -1,8 +1,17 @@
-const CACHE_NAME = "kuma-chess-20260714-layout23";
+const CACHE_NAME = "kuma-chess-20260715-domain04";
 const CORE_FILES = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./app-init.js",
+  "./ads-config.js",
+  "./privacy.html",
+  "./guide.html",
+  "./robots.txt",
+  "./sitemap.xml",
+  "./ads.txt",
+  "./docs.css",
+  "./docs.js",
   "./phaser.js",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",

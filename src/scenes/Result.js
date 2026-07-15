@@ -1,7 +1,14 @@
-import { createPieceView } from "../pieceStyles.js?v=20260714-layout22";
-import { grantCoinsOnce, readPlayerState, REWARDS } from "../playerState.js";
-import { t } from "../i18n.js?v=20260714-layout22";
-import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260714-layout22";
+import { createPieceView } from "../pieceStyles.js?v=20260715-domain04";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260715-domain04";
+import { t } from "../i18n.js?v=20260715-domain04";
+import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260715-domain04";
+
+const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35 });
+const DIFFICULTY_LABELS = Object.freeze({
+  ko: { easy: "쉬움", normal: "보통", hard: "어려움" },
+  en: { easy: "EASY", normal: "NORMAL", hard: "HARD" },
+  ja: { easy: "かんたん", normal: "ふつう", hard: "むずかしい" },
+});
 
 export class Result extends Phaser.Scene {
   constructor() {
@@ -23,9 +30,15 @@ export class Result extends Phaser.Scene {
       this.dataIn?.mode === "ai" &&
       this.dataIn?.playerColor &&
       this.dataIn?.winnerColor === this.dataIn.playerColor;
-    const reward = playerWonAI
-      ? grantCoinsOnce(`ai-win:${this.dataIn.gameSessionId || Date.now()}`, REWARDS.aiWin)
-      : { awarded: false, amount: 0, coins: readPlayerState().coins };
+    const difficultyId = this.dataIn?.difficulty || this.registry.get("aiDifficulty") || "normal";
+    const difficulty = getAIDifficulty(difficultyId) || AI_DIFFICULTIES?.normal || { id: difficultyId };
+    const resolvedDifficultyId = difficulty?.id || difficultyId;
+    const winReward = Number(difficulty?.reward)
+      || AI_WIN_REWARDS[resolvedDifficultyId]
+      || AI_WIN_REWARDS.normal;
+    const reward = this.dataIn?.reward ?? (playerWonAI
+      ? grantCoinsOnce(`ai-win:${this.dataIn.gameSessionId || Date.now()}`, winReward)
+      : { awarded: false, amount: 0, coins: readPlayerState().coins });
 
     const winnerColor =
       this.dataIn?.winnerColor ??
@@ -56,6 +69,24 @@ export class Result extends Phaser.Scene {
       fontStyle: "500",
     }).setOrigin(0.5).setDepth(40);
 
+    if (this.dataIn?.mode === "ai") {
+      const language = readPlayerState().language || "ko";
+      const label = DIFFICULTY_LABELS[language]?.[resolvedDifficultyId]
+        || DIFFICULTY_LABELS.en[resolvedDifficultyId]
+        || resolvedDifficultyId.toUpperCase();
+      const rewardLabel = language === "ko"
+        ? `${label} · 승리 보상 ${winReward} COIN`
+        : language === "ja"
+          ? `${label} · 勝利報酬 ${winReward} COIN`
+          : `${label} · WIN REWARD ${winReward} COIN`;
+      this.add.text(width / 2, 934, rewardLabel, {
+        fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
+        fontSize: "19px",
+        color: KUMA_COLORS.ink,
+        fontStyle: "500",
+      }).setOrigin(0.5).setDepth(40);
+    }
+
     if (reward.awarded) {
       this.time.delayedCall(650, () => {
         showRewardLine(this, t("reward.ai", { amount: reward.amount }), {
@@ -69,6 +100,7 @@ export class Result extends Phaser.Scene {
     addLargeTextButton(this, width / 2 - 165, yBtn, t("result.retry"), "", () => {
       if (this.dataIn?.mode) this.registry.set("gameMode", this.dataIn.mode);
       if (this.dataIn?.playerColor) this.registry.set("playerColor", this.dataIn.playerColor);
+      if (this.dataIn?.difficulty) this.registry.set("aiDifficulty", this.dataIn.difficulty);
       this.registry.set("pieceSkin", skins);
       this.scene.start("Game");
     }, { width: 300, height: 82, fontSize: 25, depth: 80 });

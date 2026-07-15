@@ -1,0 +1,75 @@
+@font-face {
+  font-family: "Pretendard";
+  src: url("./assets/fonts/PretendardVariable.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Serif KR";
+  src: url("./assets/fonts/NotoSerifKR-Variable.ttf") format("truetype");
+  font-weight: 200 900;
+  font-display: swap;
+}
+:root {
+  color: #352719;
+  background: #fff8ea;
+  font-family: "Pretendard", sans-serif;
+  font-synthesis: none;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100dvh; background: #fff8ea; }
+.doc-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 68px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) 10px max(18px, env(safe-area-inset-left, 0px));
+  background: rgba(47, 37, 26, 0.98);
+  color: #fff4cf;
+  border-bottom: 2px solid #d8a344;
+}
+.doc-header a {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: #352719;
+  background: #fff4cf;
+  border: 2px solid #d8a344;
+  border-radius: 50%;
+  text-decoration: none;
+  font-size: 25px;
+  font-weight: 800;
+}
+.doc-header strong { font-family: "Noto Serif KR", serif; font-size: 22px; }
+.language-switch { margin-left: auto; display: flex; gap: 4px; }
+.language-switch button {
+  width: 38px;
+  height: 34px;
+  border: 1px solid #bda17f;
+  background: transparent;
+  color: #f4dfb3;
+  font: 700 14px "Pretendard", sans-serif;
+  cursor: pointer;
+}
+.language-switch button[aria-pressed="true"] { background: #fff4cf; color: #352719; }
+main { width: min(760px, 100%); margin: 0 auto; padding: 42px 24px 100px; }
+h1 { margin: 0 0 12px; font: 800 clamp(30px, 7vw, 48px) "Noto Serif KR", serif; }
+.lead { margin: 0 0 38px; color: #705a45; font-size: 18px; line-height: 1.75; }
+article[hidden] { display: none; }
+section { padding: 28px 0; border-top: 1px solid #ddc9ad; }
+h2 { margin: 0 0 14px; font-size: 22px; }
+h3 { margin: 22px 0 10px; font-size: 18px; }
+p, li { font-size: 16px; line-height: 1.75; }
+ul, ol { padding-left: 22px; }
+.notice { padding: 18px; background: #f6ead6; border-left: 4px solid #d8a344; }
+.doc-footer { color: #9b8065; font-size: 14px; text-align: center; }
+a { color: #79521f; text-underline-offset: 3px; }
+@media (max-width: 430px) {
+  .doc-header { gap: 10px; }
+  .doc-header strong { font-size: 18px; }
+  main { padding: 30px 20px 80px; }
+}
