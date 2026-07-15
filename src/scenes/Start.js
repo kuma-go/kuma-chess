@@ -1,6 +1,6 @@
-import { claimDailyReward, readPlayerState } from "../playerState.js?v=20260715-domain04";
-import { setTopAdVisible } from "../adManager.js?v=20260715-domain04";
-import { t } from "../i18n.js?v=20260715-domain04";
+import { claimDailyReward, readPlayerState } from "../playerState.js?v=20260715-mobile07";
+import { setTopAdVisible } from "../adManager.js?v=20260715-mobile07";
+import { t } from "../i18n.js?v=20260715-mobile07";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -9,8 +9,8 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260715-domain04";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260715-domain04";
+} from "../ui/KumaUi.js?v=20260715-mobile07";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260715-mobile07";
 
 const BUTTONS = [
   { y: 873, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },

@@ -1,6 +1,11 @@
-import { readPlayerState, writePlayerState } from "../playerState.js?v=20260715-domain04";
-import { t } from "../i18n.js?v=20260715-domain04";
-import { SpriteButton } from "./SpriteButton.js?v=20260715-domain04";
+import { readPlayerState, writePlayerState } from "../playerState.js?v=20260715-mobile07";
+import { t } from "../i18n.js?v=20260715-mobile07";
+import { SpriteButton } from "./SpriteButton.js?v=20260715-mobile07";
+import {
+  isVibrationSupported,
+  playFeedback,
+  vibrateFeedback,
+} from "../feedback.js?v=20260715-mobile07";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
@@ -135,7 +140,10 @@ export function addRoundIconButton(scene, x, y, glyph, onClick, size = 72) {
 
   const hit = scene.add.circle(0, 0, r + 8, 0xffffff, 0.001)
     .setInteractive({ useHandCursor: true });
-  hit.on("pointerdown", () => onClick && onClick());
+  hit.on("pointerdown", () => {
+    playFeedback("ui");
+    onClick?.();
+  });
 
   group.add([bg, icon, hit]);
   return group;
@@ -146,7 +154,10 @@ export function addSettingsButton(scene, onClick) {
     .setDisplaySize(67, 67)
     .setDepth(930)
     .setInteractive({ useHandCursor: true });
-  btn.on("pointerdown", () => onClick?.());
+  btn.on("pointerdown", () => {
+    playFeedback("ui");
+    onClick?.();
+  });
   return btn;
 }
 
@@ -154,7 +165,10 @@ export function addBackButton(scene, onClick, x = 70, y = null) {
   const yy = y ?? scene.scale.height - 70;
   const btn = scene.add.image(x, yy, "kuma_ui_btn_back").setDisplaySize(70, 70).setDepth(930)
     .setInteractive({ useHandCursor: true });
-  btn.on("pointerdown", () => onClick?.());
+  btn.on("pointerdown", () => {
+    playFeedback("ui");
+    onClick?.();
+  });
   return btn;
 }
 
@@ -240,12 +254,16 @@ export function addDarkTopBar(scene, title = "Kuma Chess", opts = {}) {
   const home = scene.add.image(width - 188, 57, "kuma_ui_btn_home").setDisplaySize(67, 67)
     .setInteractive({ useHandCursor: true });
   home.on("pointerdown", () => {
+    playFeedback("ui");
     if (opts.onHome) opts.onHome();
     else scene.scene.start("Start");
   });
   const settings = scene.add.image(width - 90, 57, "kuma_ui_btn_seting").setDisplaySize(67, 67)
     .setInteractive({ useHandCursor: true });
-  settings.on("pointerdown", () => showSettingsPanel(scene));
+  settings.on("pointerdown", () => {
+    playFeedback("ui");
+    showSettingsPanel(scene);
+  });
   group.add([bg, home, settings]);
   return group;
 }
@@ -328,6 +346,7 @@ export function showRewardLine(scene, message, options = {}) {
   const particleScale = options.particleScale ?? 1;
   const tone = options.tone ?? "success";
   const isFailure = tone === "failure";
+  playFeedback(options.feedbackType || (isFailure ? "error" : showCoin ? "reward" : "success"));
   const palette = isFailure
     ? {
         band: 0x321b1b,
@@ -435,6 +454,7 @@ export function showSettingsPanel(scene) {
   const { width, height } = scene.scale;
   const current = readPlayerState();
   const pending = { ...current };
+  const vibrationAvailable = isVibrationSupported();
   const backdrop = createModalBackdrop(scene, 9990);
   const layer = scene.add.container(0, 0).setDepth(10000);
   scene.settingsLayer = layer;
@@ -479,6 +499,7 @@ export function showSettingsPanel(scene) {
       box.strokeRoundedRect(x - 42, py - 63, 84, 58, 6);
       box.setInteractive(new Phaser.Geom.Rectangle(x - 42, py - 63, 84, 58), Phaser.Geom.Rectangle.Contains);
       box.on("pointerdown", () => {
+        playFeedback("ui");
         pending.language = lang.key;
         redraw();
       });
@@ -491,7 +512,7 @@ export function showSettingsPanel(scene) {
       controls.add([box, txt]);
     });
 
-    const makeToggle = (x, y, label, asset, value, onClick) => {
+    const makeToggle = (x, y, label, asset, value, onClick, enabled = true) => {
       const labelObj = scene.add.text(x, y - 48, label, {
         fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
         fontSize: "25px",
@@ -499,25 +520,32 @@ export function showSettingsPanel(scene) {
         fontStyle: "800",
       }).setOrigin(0.5);
       const button = scene.add.image(x, y, `kuma_ui_${asset}_${value ? "on" : "off"}`)
-        .setDisplaySize(64, 64).setDepth(10004).setInteractive({ useHandCursor: true });
-      button.on("pointerdown", onClick);
-      const state = scene.add.text(x, y + 58, value ? "ON" : "OFF", {
+        .setDisplaySize(64, 64).setDepth(10004);
+      if (enabled) button.setInteractive({ useHandCursor: true }).on("pointerdown", onClick);
+      else button.setAlpha(0.46);
+      const state = scene.add.text(x, y + 58, enabled ? (value ? "ON" : "OFF") : "N/A", {
         fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
         fontSize: "24px",
         color: KUMA_COLORS.ink,
         fontStyle: "900",
       }).setOrigin(0.5);
+      if (!enabled) {
+        labelObj.setAlpha(0.52);
+        state.setAlpha(0.52);
+      }
       controls.add([labelObj, button, state]);
     };
 
     makeToggle(px - 110, py + 72, t("settings.sound", {}, pending.language), "btn_sound", pending.soundEnabled, () => {
       pending.soundEnabled = !pending.soundEnabled;
+      if (pending.soundEnabled) playFeedback("ui", { forceSound: true, vibrate: false });
       redraw();
     });
     makeToggle(px + 110, py + 72, t("settings.vibration", {}, pending.language), "btn_vibration", pending.vibrationEnabled !== false, () => {
       pending.vibrationEnabled = pending.vibrationEnabled === false;
+      if (pending.vibrationEnabled) vibrateFeedback("success", true);
       redraw();
-    });
+    }, vibrationAvailable);
 
     const contact = scene.add.text(px, py + 172, t("settings.contact", {}, pending.language), {
       fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',

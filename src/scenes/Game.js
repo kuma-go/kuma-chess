@@ -1,9 +1,10 @@
-import { Chess } from "../vendor-chess.js?v=20260715-domain04";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260715-domain04";
-import { t } from "../i18n.js?v=20260715-domain04";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-domain04";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260715-domain04";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260715-domain04";
+import { Chess } from "../vendor-chess.js?v=20260715-mobile07";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260715-mobile07";
+import { t } from "../i18n.js?v=20260715-mobile07";
+import { playFeedback } from "../feedback.js?v=20260715-mobile07";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-mobile07";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260715-mobile07";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260715-mobile07";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -14,7 +15,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260715-domain04";
+} from "../ui/KumaUi.js?v=20260715-mobile07";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
@@ -604,6 +605,7 @@ export class Game extends Phaser.Scene {
     const prevTurn = this.game.turn();
     const piece = this.game.get(from);
     if (!piece) {
+      playFeedback("error");
       this.bounceBack(true);
       return;
     }
@@ -611,6 +613,7 @@ export class Game extends Phaser.Scene {
     // ✅ 먼저 "법적으로 가능한 수"인지 확인 (불가능하면 승급 UI도 뜨면 안 됨)
     const legal = this.game.moves({ square: from, verbose: true }).find((m) => m.to === to);
     if (!legal) {
+      playFeedback("error");
       this.bounceBack(true);
       return;
     }
@@ -634,6 +637,7 @@ export class Game extends Phaser.Scene {
         const move = this.game.move({ from, to, promotion: chosen });
         if (!move) {
           // 이 경우는 거의 없어야 하지만(legal 기반), 안전장치
+          playFeedback("error");
           this.bounceBack(true);
           return;
         }
@@ -666,6 +670,7 @@ export class Game extends Phaser.Scene {
 
     const move = this.game.move({ from, to });
     if (!move) {
+      playFeedback("error");
       this.bounceBack(true);
       return;
     }
@@ -798,6 +803,7 @@ export class Game extends Phaser.Scene {
     this.recordResultOnce(payload);
     this.awardResultOnce(payload);
     if (payload.reason === "checkmate") {
+      playFeedback("win");
       const loser = this.game.turn();
       const winner = loser === "w" ? "b" : "w";
       const winnerLabel = winner === "w" ? "WHITE" : "BLACK";
@@ -818,6 +824,7 @@ export class Game extends Phaser.Scene {
     }
 
     // Draw / 기타 종료
+    playFeedback("draw");
     this.showLineText("DRAW", { duration: 900, stay: 700, y: this.scale.height * 0.4 });
     const timer = this.time.delayedCall(1800, () => {
       this.finishToResult(payload);
@@ -845,6 +852,7 @@ export class Game extends Phaser.Scene {
     const key = `${turnColor}_check_${this.game.fen()}`;
     if (this._lastCheckKey !== key) {
       this._lastCheckKey = key;
+      playFeedback("check");
       this.showLineText(`CHECK! (${turnLabel})`, { duration: 900, stay: 650, y: this.scale.height * 0.36 });
     }
   } else {
@@ -1343,12 +1351,12 @@ maybeAIMove(force = false) {
 
         this.renderAll();
         this.renderCaptured();
-        this.updateStatus();
-        if (moved?.to) this.playImpactEffect(moved.to, !!moved.captured);
-
-        if (this.game.isGameOver()) {
-          this.handleGameOverFx();
-        }
+        const afterImpact = () => {
+          this.updateStatus();
+          if (this.game.isGameOver()) this.handleGameOverFx();
+        };
+        if (moved?.to) this.playImpactEffect(moved.to, !!moved.captured, afterImpact);
+        else afterImpact();
       } finally {
         if (token === this._aiToken) this._aiBusy = false;
       }
@@ -1357,6 +1365,7 @@ maybeAIMove(force = false) {
 
   // ---------- 타격감 ----------
   playImpactEffect(square, isCapture, onDone = null) {
+    playFeedback(isCapture ? "capture" : "move");
     let doneCalled = false;
     const done = () => {
       if (doneCalled) return;

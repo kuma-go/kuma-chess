@@ -1,5 +1,5 @@
-import { createPieceView } from "../pieceStyles.js?v=20260715-domain04";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260715-domain04";
+import { createPieceView } from "../pieceStyles.js?v=20260715-mobile07";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260715-mobile07";
 import {
   AI_DIFFICULTIES,
   DEFAULT_AI_DIFFICULTY,
@@ -8,8 +8,8 @@ import {
   readPlayerState,
   SKIN_SHOP,
   unlockSkin,
-} from "../playerState.js?v=20260715-domain04";
-import { skinName, t } from "../i18n.js?v=20260715-domain04";
+} from "../playerState.js?v=20260715-mobile07";
+import { skinName, t } from "../i18n.js?v=20260715-mobile07";
 import {
   addBackButton,
   addCoinPill,
@@ -27,7 +27,7 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260715-domain04";
+} from "../ui/KumaUi.js?v=20260715-mobile07";
 
 const SHOP = SKIN_SHOP;
 
@@ -275,6 +275,7 @@ export class PieceSelectAI extends Phaser.Scene {
       showRewardLine(this, t("select.purchased", { color: colorName, skin: localizedSkin }), {
         showCoin: false,
         particleScale: 1.3,
+        feedbackType: "purchase",
       });
     }, {
       width: 195,

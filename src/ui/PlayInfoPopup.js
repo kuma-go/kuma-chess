@@ -3,15 +3,15 @@ import {
   getSkinUnlockState,
   readPlayerState,
   SKIN_SHOP,
-} from "../playerState.js?v=20260715-domain04";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260715-domain04";
+} from "../playerState.js?v=20260715-mobile07";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260715-mobile07";
 import {
   addLargeTextButton,
   addPanel,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260715-domain04";
+} from "./KumaUi.js?v=20260715-mobile07";
 
 const COPY = {
   ko: {

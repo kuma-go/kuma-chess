@@ -1,4 +1,4 @@
-import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260715-domain04";
+import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260715-mobile07";
 
 export class Boot extends Phaser.Scene {
   constructor() {

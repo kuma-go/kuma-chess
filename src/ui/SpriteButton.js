@@ -1,3 +1,5 @@
+import { playFeedback } from "../feedback.js?v=20260715-mobile07";
+
 /**
  * SpriteButton
  * - 이미지 3장(normal/hover/pressed)로 동작하는 버튼
@@ -67,7 +69,10 @@ export class SpriteButton extends Phaser.GameObjects.Container {
       this._isDown = false;
       // selected면 hover를 유지, 아니면 hover(마우스가 위에 있으니까)
       this.sprite.setTexture(this.keys.hover);
-      if (wasDown && this.onClick) this.onClick();
+      if (wasDown && this.onClick) {
+        playFeedback("ui");
+        this.onClick();
+      }
     });
 
     // 밖에서 떼면 눌림 해제만

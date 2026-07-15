@@ -1,9 +1,9 @@
-import { Chess } from "../vendor-chess.js?v=20260715-domain04";
-import { readPlayerState } from "../playerState.js?v=20260715-domain04";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260715-domain04";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260715-domain04";
-import { getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260715-domain04";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-domain04";
+import { Chess } from "../vendor-chess.js?v=20260715-mobile07";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260715-mobile07";
+import { playFeedback } from "../feedback.js?v=20260715-mobile07";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260715-mobile07";
+import { getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260715-mobile07";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-mobile07";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -15,7 +15,7 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260715-domain04";
+} from "../ui/KumaUi.js?v=20260715-mobile07";
 
 const FILES = "abcdefgh";
 
@@ -456,15 +456,16 @@ export class Puzzle extends Phaser.Scene {
 
     this._moveBusy = true;
     this.stepIndex += 1;
+    const isFinalStep = this.stepIndex >= this.puzzle.solutionSteps.length;
     this.clearSelection();
     this.renderAll();
     this.updateProgress();
     this.flashMessage(move.san.includes("#") ? "CHECKMATE!" : t("puzzle.correct"), "#bbf7d0");
     this.playImpactEffect(move.to, !!move.captured, true, () => {
       this._moveBusy = false;
-    });
+    }, !isFinalStep);
 
-    if (this.stepIndex >= this.puzzle.solutionSteps.length) {
+    if (isFinalStep) {
       this.completePuzzle();
       return;
     }
@@ -637,18 +638,7 @@ export class Puzzle extends Phaser.Scene {
     });
   }
 
-  vibrateImpact(strong = false) {
-    if (!readPlayerState().vibrationEnabled) return;
-    try {
-      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-        navigator.vibrate(strong ? [28, 18, 44] : 18);
-      }
-    } catch (e) {
-      // Vibration is optional and may be blocked by the browser or device policy.
-    }
-  }
-
-  playImpactEffect(square, isCapture, isCorrect = false, onDone = null) {
+  playImpactEffect(square, isCapture, isCorrect = false, onDone = null, withFeedback = true) {
     const view = this.pieceViews.get(square);
     const { x, y } = this.squareToCenter(square);
     const strong = isCapture || isCorrect;
@@ -659,7 +649,7 @@ export class Puzzle extends Phaser.Scene {
       onDone?.();
     };
 
-    this.vibrateImpact(strong);
+    if (withFeedback) playFeedback(isCorrect ? "correct" : isCapture ? "capture" : "move");
     this.cameras.main.shake(strong ? 85 : 50, strong ? 0.005 : 0.0025);
 
     const ring = this.add.graphics().setDepth(997).setPosition(x, y);
@@ -742,6 +732,7 @@ export class Puzzle extends Phaser.Scene {
       hold: 2300,
       showCoin: !!result.reward?.awarded,
       particleScale: 1.6,
+      feedbackType: result.reward?.awarded ? "reward" : "success",
     });
     this.showNextButton();
   }

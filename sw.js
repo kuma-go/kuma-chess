@@ -1,4 +1,4 @@
-const CACHE_NAME = "kuma-chess-20260715-domain04";
+const CACHE_NAME = "kuma-chess-20260715-mobile07";
 const CORE_FILES = [
   "./",
   "./index.html",

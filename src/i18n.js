@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260715-domain04";
+import { readPlayerState } from "./playerState.js?v=20260715-mobile07";
 
 const TEXT = {
   ko: {
