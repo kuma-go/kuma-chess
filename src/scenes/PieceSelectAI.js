@@ -1,5 +1,5 @@
-import { createPieceView } from "../pieceStyles.js?v=20260715-mobile07";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260715-mobile07";
+import { createPieceView } from "../pieceStyles.js?v=20260715-mobile09";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260715-mobile09";
 import {
   AI_DIFFICULTIES,
   DEFAULT_AI_DIFFICULTY,
@@ -8,8 +8,8 @@ import {
   readPlayerState,
   SKIN_SHOP,
   unlockSkin,
-} from "../playerState.js?v=20260715-mobile07";
-import { skinName, t } from "../i18n.js?v=20260715-mobile07";
+} from "../playerState.js?v=20260715-mobile09";
+import { skinName, t } from "../i18n.js?v=20260715-mobile09";
 import {
   addBackButton,
   addCoinPill,
@@ -27,7 +27,7 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260715-mobile07";
+} from "../ui/KumaUi.js?v=20260715-mobile09";
 
 const SHOP = SKIN_SHOP;
 
@@ -69,6 +69,17 @@ export class PieceSelectAI extends Phaser.Scene {
     super("PieceSelectAI");
   }
 
+  init() {
+    this._sceneRun = (this._sceneRun || 0) + 1;
+    this._startingGame = false;
+    this.difficultyModalLayer = null;
+    this.purchaseLayer = null;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this._sceneRun += 1;
+      this._startingGame = false;
+    });
+  }
+
   create() {
     const { width, height } = this.scale;
     addScreenBg(this, "bg_select");
@@ -103,13 +114,16 @@ export class PieceSelectAI extends Phaser.Scene {
   async startGame(savedSkin) {
     if (this._startingGame) return;
     this._startingGame = true;
+    const sceneRun = this._sceneRun;
+    let loading = null;
+    try {
       const aiColor = this.playerColor === "w" ? "b" : "w";
       const availableAI = SHOP.filter((skin) => this.isUnlocked(skin.id, aiColor));
       const aiSkin = (Phaser.Utils.Array.GetRandom(availableAI) || SHOP[0]).id;
       const skins = { w: savedSkin.w || "classic", b: savedSkin.b || "classic" };
       skins[this.playerColor] = this.playerSkin;
       skins[aiColor] = aiSkin;
-      const loading = this.add.text(this.scale.width / 2, 1068, "LOADING...", {
+      loading = this.add.text(this.scale.width / 2, 1068, "LOADING...", {
         fontFamily: KUMA_FONT_SANS,
         fontSize: "17px",
         color: KUMA_COLORS.ink,
@@ -119,12 +133,23 @@ export class PieceSelectAI extends Phaser.Scene {
         { skin: skins.w, color: "w" },
         { skin: skins.b, color: "b" },
       ]);
-      loading.destroy();
+      if (sceneRun !== this._sceneRun || !this.scene.isActive()) return;
       this.registry.set("gameMode", "ai");
       this.registry.set("aiDifficulty", this.aiDifficulty);
       this.registry.set("playerColor", this.playerColor);
       this.registry.set("pieceSkin", skins);
       this.scene.start("Game");
+    } catch (error) {
+      if (this.scene.isActive()) {
+        showRewardLine(this, t("select.loadFailed"), {
+          tone: "failure",
+          showCoin: false,
+        });
+      }
+    } finally {
+      loading?.destroy();
+      this._startingGame = false;
+    }
   }
 
   renderList() {

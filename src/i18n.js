@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260715-mobile07";
+import { readPlayerState } from "./playerState.js?v=20260715-mobile09";
 
 const TEXT = {
   ko: {
@@ -21,6 +21,7 @@ const TEXT = {
     "select.start": "START GAME", "select.startAI": "START AI GAME", "select.purchase": "체스말 구입",
     "select.purchaseMessage": "{cost} 코인으로 '{color} {skin}'\n체스말을 구입하시겠습니까?",
     "select.notEnough": "코인이 부족합니다 ({coins}/{cost})", "select.purchased": "{color} {skin} 구입 완료",
+    "select.loadFailed": "기물을 불러오지 못했습니다. 다시 시도해 주세요.",
     "color.w": "백", "color.b": "흑", "side.w": "백 진영", "side.b": "흑 진영",
     "game.homeTitle": "메인으로 이동", "game.homeMessage": "정말 메인으로 돌아갈까요?\n진행 중인 게임은 종료됩니다.",
     "game.move": "이동", "game.conceptOff": "컨셉 끄기", "game.undoUnavailable": "무를 수 없습니다.",
@@ -50,6 +51,7 @@ const TEXT = {
     "select.start": "START GAME", "select.startAI": "START AI GAME", "select.purchase": "Buy Piece Set",
     "select.purchaseMessage": "Buy the '{color} {skin}' piece set\nfor {cost} coins?",
     "select.notEnough": "Not enough coins ({coins}/{cost})", "select.purchased": "{color} {skin} purchased",
+    "select.loadFailed": "Could not load the pieces. Please try again.",
     "color.w": "White", "color.b": "Black", "side.w": "White", "side.b": "Black",
     "game.homeTitle": "Return to Main", "game.homeMessage": "Return to the main screen?\nThe current game will end.",
     "game.move": "Move", "game.conceptOff": "Concept Off", "game.undoUnavailable": "No move to undo.",
@@ -79,6 +81,7 @@ const TEXT = {
     "select.start": "ゲーム開始", "select.startAI": "AI対戦開始", "select.purchase": "駒を購入",
     "select.purchaseMessage": "{cost}コインで「{color} {skin}」の\n駒を購入しますか？",
     "select.notEnough": "コインが足りません ({coins}/{cost})", "select.purchased": "{color} {skin}を購入しました",
+    "select.loadFailed": "駒を読み込めませんでした。もう一度お試しください。",
     "color.w": "白", "color.b": "黒", "side.w": "白陣営", "side.b": "黒陣営",
     "game.homeTitle": "メインへ戻る", "game.homeMessage": "メイン画面へ戻りますか？\n進行中のゲームは終了します。",
     "game.move": "移動", "game.conceptOff": "コンセプトOFF", "game.undoUnavailable": "戻せる手がありません。",

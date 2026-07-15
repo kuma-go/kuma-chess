@@ -1,14 +1,14 @@
-import { createPieceView } from "../pieceStyles.js?v=20260715-mobile07";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260715-mobile07";
+import { createPieceView } from "../pieceStyles.js?v=20260715-mobile09";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260715-mobile09";
 import {
   getSkinUnlockState,
   isSkinUnlocked,
   readPlayerState,
   SKIN_SHOP,
   unlockSkin,
-} from "../playerState.js?v=20260715-mobile07";
-import { skinName, t } from "../i18n.js?v=20260715-mobile07";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-mobile07";
+} from "../playerState.js?v=20260715-mobile09";
+import { skinName, t } from "../i18n.js?v=20260715-mobile09";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-mobile09";
 import {
   addBackButton,
   addCoinPill,
@@ -26,13 +26,23 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260715-mobile07";
+} from "../ui/KumaUi.js?v=20260715-mobile09";
 
 const SHOP = SKIN_SHOP;
 
 export class PieceSelect extends Phaser.Scene {
   constructor() {
     super("PieceSelect");
+  }
+
+  init() {
+    this._sceneRun = (this._sceneRun || 0) + 1;
+    this._startingGame = false;
+    this.purchaseLayer = null;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this._sceneRun += 1;
+      this._startingGame = false;
+    });
   }
 
   create() {
@@ -66,20 +76,34 @@ export class PieceSelect extends Phaser.Scene {
   async startGame() {
     if (this._startingGame) return;
     this._startingGame = true;
-    const loading = this.add.text(this.scale.width / 2, 1068, "LOADING...", {
-      fontFamily: KUMA_FONT_SANS,
-      fontSize: "17px",
-      color: KUMA_COLORS.ink,
-      fontStyle: "700",
-    }).setOrigin(0.5).setDepth(160);
-    await ensurePieceSetsLoaded(this, [
-      { skin: this.skinW, color: "w" },
-      { skin: this.skinB, color: "b" },
-    ]);
-    loading.destroy();
-    this.registry.set("gameMode", "pvp");
-    this.registry.set("pieceSkin", { w: this.skinW, b: this.skinB });
-    this.scene.start("Game");
+    const sceneRun = this._sceneRun;
+    let loading = null;
+    try {
+      loading = this.add.text(this.scale.width / 2, 1068, "LOADING...", {
+        fontFamily: KUMA_FONT_SANS,
+        fontSize: "17px",
+        color: KUMA_COLORS.ink,
+        fontStyle: "700",
+      }).setOrigin(0.5).setDepth(160);
+      await ensurePieceSetsLoaded(this, [
+        { skin: this.skinW, color: "w" },
+        { skin: this.skinB, color: "b" },
+      ]);
+      if (sceneRun !== this._sceneRun || !this.scene.isActive()) return;
+      this.registry.set("gameMode", "pvp");
+      this.registry.set("pieceSkin", { w: this.skinW, b: this.skinB });
+      this.scene.start("Game");
+    } catch (error) {
+      if (this.scene.isActive()) {
+        showRewardLine(this, t("select.loadFailed"), {
+          tone: "failure",
+          showCoin: false,
+        });
+      }
+    } finally {
+      loading?.destroy();
+      this._startingGame = false;
+    }
   }
 
   renderList() {

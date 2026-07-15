@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260715-mobile07";
+import { readPlayerState } from "./playerState.js?v=20260715-mobile09";
 
 const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
 
@@ -21,6 +21,9 @@ let masterGain = null;
 let unlockInstalled = false;
 let pendingSoundType = null;
 let resumePromise = null;
+let audioUnlocked = false;
+let foregroundRecoveryTimer = 0;
+let lastPrimeAt = 0;
 
 function stateAllows(key) {
   const state = readPlayerState();
@@ -32,10 +35,75 @@ function ensureAudioContext() {
   if (!audioContext || audioContext.state === "closed") {
     audioContext = new AudioContextCtor();
     masterGain = audioContext.createGain();
-    masterGain.gain.value = 0.34;
+    masterGain.gain.value = 0.78;
     masterGain.connect(audioContext.destination);
   }
   return audioContext;
+}
+
+function startSilentBuffer(context) {
+  const buffer = context.createBuffer(1, 1, context.sampleRate);
+  const source = context.createBufferSource();
+  source.buffer = buffer;
+  source.connect(masterGain);
+  source.start(0);
+}
+
+function flushPendingSound() {
+  if (!audioUnlocked || !pendingSoundType) return;
+  const type = pendingSoundType;
+  pendingSoundType = null;
+  playPattern(type);
+}
+
+function resetAudioGraph() {
+  const context = audioContext;
+  audioContext = null;
+  masterGain = null;
+  resumePromise = null;
+  audioUnlocked = false;
+  if (context && context.state !== "closed") context.close().catch(() => {});
+}
+
+function settleWithTimeout(promise, timeout = 650) {
+  return Promise.race([
+    promise.then(() => true).catch(() => false),
+    new Promise((resolve) => window.setTimeout(() => resolve(false), timeout)),
+  ]);
+}
+
+export function primeAudioFromGesture(force = false) {
+  if (!force && !stateAllows("sound")) return false;
+  const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+  if (audioContext && now - lastPrimeAt < 80) return audioUnlocked;
+  lastPrimeAt = now;
+  const context = ensureAudioContext();
+  if (!context) return false;
+
+  try {
+    // This must run synchronously inside touchend/pointerup for iOS Safari.
+    startSilentBuffer(context);
+    const finish = () => {
+      audioUnlocked = context.state === "running";
+      if (audioUnlocked) Promise.resolve().then(flushPendingSound);
+      return audioUnlocked;
+    };
+
+    if (context.state === "running") {
+      finish();
+      return true;
+    }
+
+    if (!resumePromise) {
+      resumePromise = context.resume()
+        .then(finish)
+        .catch(() => false)
+        .finally(() => { resumePromise = null; });
+    }
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 export async function unlockAudio(force = false) {
@@ -54,17 +122,8 @@ export async function unlockAudio(force = false) {
       if (!resumed) return false;
     }
 
-    // Safari reliably unlocks after a tiny silent buffer started in a user gesture.
-    const buffer = context.createBuffer(1, 1, context.sampleRate);
-    const source = context.createBufferSource();
-    source.buffer = buffer;
-    source.connect(masterGain);
-    source.start();
-    if (pendingSoundType) {
-      const type = pendingSoundType;
-      pendingSoundType = null;
-      playPattern(type);
-    }
+    audioUnlocked = true;
+    flushPendingSound();
     return true;
   } catch (error) {
     return false;
@@ -74,15 +133,47 @@ export async function unlockAudio(force = false) {
 export function installFeedbackUnlock() {
   if (unlockInstalled) return;
   unlockInstalled = true;
-  const unlock = () => {
-    unlockAudio();
+  const prime = () => {
+    primeAudioFromGesture();
   };
-  window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
-  window.addEventListener("touchend", unlock, { capture: true, passive: true });
-  window.addEventListener("keydown", unlock, { capture: true });
+  window.addEventListener("pointerup", prime, { capture: true, passive: true });
+  window.addEventListener("touchend", prime, { capture: true, passive: true });
+  window.addEventListener("click", prime, { capture: true, passive: true });
+  window.addEventListener("keydown", prime, { capture: true });
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) unlockAudio();
+    if (!document.hidden) recoverAudioAfterForeground();
   });
+  window.addEventListener("pageshow", recoverAudioAfterForeground, { passive: true });
+}
+
+async function recoverAudioAfterForeground() {
+  window.clearTimeout(foregroundRecoveryTimer);
+  if (!audioContext || !audioUnlocked || !stateAllows("sound")) return;
+
+  const context = audioContext;
+  const before = context.currentTime;
+  if (context.state !== "running" && !(await settleWithTimeout(context.resume()))) {
+    resetAudioGraph();
+    return;
+  }
+
+  foregroundRecoveryTimer = window.setTimeout(async () => {
+    if (audioContext !== context) return;
+    const stalled = context.state !== "running" || context.currentTime <= before + 0.001;
+    if (!stalled) return;
+    const suspended = await settleWithTimeout(context.suspend());
+    const resumed = suspended && await settleWithTimeout(context.resume());
+    if (!resumed) {
+      resetAudioGraph();
+      return;
+    }
+    const verifyAt = context.currentTime;
+    window.setTimeout(() => {
+      if (audioContext === context && (context.state !== "running" || context.currentTime <= verifyAt + 0.001)) {
+        resetAudioGraph();
+      }
+    }, 180);
+  }, 180);
 }
 
 function tone(frequency, duration, options = {}) {
@@ -188,11 +279,44 @@ function playPattern(type) {
 }
 
 export function isVibrationSupported() {
-  return typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+  return !!getNativeHaptics() || (typeof navigator !== "undefined" && typeof navigator.vibrate === "function");
+}
+
+function getNativeHaptics() {
+  if (typeof window === "undefined") return null;
+  return window.KumaNativeHaptics || window.Capacitor?.Plugins?.Haptics || null;
+}
+
+function playNativeHaptic(type) {
+  const haptics = getNativeHaptics();
+  if (!haptics) return false;
+  try {
+    let action = null;
+    if (["success", "reward", "purchase", "win", "correct"].includes(type) && haptics.notification) {
+      action = haptics.notification({ type: "SUCCESS" });
+    } else if (type === "error" && haptics.notification) {
+      action = haptics.notification({ type: "ERROR" });
+    } else if (haptics.impact) {
+      const style = ["capture", "check"].includes(type) ? "HEAVY" : type === "move" ? "MEDIUM" : "LIGHT";
+      action = haptics.impact({ style });
+    } else if (haptics.vibrate) {
+      action = haptics.vibrate({ duration: 24 });
+    }
+    if (!action) return false;
+    Promise.resolve(action).catch(() => {
+      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        navigator.vibrate(HAPTIC_PATTERNS[type] || HAPTIC_PATTERNS.ui);
+      }
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 export function vibrateFeedback(type = "ui", force = false) {
   if (!force && !stateAllows("vibration")) return false;
+  if (playNativeHaptic(type)) return true;
   if (!isVibrationSupported()) return false;
   try {
     return navigator.vibrate(HAPTIC_PATTERNS[type] || HAPTIC_PATTERNS.ui);
@@ -205,15 +329,11 @@ export function playFeedback(type = "ui", options = {}) {
   const withVibration = options.vibrate !== false;
   if (withVibration) vibrateFeedback(type, options.forceVibration === true);
   if (!options.forceSound && !stateAllows("sound")) return;
-  const play = () => playPattern(type);
-  const context = ensureAudioContext();
-  if (!context) return;
-  if (context.state === "running") {
-    play();
+  if (audioUnlocked && audioContext?.state === "running") {
+    playPattern(type);
     return;
   }
   pendingSoundType = type;
-  unlockAudio(options.forceSound === true);
 }
 
 export function stopFeedback() {

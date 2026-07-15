@@ -1,11 +1,12 @@
-import { readPlayerState, writePlayerState } from "../playerState.js?v=20260715-mobile07";
-import { t } from "../i18n.js?v=20260715-mobile07";
-import { SpriteButton } from "./SpriteButton.js?v=20260715-mobile07";
+import { readPlayerState, writePlayerState } from "../playerState.js?v=20260715-mobile09";
+import { t } from "../i18n.js?v=20260715-mobile09";
+import { SpriteButton } from "./SpriteButton.js?v=20260715-mobile09";
 import {
   isVibrationSupported,
   playFeedback,
+  primeAudioFromGesture,
   vibrateFeedback,
-} from "../feedback.js?v=20260715-mobile07";
+} from "../feedback.js?v=20260715-mobile09";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
@@ -538,7 +539,10 @@ export function showSettingsPanel(scene) {
 
     makeToggle(px - 110, py + 72, t("settings.sound", {}, pending.language), "btn_sound", pending.soundEnabled, () => {
       pending.soundEnabled = !pending.soundEnabled;
-      if (pending.soundEnabled) playFeedback("ui", { forceSound: true, vibrate: false });
+      if (pending.soundEnabled) {
+        primeAudioFromGesture(true);
+        playFeedback("ui", { forceSound: true, vibrate: false });
+      }
       redraw();
     });
     makeToggle(px + 110, py + 72, t("settings.vibration", {}, pending.language), "btn_vibration", pending.vibrationEnabled !== false, () => {

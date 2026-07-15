@@ -1,12 +1,12 @@
-import { Boot } from "./scenes/Boot.js?v=20260715-mobile07";
-import { Start } from "./scenes/Start.js?v=20260715-mobile07";
-import { PieceSelect } from "./scenes/PieceSelect.js?v=20260715-mobile07";
-import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260715-mobile07";
-import { Game } from "./scenes/Game.js?v=20260715-mobile07";
-import { Result } from "./scenes/Result.js?v=20260715-mobile07";
-import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260715-mobile07";
-import { Puzzle } from "./scenes/Puzzle.js?v=20260715-mobile07";
-import { installFeedbackUnlock } from "./feedback.js?v=20260715-mobile07";
+import { Boot } from "./scenes/Boot.js?v=20260715-mobile09";
+import { Start } from "./scenes/Start.js?v=20260715-mobile09";
+import { PieceSelect } from "./scenes/PieceSelect.js?v=20260715-mobile09";
+import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260715-mobile09";
+import { Game } from "./scenes/Game.js?v=20260715-mobile09";
+import { Result } from "./scenes/Result.js?v=20260715-mobile09";
+import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260715-mobile09";
+import { Puzzle } from "./scenes/Puzzle.js?v=20260715-mobile09";
+import { installFeedbackUnlock } from "./feedback.js?v=20260715-mobile09";
 
 const config = {
   type: Phaser.AUTO,
