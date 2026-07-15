@@ -1,7 +1,7 @@
-import { createPieceView } from "../pieceStyles.js?v=20260715-mobile09";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260715-mobile09";
-import { t } from "../i18n.js?v=20260715-mobile09";
-import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260715-mobile09";
+import { createPieceView } from "../pieceStyles.js?v=20260715-mobile14";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260715-mobile14";
+import { t } from "../i18n.js?v=20260715-mobile14";
+import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260715-mobile14";
 
 const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35 });
 const DIFFICULTY_LABELS = Object.freeze({

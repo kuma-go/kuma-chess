@@ -3,6 +3,49 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 }
 
 (() => {
+  let deferredPrompt = null;
+  const isStandalone = () => (
+    window.matchMedia?.("(display-mode: standalone)")?.matches
+    || navigator.standalone === true
+  );
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const notify = () => window.dispatchEvent(new CustomEvent("kuma-install-state-changed"));
+
+  window.KumaInstall = {
+    getState() {
+      const standalone = isStandalone();
+      return {
+        standalone,
+        available: !standalone && (Boolean(deferredPrompt) || isIos),
+        nativePrompt: Boolean(deferredPrompt),
+        platform: isIos ? "ios" : "browser",
+      };
+    },
+    async request() {
+      if (isStandalone()) return { status: "installed" };
+      if (!deferredPrompt) return { status: "guide", platform: isIos ? "ios" : "browser" };
+      const prompt = deferredPrompt;
+      deferredPrompt = null;
+      await prompt.prompt();
+      const choice = await prompt.userChoice.catch(() => ({ outcome: "dismissed" }));
+      notify();
+      return { status: choice.outcome === "accepted" ? "accepted" : "dismissed" };
+    },
+  };
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredPrompt = event;
+    notify();
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    notify();
+  });
+})();
+
+(() => {
   let resizeTimer = 0;
   const root = document.documentElement;
 

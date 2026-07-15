@@ -1,6 +1,6 @@
-import { claimDailyReward, readPlayerState } from "../playerState.js?v=20260715-mobile09";
-import { setTopAdVisible } from "../adManager.js?v=20260715-mobile09";
-import { t } from "../i18n.js?v=20260715-mobile09";
+import { claimDailyReward, readPlayerState } from "../playerState.js?v=20260715-mobile14";
+import { setTopAdVisible } from "../adManager.js?v=20260715-mobile14";
+import { t } from "../i18n.js?v=20260715-mobile14";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -8,9 +8,11 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
+  showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260715-mobile09";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260715-mobile09";
+} from "../ui/KumaUi.js?v=20260715-mobile14";
+import { playFeedback } from "../feedback.js?v=20260715-mobile14";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260715-mobile14";
 
 const BUTTONS = [
   { y: 873, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
@@ -79,6 +81,7 @@ export class Start extends Phaser.Scene {
     this.refreshCoins();
     addSettingsButton(this, () => showSettingsPanel(this));
     this.addPlayInfoButton();
+    this.addInstallButton();
 
     for (const item of BUTTONS) {
       addLargeTextButton(this, width / 2, item.y, t(item.labelKey), t(item.subKey), () => {
@@ -122,6 +125,52 @@ export class Start extends Phaser.Scene {
       .setDepth(931)
       .setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => showPlayInfoPopup(this));
+  }
+
+  addInstallButton() {
+    let group = null;
+    const draw = () => {
+      const install = window.KumaInstall?.getState();
+      const shouldShow = install?.available && !install.standalone;
+      if (!shouldShow) {
+        group?.destroy();
+        group = null;
+        return;
+      }
+      if (group) return;
+
+      const x = this.scale.width - 67;
+      const y = 215;
+      group = this.add.container(x, y).setDepth(930);
+      const bg = this.add.image(0, 0, "kuma_ui_btn_c_normal").setDisplaySize(67, 67);
+      const glyph = this.add.graphics();
+      glyph.lineStyle(5, 0x5a3c1d, 1);
+      glyph.beginPath();
+      glyph.moveTo(0, -16);
+      glyph.lineTo(0, 8);
+      glyph.moveTo(-10, -1);
+      glyph.lineTo(0, 9);
+      glyph.lineTo(10, -1);
+      glyph.moveTo(-13, 17);
+      glyph.lineTo(13, 17);
+      glyph.strokePath();
+      const hit = this.add.circle(0, 0, 38, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", async () => {
+        playFeedback("ui");
+        const result = await window.KumaInstall?.request();
+        if (!this.scene.isActive()) return;
+        if (result?.status === "guide") showInstallGuide(this, result.platform);
+        draw();
+      });
+      group.add([bg, glyph, hit]);
+    };
+
+    window.addEventListener("kuma-install-state-changed", draw);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      window.removeEventListener("kuma-install-state-changed", draw);
+      group = null;
+    });
+    draw();
   }
 
   addDocumentLinks(language) {

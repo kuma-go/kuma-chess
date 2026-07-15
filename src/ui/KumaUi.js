@@ -1,12 +1,13 @@
-import { readPlayerState, writePlayerState } from "../playerState.js?v=20260715-mobile09";
-import { t } from "../i18n.js?v=20260715-mobile09";
-import { SpriteButton } from "./SpriteButton.js?v=20260715-mobile09";
+import { readPlayerState, writePlayerState } from "../playerState.js?v=20260715-mobile14";
+import { t } from "../i18n.js?v=20260715-mobile14";
+import { SpriteButton } from "./SpriteButton.js?v=20260715-mobile14";
+import { setMenuBgmVolume } from "../menuBgm.js?v=20260715-mobile14";
 import {
   isVibrationSupported,
   playFeedback,
   primeAudioFromGesture,
   vibrateFeedback,
-} from "../feedback.js?v=20260715-mobile09";
+} from "../feedback.js?v=20260715-mobile14";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
@@ -461,24 +462,24 @@ export function showSettingsPanel(scene) {
   scene.settingsLayer = layer;
 
   const panelW = Math.min(514, width * 0.86);
-  const panelH = 647;
+  const panelH = 760;
   const px = width / 2;
   const py = height / 2;
   const panel = addPanel(scene, px, py, panelW, panelH, 10001);
-  const title = scene.add.text(px, py - 190, t("settings.title", {}, current.language), {
+  const title = scene.add.text(px, py - 250, t("settings.title", {}, current.language), {
     fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
     fontSize: "28px",
     color: KUMA_COLORS.ink,
     fontStyle: "900",
   }).setOrigin(0.5).setDepth(10002);
-  const divider = scene.add.rectangle(px, py - 150, panelW * 0.72, 2, 0xc69d72).setDepth(10002);
+  const divider = scene.add.rectangle(px, py - 210, panelW * 0.72, 2, 0xc69d72).setDepth(10002);
   layer.add([panel, title, divider]);
 
   const redraw = () => {
     controls?.destroy();
     title.setText(t("settings.title", {}, pending.language));
     controls = scene.add.container(0, 0).setDepth(10003);
-    const langTitle = scene.add.text(px, py - 105, t("settings.language", {}, pending.language), {
+    const langTitle = scene.add.text(px, py - 165, t("settings.language", {}, pending.language), {
       fontFamily: KUMA_FONT_SANS,
       fontSize: "28px",
       color: KUMA_COLORS.ink,
@@ -495,16 +496,16 @@ export function showSettingsPanel(scene) {
       const selected = pending.language === lang.key;
       const box = scene.add.graphics();
       box.fillStyle(selected ? 0xfff1c8 : 0xfff8eb, 0.95);
-      box.fillRoundedRect(x - 42, py - 63, 84, 58, 6);
+      box.fillRoundedRect(x - 42, py - 123, 84, 58, 6);
       box.lineStyle(2, selected ? 0xd8a344 : 0xc69d72, 1);
-      box.strokeRoundedRect(x - 42, py - 63, 84, 58, 6);
-      box.setInteractive(new Phaser.Geom.Rectangle(x - 42, py - 63, 84, 58), Phaser.Geom.Rectangle.Contains);
+      box.strokeRoundedRect(x - 42, py - 123, 84, 58, 6);
+      box.setInteractive(new Phaser.Geom.Rectangle(x - 42, py - 123, 84, 58), Phaser.Geom.Rectangle.Contains);
       box.on("pointerdown", () => {
         playFeedback("ui");
         pending.language = lang.key;
         redraw();
       });
-      const txt = scene.add.text(x, py - 34, lang.label, {
+      const txt = scene.add.text(x, py - 94, lang.label, {
         fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
         fontSize: "24px",
         color: selected ? KUMA_COLORS.teal : "#876f58",
@@ -524,20 +525,13 @@ export function showSettingsPanel(scene) {
         .setDisplaySize(64, 64).setDepth(10004);
       if (enabled) button.setInteractive({ useHandCursor: true }).on("pointerdown", onClick);
       else button.setAlpha(0.46);
-      const state = scene.add.text(x, y + 58, enabled ? (value ? "ON" : "OFF") : "N/A", {
-        fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
-        fontSize: "24px",
-        color: KUMA_COLORS.ink,
-        fontStyle: "900",
-      }).setOrigin(0.5);
       if (!enabled) {
         labelObj.setAlpha(0.52);
-        state.setAlpha(0.52);
       }
-      controls.add([labelObj, button, state]);
+      controls.add([labelObj, button]);
     };
 
-    makeToggle(px - 110, py + 72, t("settings.sound", {}, pending.language), "btn_sound", pending.soundEnabled, () => {
+    makeToggle(px - 110, py + 12, t("settings.sound", {}, pending.language), "btn_sound", pending.soundEnabled, () => {
       pending.soundEnabled = !pending.soundEnabled;
       if (pending.soundEnabled) {
         primeAudioFromGesture(true);
@@ -545,13 +539,65 @@ export function showSettingsPanel(scene) {
       }
       redraw();
     });
-    makeToggle(px + 110, py + 72, t("settings.vibration", {}, pending.language), "btn_vibration", pending.vibrationEnabled !== false, () => {
+    makeToggle(px + 110, py + 12, t("settings.vibration", {}, pending.language), "btn_vibration", pending.vibrationEnabled !== false, () => {
       pending.vibrationEnabled = pending.vibrationEnabled === false;
       if (pending.vibrationEnabled) vibrateFeedback("success", true);
       redraw();
     }, vibrationAvailable);
 
-    const contact = scene.add.text(px, py + 172, t("settings.contact", {}, pending.language), {
+    const sliderY = py + 137;
+    const sliderLeft = px - 145;
+    const sliderRight = px + 145;
+    const volumeLabel = scene.add.text(sliderLeft, py + 90, t("settings.bgmVolume", {}, pending.language), {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "23px",
+      color: KUMA_COLORS.ink,
+      fontStyle: "800",
+    }).setOrigin(0, 0.5);
+    const volumeValue = scene.add.text(sliderRight, py + 90, "", {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "22px",
+      color: KUMA_COLORS.teal,
+      fontStyle: "800",
+    }).setOrigin(1, 0.5);
+    const slider = scene.add.graphics();
+    const sliderHit = scene.add.rectangle(px, sliderY, 330, 52, 0xffffff, 0.001)
+      .setInteractive({ useHandCursor: true });
+    const drawSlider = () => {
+      const value = Math.min(1, Math.max(0, Number(pending.bgmVolume) || 0));
+      const thumbX = Phaser.Math.Linear(sliderLeft, sliderRight, value);
+      slider.clear();
+      slider.lineStyle(10, 0xd8c6aa, 0.8);
+      slider.beginPath();
+      slider.moveTo(sliderLeft, sliderY);
+      slider.lineTo(sliderRight, sliderY);
+      slider.strokePath();
+      if (value > 0) {
+        slider.lineStyle(10, 0xd8a344, 1);
+        slider.beginPath();
+        slider.moveTo(sliderLeft, sliderY);
+        slider.lineTo(thumbX, sliderY);
+        slider.strokePath();
+      }
+      slider.fillStyle(0xfff6e5, 1);
+      slider.fillCircle(thumbX, sliderY, 17);
+      slider.lineStyle(4, 0xbd852b, 1);
+      slider.strokeCircle(thumbX, sliderY, 17);
+      volumeValue.setText(`${Math.round(value * 100)}%`);
+    };
+    const updateVolume = (pointerX) => {
+      pending.bgmVolume = Phaser.Math.Clamp((pointerX - sliderLeft) / (sliderRight - sliderLeft), 0, 1);
+      setMenuBgmVolume(pending.bgmVolume);
+      drawSlider();
+    };
+    sliderHit.on("pointerdown", (pointer) => updateVolume(pointer.x));
+    sliderHit.on("pointermove", (pointer) => {
+      if (pointer.isDown) updateVolume(pointer.x);
+    });
+    drawSlider();
+    controls.add([volumeLabel, volumeValue, slider, sliderHit]);
+
+    const contact = scene.add.text(px, py + 195, t("settings.contact", {}, pending.language), {
       fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
       fontSize: "22px",
       color: "#c49a74",
@@ -559,13 +605,13 @@ export function showSettingsPanel(scene) {
     }).setOrigin(0.5);
     controls.add(contact);
 
-    const cancel = addLargeTextButton(scene, px - 100, py + 238, t("common.cancel", {}, pending.language), "", () => close(false), {
+    const cancel = addLargeTextButton(scene, px - 100, py + 260, t("common.cancel", {}, pending.language), "", () => close(false), {
       width: 180,
       height: 70,
       fontSize: 24,
       depth: 10004,
     });
-    const apply = addLargeTextButton(scene, px + 100, py + 238, t("common.apply", {}, pending.language), "", () => close(true), {
+    const apply = addLargeTextButton(scene, px + 100, py + 260, t("common.apply", {}, pending.language), "", () => close(true), {
       width: 180,
       height: 70,
       fontSize: 24,
@@ -576,12 +622,18 @@ export function showSettingsPanel(scene) {
     layer.add(controls);
   };
 
+  let finalized = false;
+  let handleShutdown = null;
   const close = (apply) => {
+    if (finalized) return;
+    finalized = true;
+    if (handleShutdown) scene.events.off(Phaser.Scenes.Events.SHUTDOWN, handleShutdown);
     const languageChanged = apply && current.language !== pending.language;
     if (apply) {
       writePlayerState(pending);
       scene.sound.mute = !pending.soundEnabled;
     }
+    setMenuBgmVolume(apply ? pending.bgmVolume : current.bgmVolume);
     backdrop.cleanup();
     layer.destroy();
     scene.settingsLayer = null;
@@ -591,6 +643,55 @@ export function showSettingsPanel(scene) {
     }
   };
 
+  handleShutdown = () => close(false);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, handleShutdown);
+
   let controls = null;
   redraw();
+}
+
+export function showInstallGuide(scene, platform = "browser") {
+  if (scene.installGuideLayer) return;
+  const { width, height } = scene.scale;
+  const language = readPlayerState().language;
+  const px = width / 2;
+  const py = height / 2;
+  const backdrop = createModalBackdrop(scene, 9990);
+  const layer = scene.add.container(0, 0).setDepth(10000);
+  scene.installGuideLayer = layer;
+  layer.add(addPanel(scene, px, py, Math.min(450, width * 0.84), 390, 10001));
+  layer.add(scene.add.text(px, py - 112, t("install.title", {}, language), {
+    fontFamily: KUMA_FONT_SANS,
+    fontSize: "28px",
+    color: KUMA_COLORS.ink,
+    fontStyle: "800",
+  }).setOrigin(0.5).setDepth(10002));
+  layer.add(scene.add.rectangle(px, py - 74, 300, 2, 0xc69d72).setDepth(10002));
+  layer.add(scene.add.text(px, py + 4, t(platform === "ios" ? "install.ios" : "install.browser", {}, language), {
+    fontFamily: KUMA_FONT_SANS,
+    fontSize: "22px",
+    color: KUMA_COLORS.ink,
+    fontStyle: "500",
+    align: "center",
+    lineSpacing: 9,
+  }).setOrigin(0.5).setDepth(10002));
+
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    scene.events.off(Phaser.Scenes.Events.SHUTDOWN, close);
+    backdrop.cleanup();
+    layer.destroy();
+    scene.installGuideLayer = null;
+  };
+  const confirm = addLargeTextButton(scene, px, py + 118, t("common.confirm", {}, language), "", close, {
+    width: 190,
+    height: 70,
+    fontSize: 24,
+    dark: true,
+    depth: 10003,
+  });
+  layer.add([confirm.button, confirm.title]);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, close);
 }

@@ -1,12 +1,13 @@
-import { Boot } from "./scenes/Boot.js?v=20260715-mobile09";
-import { Start } from "./scenes/Start.js?v=20260715-mobile09";
-import { PieceSelect } from "./scenes/PieceSelect.js?v=20260715-mobile09";
-import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260715-mobile09";
-import { Game } from "./scenes/Game.js?v=20260715-mobile09";
-import { Result } from "./scenes/Result.js?v=20260715-mobile09";
-import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260715-mobile09";
-import { Puzzle } from "./scenes/Puzzle.js?v=20260715-mobile09";
-import { installFeedbackUnlock } from "./feedback.js?v=20260715-mobile09";
+import { Boot } from "./scenes/Boot.js?v=20260715-mobile14";
+import { Start } from "./scenes/Start.js?v=20260715-mobile14";
+import { PieceSelect } from "./scenes/PieceSelect.js?v=20260715-mobile14";
+import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260715-mobile14";
+import { Game } from "./scenes/Game.js?v=20260715-mobile14";
+import { Result } from "./scenes/Result.js?v=20260715-mobile14";
+import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260715-mobile14";
+import { Puzzle } from "./scenes/Puzzle.js?v=20260715-mobile14";
+import { installFeedbackUnlock } from "./feedback.js?v=20260715-mobile14";
+import { installMenuBgm, installMenuBgmSceneHooks } from "./menuBgm.js?v=20260715-mobile14";
 
 const config = {
   type: Phaser.AUTO,
@@ -31,8 +32,10 @@ const config = {
 };
 
 installFeedbackUnlock();
+installMenuBgm();
 
 const game = new Phaser.Game(config);
+installMenuBgmSceneHooks(game);
 const parent = document.getElementById("game-container");
 let refreshFrame = 0;
 let refreshTimer = 0;

@@ -47,6 +47,7 @@ const DEFAULT_STATE = {
   lastDailyRewardDate: "",
   language: "ko",
   soundEnabled: true,
+  bgmVolume: 0.35,
   vibrationEnabled: true,
   stats: createDefaultStats(),
 };
@@ -80,6 +81,11 @@ function normalizeState(state) {
   }
   next.language = ["ko", "en", "ja"].includes(next.language) ? next.language : "ko";
   next.soundEnabled = next.soundEnabled !== false;
+  const hasSavedBgmVolume = Object.prototype.hasOwnProperty.call(state || {}, "bgmVolume");
+  const bgmVolume = Number(hasSavedBgmVolume ? state.bgmVolume : undefined);
+  next.bgmVolume = Number.isFinite(bgmVolume)
+    ? Math.min(1, Math.max(0, bgmVolume))
+    : (state?.soundEnabled === false ? 0 : DEFAULT_STATE.bgmVolume);
   next.vibrationEnabled = next.vibrationEnabled !== false;
   const sourceStats = state?.stats || {};
   const defaults = createDefaultStats();

@@ -29,11 +29,18 @@ values.set(state.PLAYER_STATE_KEY, JSON.stringify({
   coins: 100,
   unlockedSkinColors: ["classic:w", "classic:b"],
   language: "ko",
+  soundEnabled: false,
 }));
 
 const migrated = state.readPlayerState();
 assert(migrated.stats.ai.normal.played === 0, "legacy saves must migrate AI stats");
 assert(migrated.stats.pvp.played === 0, "legacy saves must migrate PVP stats");
+assert(migrated.bgmVolume === 0, "legacy sound mute must also mute newly introduced BGM");
+
+values.set(state.PLAYER_STATE_KEY, JSON.stringify({ ...migrated, soundEnabled: true, bgmVolume: 0 }));
+const explicitlyMutedBgm = state.readPlayerState();
+assert(explicitlyMutedBgm.soundEnabled === true, "effects can remain enabled while BGM is muted");
+assert(explicitlyMutedBgm.bgmVolume === 0, "saved zero BGM volume must remain muted");
 assert(state.getSkinCost("bear", "w") === 40, "white bear must be the cheap white set");
 assert(state.getSkinCost("rabbit", "b") === 40, "black rabbit must be the cheap black set");
 assert(state.getSkinUnlockState("cat", "w").purchasable === false, "quest sets must not be purchasable");

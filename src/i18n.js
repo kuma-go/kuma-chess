@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260715-mobile09";
+import { readPlayerState } from "./playerState.js?v=20260715-mobile14";
 
 const TEXT = {
   ko: {
@@ -6,9 +6,11 @@ const TEXT = {
     "start.ai": "AI START", "start.aiSub": "혼자 플레이(랜덤AI)",
     "start.pvp": "PVP START", "start.pvpSub": "로컬 2인 플레이",
     "reward.daily": "접속 보상 +{amount}", "reward.ai": "AI 승리 보상  +{amount} COIN",
-    "settings.title": "설정", "settings.language": "언어", "settings.sound": "사운드",
+    "settings.title": "설정", "settings.language": "언어", "settings.sound": "효과음", "settings.bgmVolume": "배경음악",
     "settings.vibration": "진동", "settings.contact": "문의/제작 carksk@naver.com", "common.cancel": "취소", "common.apply": "적용",
     "common.buy": "구입", "common.change": "변경", "common.back": "뒤로", "common.confirm": "확인",
+    "install.title": "홈 화면에 추가", "install.ios": "브라우저의 공유 버튼을 누른 뒤\n'홈 화면에 추가'를 선택하세요.",
+    "install.browser": "브라우저 메뉴에서\n'앱 설치' 또는 '홈 화면에 추가'를 선택하세요.",
     "footer.contact": "제작/제보 carksk@naver.com 카카오ID : carksk2",
     "puzzle.title": "퍼즐", "puzzle.listSub": "순서대로 클리어해서 다음 문제를 여세요 ({count}/{total})",
     "puzzle.locked": "이전 퍼즐을 먼저 클리어하세요.", "puzzle.reward": "보상",
@@ -36,9 +38,11 @@ const TEXT = {
     "start.ai": "AI START", "start.aiSub": "Solo play (random AI)",
     "start.pvp": "PVP START", "start.pvpSub": "Local two-player game",
     "reward.daily": "Daily reward +{amount}", "reward.ai": "AI win reward  +{amount} COIN",
-    "settings.title": "Settings", "settings.language": "Language", "settings.sound": "Sound",
+    "settings.title": "Settings", "settings.language": "Language", "settings.sound": "SFX", "settings.bgmVolume": "BGM Volume",
     "settings.vibration": "Vibration", "settings.contact": "Contact carksk@naver.com", "common.cancel": "Cancel", "common.apply": "Apply",
     "common.buy": "Buy", "common.change": "Change", "common.back": "Back", "common.confirm": "Confirm",
+    "install.title": "Add to Home Screen", "install.ios": "Tap the browser's Share button, then choose\n'Add to Home Screen.'",
+    "install.browser": "Open the browser menu and choose\n'Install app' or 'Add to Home Screen.'",
     "footer.contact": "Contact carksk@naver.com  Kakao ID: carksk2",
     "puzzle.title": "Puzzle", "puzzle.listSub": "Clear each puzzle in order to unlock the next ({count}/{total})",
     "puzzle.locked": "Clear the previous puzzle first.", "puzzle.reward": "Reward",
@@ -66,9 +70,11 @@ const TEXT = {
     "start.ai": "AI 対戦", "start.aiSub": "ひとりでプレイ（ランダムAI）",
     "start.pvp": "2人対戦", "start.pvpSub": "ローカル2人プレイ",
     "reward.daily": "ログイン報酬 +{amount}", "reward.ai": "AI勝利報酬  +{amount} COIN",
-    "settings.title": "設定", "settings.language": "言語", "settings.sound": "サウンド",
+    "settings.title": "設定", "settings.language": "言語", "settings.sound": "効果音", "settings.bgmVolume": "BGM音量",
     "settings.vibration": "振動", "settings.contact": "お問い合わせ carksk@naver.com", "common.cancel": "取消", "common.apply": "適用",
     "common.buy": "購入", "common.change": "変更", "common.back": "戻る", "common.confirm": "確認",
+    "install.title": "ホーム画面に追加", "install.ios": "ブラウザの共有ボタンを押し、\n「ホーム画面に追加」を選択してください。",
+    "install.browser": "ブラウザのメニューから\n「アプリをインストール」を選択してください。",
     "footer.contact": "お問い合わせ carksk@naver.com  Kakao ID: carksk2",
     "puzzle.title": "パズル", "puzzle.listSub": "順番にクリアして次の問題を開放 ({count}/{total})",
     "puzzle.locked": "前のパズルを先にクリアしてください。", "puzzle.reward": "報酬",

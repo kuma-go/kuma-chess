@@ -7,3 +7,5 @@ The original KUMA CHESS name, logos, animal chess-piece artwork, portraits, user
 Third-party libraries and fonts remain governed by their own license files, including `CHESSJS_LICENSE`, the Pretendard license, and the Noto Serif KR Open Font License.
 
 Public availability of a file in this repository does not waive copyright or grant an implied asset license.
+
+The original background music tracks `창가의 작은 숲` and `쿠마의 체스` are also proprietary KUMA CHESS sound assets covered by this notice.
