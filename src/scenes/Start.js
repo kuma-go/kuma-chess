@@ -3,9 +3,9 @@ import {
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260716-mobile25";
-import { setTopAdVisible } from "../adManager.js?v=20260716-mobile25";
-import { t } from "../i18n.js?v=20260716-mobile25";
+} from "../playerState.js?v=20260716-mobile26";
+import { setTopAdVisible } from "../adManager.js?v=20260716-mobile26";
+import { t } from "../i18n.js?v=20260716-mobile26";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -15,9 +15,9 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260716-mobile25";
-import { playFeedback } from "../feedback.js?v=20260716-mobile25";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260716-mobile25";
+} from "../ui/KumaUi.js?v=20260716-mobile26";
+import { playFeedback } from "../feedback.js?v=20260716-mobile26";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260716-mobile26";
 
 const BUTTONS = [
   { y: 873, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },

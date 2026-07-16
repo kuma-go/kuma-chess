@@ -1,10 +1,10 @@
-import { readPlayerState } from "./playerState.js?v=20260716-mobile25";
+import { readPlayerState } from "./playerState.js?v=20260716-mobile26";
 
 const TEXT = {
   ko: {
     "start.puzzle": "PUZZLE", "start.puzzleSub": "짧은 전술 문제",
     "start.ai": "AI START", "start.aiSub": "혼자 플레이(랜덤AI)",
-    "start.pvp": "PVP START", "start.pvpSub": "로컬 2인 플레이",
+    "start.pvp": "START", "start.pvpSub": "마주보고 2인 플레이",
     "reward.daily": "접속 보상 +{amount}", "reward.ai": "AI 승리 보상  +{amount} COIN",
     "settings.title": "설정", "settings.language": "언어", "settings.sound": "효과음", "settings.bgmVolume": "배경음악",
     "settings.vibration": "진동", "settings.contact": "문의/제작 carksk@naver.com", "common.cancel": "취소", "common.apply": "적용",
@@ -37,7 +37,7 @@ const TEXT = {
   en: {
     "start.puzzle": "PUZZLE", "start.puzzleSub": "Quick tactical challenges",
     "start.ai": "AI START", "start.aiSub": "Solo play (random AI)",
-    "start.pvp": "PVP START", "start.pvpSub": "Local two-player game",
+    "start.pvp": "START", "start.pvpSub": "Face-to-face two-player game",
     "reward.daily": "Daily reward +{amount}", "reward.ai": "AI win reward  +{amount} COIN",
     "settings.title": "Settings", "settings.language": "Language", "settings.sound": "SFX", "settings.bgmVolume": "BGM Volume",
     "settings.vibration": "Vibration", "settings.contact": "Contact carksk@naver.com", "common.cancel": "Cancel", "common.apply": "Apply",
@@ -70,7 +70,7 @@ const TEXT = {
   ja: {
     "start.puzzle": "パズル", "start.puzzleSub": "短い戦術問題",
     "start.ai": "AI 対戦", "start.aiSub": "ひとりでプレイ（ランダムAI）",
-    "start.pvp": "2人対戦", "start.pvpSub": "ローカル2人プレイ",
+    "start.pvp": "START", "start.pvpSub": "向かい合って2人プレイ",
     "reward.daily": "ログイン報酬 +{amount}", "reward.ai": "AI勝利報酬  +{amount} COIN",
     "settings.title": "設定", "settings.language": "言語", "settings.sound": "効果音", "settings.bgmVolume": "BGM音量",
     "settings.vibration": "振動", "settings.contact": "お問い合わせ carksk@naver.com", "common.cancel": "取消", "common.apply": "適用",

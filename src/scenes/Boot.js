@@ -1,4 +1,4 @@
-import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260716-mobile25";
+import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260716-mobile26";
 
 export class Boot extends Phaser.Scene {
   constructor() {
@@ -41,7 +41,7 @@ export class Boot extends Phaser.Scene {
       "icon_Queen_w", "icon_Queen_b", "icon_King_w", "icon_King_b",
     ];
     for (const name of uiFiles) {
-      const version = name === "btn_install" ? "?v=20260716-mobile25" : "";
+      const version = name === "btn_install" ? "?v=20260716-mobile26" : "";
       this.load.image(`kuma_ui_${name}`, `${uiRoot}${name}.png${version}`);
     }
 

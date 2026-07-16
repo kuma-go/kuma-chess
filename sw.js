@@ -1,5 +1,5 @@
-const CACHE_NAME = "kuma-chess-20260716-mobile25";
-const MODULE_VERSION = "20260716-mobile25";
+const CACHE_NAME = "kuma-chess-20260716-mobile26";
+const MODULE_VERSION = "20260716-mobile26";
 const APP_MODULE_PATHS = [
   "./src/adManager.js",
   "./src/feedback.js",

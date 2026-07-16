@@ -1,0 +1,36 @@
+name: Security checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+
+      - name: Scan working tree and Git history
+        run: node scripts/security-check.mjs --history
+
+      - name: Check JavaScript syntax
+        run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Validate game data
+        run: |
+          node scripts/validate-puzzles.mjs
+          node scripts/validate-player-state.mjs
+          node scripts/validate-piece-assets.mjs

@@ -1,4 +1,4 @@
-import { playFeedback } from "../feedback.js?v=20260716-mobile25";
+import { playFeedback } from "../feedback.js?v=20260716-mobile26";
 
 /**
  * SpriteButton

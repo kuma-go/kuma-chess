@@ -3,6 +3,7 @@
 ## Before every deployment
 
 1. Confirm no secrets are present: API keys, OAuth secrets, cookies, tokens, `.env` files, signing keys, or private user data.
+   Run `node scripts/security-check.mjs --history` to scan both current files and reachable Git history.
 2. Run JavaScript syntax checks and the puzzle validator.
 3. Keep dependencies local and pinned. Review changes to `phaser.js` and `vendor-chess.js` deliberately.
 4. Deploy over HTTPS only.
@@ -34,5 +35,7 @@ AdSense domains must remain in the final CSP after ads are enabled. Test ad deli
 ## Public repository warning
 
 Any file committed to a public repository or sent to a browser can be copied. Keep master artwork and commercial source files private, and publish only the compressed assets needed at runtime.
+
+Commit author names and email addresses are also public metadata. Configure this repository with a GitHub `noreply` address before committing. Removing an address from existing commits requires a coordinated history rewrite and force-push; changing the current file contents alone does not remove it from old commits.
 
 For better casual-leak resistance, keep the development repository private and publish a separate runtime-only branch or artifact. `robots.txt`, `X-Robots-Tag`, and `Cross-Origin-Resource-Policy` reduce indexing and cross-site embedding on supported hosts, but they are not access control and cannot stop a determined downloader.

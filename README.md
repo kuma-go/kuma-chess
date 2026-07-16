@@ -20,12 +20,14 @@ node scripts/validate-puzzles.mjs
 node scripts/validate-player-state.mjs
 node scripts/validate-piece-assets.mjs
 node scripts/security-check.mjs
+node scripts/security-check.mjs --history
 ```
 
 ## Privacy and security
 
 - Progress is stored in the current browser only.
 - Do not add API secrets, tokens, private keys, or personal data to client code.
+- Use a GitHub `noreply` address for commit metadata; author emails are public in Git history.
 - AdSense remains disabled until valid public publisher/slot IDs and consent settings are configured.
 - See `SECURITY.md`, `DEPLOYMENT_SECURITY.md`, and `privacy.html`.
 

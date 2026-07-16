@@ -1,13 +1,13 @@
-import { readPlayerState, writePlayerState } from "../playerState.js?v=20260716-mobile25";
-import { t } from "../i18n.js?v=20260716-mobile25";
-import { SpriteButton } from "./SpriteButton.js?v=20260716-mobile25";
-import { setMenuBgmVolume } from "../menuBgm.js?v=20260716-mobile25";
+import { readPlayerState, writePlayerState } from "../playerState.js?v=20260716-mobile26";
+import { t } from "../i18n.js?v=20260716-mobile26";
+import { SpriteButton } from "./SpriteButton.js?v=20260716-mobile26";
+import { setMenuBgmVolume } from "../menuBgm.js?v=20260716-mobile26";
 import {
   isVibrationSupported,
   playFeedback,
   primeAudioFromGesture,
   vibrateFeedback,
-} from "../feedback.js?v=20260716-mobile25";
+} from "../feedback.js?v=20260716-mobile26";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
