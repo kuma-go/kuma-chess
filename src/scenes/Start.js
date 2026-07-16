@@ -1,6 +1,11 @@
-import { claimDailyReward, readPlayerState } from "../playerState.js?v=20260715-mobile14";
-import { setTopAdVisible } from "../adManager.js?v=20260715-mobile14";
-import { t } from "../i18n.js?v=20260715-mobile14";
+import {
+  claimDailyReward,
+  grantCoinsOnce,
+  readPlayerState,
+  REWARDS,
+} from "../playerState.js?v=20260716-mobile25";
+import { setTopAdVisible } from "../adManager.js?v=20260716-mobile25";
+import { t } from "../i18n.js?v=20260716-mobile25";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -10,9 +15,9 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260715-mobile14";
-import { playFeedback } from "../feedback.js?v=20260715-mobile14";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260715-mobile14";
+} from "../ui/KumaUi.js?v=20260716-mobile25";
+import { playFeedback } from "../feedback.js?v=20260716-mobile25";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260716-mobile25";
 
 const BUTTONS = [
   { y: 873, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
@@ -82,6 +87,21 @@ export class Start extends Phaser.Scene {
     addSettingsButton(this, () => showSettingsPanel(this));
     this.addPlayInfoButton();
     this.addInstallButton();
+    const consumeInstallReward = () => {
+      if (!this.scene.isActive() || !window.KumaInstall?.consumeVerifiedInstall?.()) return;
+      const reward = grantCoinsOnce("pwa-install-v1", REWARDS.install);
+      if (!reward.awarded) return;
+      this.refreshCoins();
+      showRewardLine(this, t("install.rewardReceived", { amount: reward.amount }), {
+        y: this.scale.height * 0.5,
+        hold: 2400,
+      });
+    };
+    window.addEventListener("kuma-install-state-changed", consumeInstallReward);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      window.removeEventListener("kuma-install-state-changed", consumeInstallReward);
+    });
+    consumeInstallReward();
 
     for (const item of BUTTONS) {
       addLargeTextButton(this, width / 2, item.y, t(item.labelKey), t(item.subKey), () => {
@@ -121,7 +141,7 @@ export class Start extends Phaser.Scene {
     const button = this.add.image(x, 139, "kuma_ui_btn_rank")
       .setDisplaySize(67, 67)
       .setDepth(930);
-    const hit = this.add.circle(x, 139, 42, 0xffffff, 0.001)
+    const hit = this.add.circle(x, 139, 36, 0xffffff, 0.001)
       .setDepth(931)
       .setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => showPlayInfoPopup(this));
@@ -142,19 +162,20 @@ export class Start extends Phaser.Scene {
       const x = this.scale.width - 67;
       const y = 215;
       group = this.add.container(x, y).setDepth(930);
-      const bg = this.add.image(0, 0, "kuma_ui_btn_c_normal").setDisplaySize(67, 67);
-      const glyph = this.add.graphics();
-      glyph.lineStyle(5, 0x5a3c1d, 1);
-      glyph.beginPath();
-      glyph.moveTo(0, -16);
-      glyph.lineTo(0, 8);
-      glyph.moveTo(-10, -1);
-      glyph.lineTo(0, 9);
-      glyph.lineTo(10, -1);
-      glyph.moveTo(-13, 17);
-      glyph.lineTo(13, 17);
-      glyph.strokePath();
-      const hit = this.add.circle(0, 0, 38, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+      const button = this.add.image(0, 0, "kuma_ui_btn_install").setDisplaySize(67, 67);
+      const alreadyClaimed = readPlayerState().rewardClaims.includes("pwa-install-v1");
+      const rewardText = install.rewardEligible && !alreadyClaimed
+        ? this.add.text(0, 45, t("install.reward", { amount: REWARDS.install }), {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: "13px",
+          color: "#846648",
+          fontStyle: "500",
+          align: "center",
+          lineSpacing: 1,
+          wordWrap: { width: 112, useAdvancedWrap: true },
+        }).setOrigin(0.5, 0)
+        : null;
+      const hit = this.add.circle(0, 0, 36, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", async () => {
         playFeedback("ui");
         const result = await window.KumaInstall?.request();
@@ -162,7 +183,8 @@ export class Start extends Phaser.Scene {
         if (result?.status === "guide") showInstallGuide(this, result.platform);
         draw();
       });
-      group.add([bg, glyph, hit]);
+      group.add([button, hit]);
+      if (rewardText) group.add(rewardText);
     };
 
     window.addEventListener("kuma-install-state-changed", draw);

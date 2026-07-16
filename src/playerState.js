@@ -5,6 +5,7 @@ export const REWARDS = {
   daily: 20,
   puzzle: 5,
   aiWin: 15,
+  install: 20,
 };
 
 export const AI_DIFFICULTIES = Object.freeze({

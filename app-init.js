@@ -4,12 +4,16 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 
 (() => {
   let deferredPrompt = null;
+  let verifiedInstallPending = false;
+  const VERIFIED_INSTALL_KEY = "kumaPwaVerifiedInstallPending";
   const isStandalone = () => (
     window.matchMedia?.("(display-mode: standalone)")?.matches
     || navigator.standalone === true
   );
   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
     || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const installPreview = ["localhost", "127.0.0.1"].includes(location.hostname)
+    && new URLSearchParams(location.search).get("preview") === "install-button";
   const notify = () => window.dispatchEvent(new CustomEvent("kuma-install-state-changed"));
 
   window.KumaInstall = {
@@ -17,13 +21,15 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
       const standalone = isStandalone();
       return {
         standalone,
-        available: !standalone && (Boolean(deferredPrompt) || isIos),
+        available: !standalone && (Boolean(deferredPrompt) || isIos || installPreview),
         nativePrompt: Boolean(deferredPrompt),
+        rewardEligible: !isIos && (Boolean(deferredPrompt) || installPreview),
         platform: isIos ? "ios" : "browser",
       };
     },
     async request() {
       if (isStandalone()) return { status: "installed" };
+      if (installPreview && !deferredPrompt) return { status: "guide", platform: "browser" };
       if (!deferredPrompt) return { status: "guide", platform: isIos ? "ios" : "browser" };
       const prompt = deferredPrompt;
       deferredPrompt = null;
@@ -32,6 +38,18 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
       notify();
       return { status: choice.outcome === "accepted" ? "accepted" : "dismissed" };
     },
+    consumeVerifiedInstall() {
+      if (isIos) return false;
+      let pending = verifiedInstallPending;
+      try {
+        pending = pending || window.localStorage.getItem(VERIFIED_INSTALL_KEY) === "1";
+        window.localStorage.removeItem(VERIFIED_INSTALL_KEY);
+      } catch (error) {
+        // The in-memory marker still works when storage is unavailable.
+      }
+      verifiedInstallPending = false;
+      return pending;
+    },
   };
 
   window.addEventListener("beforeinstallprompt", (event) => {
@@ -39,8 +57,16 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
     deferredPrompt = event;
     notify();
   });
-  window.addEventListener("appinstalled", () => {
+  window.addEventListener("appinstalled", (event) => {
     deferredPrompt = null;
+    if (!isIos && event.isTrusted) {
+      verifiedInstallPending = true;
+      try {
+        window.localStorage.setItem(VERIFIED_INSTALL_KEY, "1");
+      } catch (error) {
+        // Keep the trusted marker in memory when storage is unavailable.
+      }
+    }
     notify();
   });
 })();

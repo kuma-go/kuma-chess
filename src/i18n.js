@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260715-mobile14";
+import { readPlayerState } from "./playerState.js?v=20260716-mobile25";
 
 const TEXT = {
   ko: {
@@ -11,6 +11,7 @@ const TEXT = {
     "common.buy": "구입", "common.change": "변경", "common.back": "뒤로", "common.confirm": "확인",
     "install.title": "홈 화면에 추가", "install.ios": "브라우저의 공유 버튼을 누른 뒤\n'홈 화면에 추가'를 선택하세요.",
     "install.browser": "브라우저 메뉴에서\n'앱 설치' 또는 '홈 화면에 추가'를 선택하세요.",
+    "install.reward": "설치 완료\n+{amount} 코인", "install.rewardReceived": "홈 화면 추가 보상 +{amount} 코인!",
     "footer.contact": "제작/제보 carksk@naver.com 카카오ID : carksk2",
     "puzzle.title": "퍼즐", "puzzle.listSub": "순서대로 클리어해서 다음 문제를 여세요 ({count}/{total})",
     "puzzle.locked": "이전 퍼즐을 먼저 클리어하세요.", "puzzle.reward": "보상",
@@ -43,6 +44,7 @@ const TEXT = {
     "common.buy": "Buy", "common.change": "Change", "common.back": "Back", "common.confirm": "Confirm",
     "install.title": "Add to Home Screen", "install.ios": "Tap the browser's Share button, then choose\n'Add to Home Screen.'",
     "install.browser": "Open the browser menu and choose\n'Install app' or 'Add to Home Screen.'",
+    "install.reward": "Install reward\n+{amount} coins", "install.rewardReceived": "Home screen reward +{amount} coins!",
     "footer.contact": "Contact carksk@naver.com  Kakao ID: carksk2",
     "puzzle.title": "Puzzle", "puzzle.listSub": "Clear each puzzle in order to unlock the next ({count}/{total})",
     "puzzle.locked": "Clear the previous puzzle first.", "puzzle.reward": "Reward",
@@ -75,6 +77,7 @@ const TEXT = {
     "common.buy": "購入", "common.change": "変更", "common.back": "戻る", "common.confirm": "確認",
     "install.title": "ホーム画面に追加", "install.ios": "ブラウザの共有ボタンを押し、\n「ホーム画面に追加」を選択してください。",
     "install.browser": "ブラウザのメニューから\n「アプリをインストール」を選択してください。",
+    "install.reward": "インストール完了\n+{amount}コイン", "install.rewardReceived": "ホーム画面追加ボーナス +{amount}コイン!",
     "footer.contact": "お問い合わせ carksk@naver.com  Kakao ID: carksk2",
     "puzzle.title": "パズル", "puzzle.listSub": "順番にクリアして次の問題を開放 ({count}/{total})",
     "puzzle.locked": "前のパズルを先にクリアしてください。", "puzzle.reward": "報酬",

@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260715-mobile14";
+import { readPlayerState } from "./playerState.js?v=20260716-mobile25";
 
 const TRACKS = Object.freeze([
   Object.freeze({
@@ -9,6 +9,11 @@ const TRACKS = Object.freeze([
   Object.freeze({
     id: "kuma-chess",
     src: "./assets/audio/kuma-chess-78386844.mp3",
+    weight: 1,
+  }),
+  Object.freeze({
+    id: "kuma-chess-new",
+    src: "./assets/audio/kuma-chess-a38de74e.mp3",
     weight: 1,
   }),
 ]);

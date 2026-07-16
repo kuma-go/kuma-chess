@@ -1,5 +1,5 @@
-import { createPieceView } from "../pieceStyles.js?v=20260715-mobile14";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260715-mobile14";
+import { createPieceView } from "../pieceStyles.js?v=20260716-mobile25";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260716-mobile25";
 import {
   AI_DIFFICULTIES,
   DEFAULT_AI_DIFFICULTY,
@@ -8,8 +8,8 @@ import {
   readPlayerState,
   SKIN_SHOP,
   unlockSkin,
-} from "../playerState.js?v=20260715-mobile14";
-import { skinName, t } from "../i18n.js?v=20260715-mobile14";
+} from "../playerState.js?v=20260716-mobile25";
+import { skinName, t } from "../i18n.js?v=20260716-mobile25";
 import {
   addBackButton,
   addCoinPill,
@@ -27,7 +27,7 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260715-mobile14";
+} from "../ui/KumaUi.js?v=20260716-mobile25";
 
 const SHOP = SKIN_SHOP;
 

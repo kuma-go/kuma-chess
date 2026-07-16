@@ -1,9 +1,9 @@
-import { Chess } from "../vendor-chess.js?v=20260715-mobile14";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260715-mobile14";
-import { playFeedback } from "../feedback.js?v=20260715-mobile14";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260715-mobile14";
-import { getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260715-mobile14";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-mobile14";
+import { Chess } from "../vendor-chess.js?v=20260716-mobile25";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260716-mobile25";
+import { playFeedback } from "../feedback.js?v=20260716-mobile25";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260716-mobile25";
+import { getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260716-mobile25";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260716-mobile25";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -15,7 +15,7 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260715-mobile14";
+} from "../ui/KumaUi.js?v=20260716-mobile25";
 
 const FILES = "abcdefgh";
 

@@ -1,10 +1,10 @@
-import { Chess } from "../vendor-chess.js?v=20260715-mobile14";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260715-mobile14";
-import { t } from "../i18n.js?v=20260715-mobile14";
-import { playFeedback } from "../feedback.js?v=20260715-mobile14";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260715-mobile14";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260715-mobile14";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260715-mobile14";
+import { Chess } from "../vendor-chess.js?v=20260716-mobile25";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260716-mobile25";
+import { t } from "../i18n.js?v=20260716-mobile25";
+import { playFeedback } from "../feedback.js?v=20260716-mobile25";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260716-mobile25";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260716-mobile25";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260716-mobile25";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -15,7 +15,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260715-mobile14";
+} from "../ui/KumaUi.js?v=20260716-mobile25";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
@@ -242,6 +242,7 @@ export class Game extends Phaser.Scene {
       .setDisplaySize(80, 54);
     const hit = this.add.rectangle(cx, cy, 94, 56, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => {
+      if (this._turnFlipBusy) return;
       this.conceptEnabled = !this.conceptEnabled;
       this.registry.set("conceptEnabled", this.conceptEnabled);
       this.clearSelection();
@@ -380,13 +381,8 @@ export class Game extends Phaser.Scene {
 
   // ---------- 말 시점/방향 ----------
   // AI stays fixed. PVP rotates each piece in its own square.
-  setPieceViewOrientation(view, perspectiveTurn = null) {
+  setPieceViewTurnTransform(view, turn) {
     if (!view) return;
-    const mag = Math.max(0.01, Math.abs(view.scaleX || 1));
-    view.scaleX = mag;
-    view.scaleY = mag;
-    const turn = perspectiveTurn ?? this._perspectiveTurn ?? this.game?.turn?.() ?? "w";
-    this.setPieceViewFacing(view, turn);
     view.setAngle(!this.isAIMode() && turn === "b" ? 180 : 0);
 
     if (!this.isAIMode() && view._square) {
@@ -394,6 +390,16 @@ export class Game extends Phaser.Scene {
       view._baseDepth = 20 + (turn === "b" ? 7 - row : row);
       view.setDepth(view._baseDepth);
     }
+  }
+
+  setPieceViewOrientation(view, perspectiveTurn = null) {
+    if (!view) return;
+    const mag = Math.max(0.01, Math.abs(view.scaleX || 1));
+    view.scaleX = mag;
+    view.scaleY = mag;
+    const turn = perspectiveTurn ?? this._perspectiveTurn ?? this.game?.turn?.() ?? "w";
+    this.setPieceViewFacing(view, turn);
+    this.setPieceViewTurnTransform(view, turn);
   }
 
   // ✅ 캡처 표시: 블랙(위), 화이트(아래)
@@ -971,7 +977,7 @@ export class Game extends Phaser.Scene {
     this._lastTurn = turn;
   }
 
-  // ---------- 턴 방향(연출: 각 기물이 제자리에서 180도 회전) ----------
+  // ---------- 턴 방향(연출: 기물이 원근상 반대편으로 넘어가며 교대) ----------
   animateTurnFlip(targetTurn, onComplete = null) {
     if (this.isAIMode()) { onComplete && onComplete(); return; } // AI 모드는 시점이 고정
 
@@ -992,46 +998,178 @@ export class Game extends Phaser.Scene {
     this._turnFlipBusy = true;
 
     let finished = false;
-    this.statusText?.setAlpha(0);
+    const handoffScale = 0.52;
+    const rowDelay = 18;
+    const collapseDuration = 180;
+    const revealDuration = 250;
+    const entries = pieces.map((view) => ({
+      view,
+      image: view._pieceImage,
+      center: view._square ? this.squareToCenter(view._square) : { x: view.x, y: view.y },
+      sourceScaleY: view._pieceImage?.scaleY ?? 1,
+      sourceOriginX: view._pieceImage?.originX ?? 0.5,
+      sourceOriginY: view._pieceImage?.originY ?? 0.5,
+      sourceX: view._pieceImage?.x ?? 0,
+      sourceY: view._pieceImage?.y ?? 0,
+      row: view._square ? this.squareToRC(view._square).r : 3,
+      targetScaleY: 1,
+      handoffView: null,
+    })).filter((entry) => entry.image);
+
+    if (!entries.length) {
+      this._perspectiveTurn = turn;
+      this.applyTurnPerspective(true, turn);
+      this._turnFlipBusy = false;
+      onComplete && onComplete();
+      return;
+    }
+
+    for (const entry of entries) {
+      entry.sourceBottomY = entry.sourceY + entry.image.displayHeight * (1 - entry.sourceOriginY);
+      entry.sourceTurnSign = Math.cos(entry.view.rotation) >= 0 ? 1 : -1;
+      entry.collapseViewY = entry.center.y - entry.sourceTurnSign * entry.sourceBottomY;
+    }
+
+    // Prepare the incoming facing before motion starts so the handoff itself
+    // only performs tweens and cannot hitch while creating display objects.
+    for (const entry of entries) {
+      const skin = entry.view._skin ?? this.getRenderSkin(entry.view._color);
+      const size = entry.view._pieceSize ?? Math.floor(this.squareSize * 1.02);
+      const facing = this.getPieceFacing(entry.view._color, turn);
+      const handoffView = createPieceView(
+        this,
+        entry.center.x,
+        entry.center.y,
+        size,
+        skin,
+        entry.view._color,
+        entry.view._type,
+        facing
+      );
+      handoffView._square = entry.view._square;
+      handoffView._color = entry.view._color;
+      handoffView._type = entry.view._type;
+      handoffView._skin = skin;
+      handoffView._pieceSize = size;
+      this.setPieceViewOrientation(handoffView, turn);
+      handoffView.setDepth(50 + entry.row);
+
+      entry.handoffView = handoffView;
+      const handoffImage = handoffView._pieceImage;
+      const handoffBottomY = handoffImage.y + handoffImage.displayHeight * (1 - handoffImage.originY);
+      handoffImage.setOrigin(handoffImage.originX, 1);
+      handoffImage.setY(handoffBottomY);
+      entry.targetTurnSign = Math.cos(handoffView.rotation) >= 0 ? 1 : -1;
+      entry.revealViewY = entry.center.y - entry.targetTurnSign * handoffBottomY;
+      handoffView.setY(entry.revealViewY);
+      entry.targetScaleY = handoffImage.scaleY;
+      handoffImage.scaleY = entry.targetScaleY * handoffScale;
+      handoffImage.setAlpha(0);
+    }
+
+    const restoreSourceAnchor = (entry) => {
+      entry.image.setOrigin(entry.sourceOriginX, entry.sourceOriginY);
+      entry.image.setPosition(entry.sourceX, entry.sourceY);
+    };
 
     const finalize = () => {
       if (finished) return;
       finished = true;
-      facingEvt?.remove(false);
 
+      for (const entry of entries) restoreSourceAnchor(entry);
       for (const v of this.pieceViews.values()) {
         this.tweens.killTweensOf(v);
+        if (v._pieceImage) this.tweens.killTweensOf(v._pieceImage);
+        if (v._square) {
+          const center = this.squareToCenter(v._square);
+          v.setPosition(center.x, center.y);
+        }
+        v.setAlpha(1);
+        v._pieceImage?.setAlpha(1);
         this.setPieceViewOrientation(v, turn);
+      }
+      for (const entry of entries) {
+        if (entry.handoffView?._pieceImage) this.tweens.killTweensOf(entry.handoffView._pieceImage);
+        entry.handoffView?.destroy();
+        entry.handoffView = null;
       }
 
       this._perspectiveTurn = turn;
       this.renderCaptured();
       this._lastTurn = turn;
       this._turnFlipBusy = false;
-      this.statusText?.setAlpha(1);
       onComplete && onComplete();
     };
 
-    const timeoutEvt = this.time.delayedCall(520, finalize);
-    // Swap the illustrated front/back resource at the midpoint of the turn.
-    // Board coordinates remain untouched; only each piece's local presentation changes.
-    const facingEvt = this.time.delayedCall(150, () => {
-      for (const v of pieces) this.setPieceViewFacing(v, turn);
-    });
-    let rotated = 0;
-    for (const v of pieces) {
-      this.tweens.killTweensOf(v);
+    const timeoutEvt = this.time.delayedCall(900, finalize);
+    let collapsed = 0;
+    const reveal = () => {
+      if (finished) return;
+      // Rotate the outgoing artwork first while it is compressed. Its texture
+      // stays unchanged and remains fully opaque beneath the incoming facing.
+      for (const entry of entries) {
+        this.setPieceViewTurnTransform(entry.view, turn);
+        entry.view.setY(entry.center.y - entry.targetTurnSign * entry.sourceBottomY);
+        entry.outgoingRevealY = entry.view.y;
+      }
+
+      let revealed = 0;
+      for (const entry of entries) {
+        this.tweens.add({
+          targets: entry.image,
+          scaleY: entry.sourceScaleY,
+          alpha: 0,
+          duration: revealDuration,
+          ease: "Sine.Out",
+          onUpdate: (tween) => {
+            entry.view.y = Phaser.Math.Linear(entry.outgoingRevealY, entry.center.y, tween.progress);
+          },
+        });
+        this.tweens.add({
+          targets: entry.handoffView._pieceImage,
+          scaleY: entry.targetScaleY,
+          alpha: 1,
+          duration: revealDuration,
+          ease: "Sine.Out",
+          onUpdate: (tween) => {
+            if (entry.handoffView) {
+              entry.handoffView.y = Phaser.Math.Linear(entry.revealViewY, entry.center.y, tween.progress);
+            }
+          },
+          onComplete: () => {
+            restoreSourceAnchor(entry);
+            this.setPieceViewOrientation(entry.view, turn);
+            entry.view._pieceImage?.setAlpha(1);
+            entry.handoffView?.destroy();
+            entry.handoffView = null;
+            revealed += 1;
+            if (revealed >= entries.length) {
+              timeoutEvt?.remove(false);
+              finalize();
+            }
+          },
+        });
+      }
+    };
+
+    for (const entry of entries) {
+      this.tweens.killTweensOf(entry.view);
+      this.tweens.killTweensOf(entry.image);
+      entry.view.setPosition(entry.center.x, entry.center.y);
+      entry.image.setOrigin(entry.sourceOriginX, 1);
+      entry.image.setPosition(entry.sourceX, entry.sourceBottomY);
       this.tweens.add({
-        targets: v,
-        angle: v.angle + 180,
-        duration: 320,
-        ease: "Cubic.InOut",
+        targets: entry.image,
+        scaleY: entry.sourceScaleY * handoffScale,
+        duration: collapseDuration,
+        delay: entry.row * rowDelay,
+        ease: "Sine.InOut",
+        onUpdate: (tween) => {
+          entry.view.y = Phaser.Math.Linear(entry.center.y, entry.collapseViewY, tween.progress);
+        },
         onComplete: () => {
-          rotated += 1;
-          if (rotated >= pieces.length) {
-            timeoutEvt?.remove(false);
-            finalize();
-          }
+          collapsed += 1;
+          if (collapsed >= entries.length) reveal();
         },
       });
     }
