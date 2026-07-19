@@ -1,4 +1,4 @@
-import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260716-mobile26";
+import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260719-medals35";
 
 export class Boot extends Phaser.Scene {
   constructor() {
@@ -29,7 +29,7 @@ export class Boot extends Phaser.Scene {
       "main_logo_B", "main_img", "main_bottom_bg",
       "coin_bg", "coin_nomal", "coin_small", "lock", "lock_bg",
       "btn_start_normal", "btn_start_hover", "btn_start_click",
-      "btn_seting", "btn_rank", "btn_install", "btn_home", "btn_back", "btn_hint",
+      "btn_seting", "btn_rank", "btn_medal", "btn_install", "btn_home", "btn_back", "btn_hint",
       "btn_radio_on", "btn_radio_off", "btn_sound_on", "btn_sound_off",
       "btn_vibration_on", "btn_vibration_off", "btn_c_normal",
       "btn_pop_w_normal", "btn_pop_b_normal",
@@ -41,9 +41,11 @@ export class Boot extends Phaser.Scene {
       "icon_Queen_w", "icon_Queen_b", "icon_King_w", "icon_King_b",
     ];
     for (const name of uiFiles) {
-      const version = name === "btn_install" ? "?v=20260716-mobile26" : "";
+      const version = name === "btn_install" ? "?v=20260719-medals35" : "";
       this.load.image(`kuma_ui_${name}`, `${uiRoot}${name}.png${version}`);
     }
+    this.load.image("kuma_ui_book_bg", `${uiRoot}book_bg.webp`);
+    this.load.image("kuma_ui_icon_new", `${uiRoot}icon_new.svg`);
 
     queueInitialPieceAssets(this);
   }

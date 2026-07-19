@@ -3,21 +3,25 @@ import {
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260716-mobile26";
-import { setTopAdVisible } from "../adManager.js?v=20260716-mobile26";
-import { t } from "../i18n.js?v=20260716-mobile26";
+  SKIN_SHOP,
+} from "../playerState.js?v=20260719-medals35";
+import { hasNewMedals, syncContextMedals } from "../medals.js?v=20260719-medals35";
+import { setTopAdVisible } from "../adManager.js?v=20260719-medals35";
+import { t } from "../i18n.js?v=20260719-medals35";
 import {
   addCoinPill,
   addLargeTextButton,
   addSettingsButton,
+  createModalBackdrop,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260716-mobile26";
-import { playFeedback } from "../feedback.js?v=20260716-mobile26";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260716-mobile26";
+} from "../ui/KumaUi.js?v=20260719-medals35";
+import { playFeedback } from "../feedback.js?v=20260719-medals35";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260719-medals35";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260719-medals35";
 
 const BUTTONS = [
   { y: 873, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
@@ -129,6 +133,18 @@ export class Start extends Phaser.Scene {
       this.refreshCoins();
       this.drawRewardToast(t("reward.daily", { amount: reward.amount }));
     }
+    const latestState = readPlayerState();
+    const medalSync = syncContextMedals({
+      coins: latestState.coins,
+      ownedSkinCount: latestState.unlockedSkinColors.length,
+      totalSkinCount: SKIN_SHOP.length * 2,
+    });
+    this.addMedalButton();
+    if (medalSync.newlyUnlocked.length) {
+      this.time.delayedCall(reward.claimed ? 2850 : 650, () => {
+        showMedalAwardSequence(this, medalSync.newlyUnlocked, { y: this.scale.height * 0.48 });
+      });
+    }
   }
 
   refreshCoins() {
@@ -147,6 +163,32 @@ export class Start extends Phaser.Scene {
     hit.on("pointerdown", () => showPlayInfoPopup(this));
   }
 
+  addMedalButton() {
+    const x = this.scale.width - 67;
+    const y = 215;
+    this.medalButtonGroup?.destroy();
+    const group = this.add.container(x, y).setDepth(930);
+    this.medalButtonGroup = group;
+    const button = this.add.image(0, 0, "kuma_ui_btn_medal").setDisplaySize(67, 67);
+    const hit = this.add.circle(0, 0, 36, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => {
+      playFeedback("ui");
+      if (this.scene.isActive("MedalCatalog")) return;
+      this.medalCatalogBackdrop = createModalBackdrop(this, 940);
+      this.scene.launch("MedalCatalog", { parentSceneKey: this.scene.key });
+      this.scene.pause();
+    });
+    group.add([button, hit]);
+    if (!hasNewMedals()) return;
+    const badge = this.add.image(25, 24, "kuma_ui_icon_new").setDisplaySize(22, 29);
+    group.add(badge);
+  }
+
+  refreshMedalButton() {
+    if (!this.scene.isActive()) return;
+    this.addMedalButton();
+  }
+
   addInstallButton() {
     let group = null;
     const draw = () => {
@@ -160,7 +202,7 @@ export class Start extends Phaser.Scene {
       if (group) return;
 
       const x = this.scale.width - 67;
-      const y = 215;
+      const y = 291;
       group = this.add.container(x, y).setDepth(930);
       const button = this.add.image(0, 0, "kuma_ui_btn_install").setDisplaySize(67, 67);
       const alreadyClaimed = readPlayerState().rewardClaims.includes("pwa-install-v1");

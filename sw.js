@@ -1,10 +1,11 @@
-const CACHE_NAME = "kuma-chess-20260716-mobile26";
-const MODULE_VERSION = "20260716-mobile26";
+const CACHE_NAME = "kuma-chess-20260719-medals35";
+const MODULE_VERSION = "20260719-medals35";
 const APP_MODULE_PATHS = [
   "./src/adManager.js",
   "./src/feedback.js",
   "./src/i18n.js",
   "./src/main.js",
+  "./src/medals.js",
   "./src/menuBgm.js",
   "./src/pieceAssets.js",
   "./src/pieceStyles.js",
@@ -12,6 +13,7 @@ const APP_MODULE_PATHS = [
   "./src/puzzles.js",
   "./src/scenes/Boot.js",
   "./src/scenes/Game.js",
+  "./src/scenes/MedalCatalog.js",
   "./src/scenes/PieceSelect.js",
   "./src/scenes/PieceSelectAI.js",
   "./src/scenes/Puzzle.js",
@@ -20,6 +22,7 @@ const APP_MODULE_PATHS = [
   "./src/scenes/Start.js",
   "./src/ui/ConfirmPopup.js",
   "./src/ui/KumaUi.js",
+  "./src/ui/MedalAward.js",
   "./src/ui/NineSlice.js",
   "./src/ui/PlayInfoPopup.js",
   "./src/ui/SpriteButton.js",
@@ -42,6 +45,8 @@ const CORE_FILES = [
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
   "./assets/icons/apple-touch-icon.png",
+  "./assets/kuma/ui/pattern.png",
+  "./assets/kuma/ui/pattern_bottom_bg.png",
   `./app-init.js?v=${MODULE_VERSION}`,
   ...APP_MODULE_PATHS.map((path) => `${path}?v=${MODULE_VERSION}`)
 ];

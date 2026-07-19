@@ -1,10 +1,11 @@
-import { Chess } from "../vendor-chess.js?v=20260716-mobile26";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260716-mobile26";
-import { t } from "../i18n.js?v=20260716-mobile26";
-import { playFeedback } from "../feedback.js?v=20260716-mobile26";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260716-mobile26";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260716-mobile26";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260716-mobile26";
+import { Chess } from "../vendor-chess.js?v=20260719-medals35";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260719-medals35";
+import { t } from "../i18n.js?v=20260719-medals35";
+import { playFeedback } from "../feedback.js?v=20260719-medals35";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260719-medals35";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260719-medals35";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260719-medals35";
+import { recordCompletedGame } from "../medals.js?v=20260719-medals35";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -15,7 +16,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260716-mobile26";
+} from "../ui/KumaUi.js?v=20260719-medals35";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
@@ -79,6 +80,8 @@ export class Game extends Phaser.Scene {
     this.gameSessionId = "";
     this.aiDifficulty = "normal";
     this._resultRecorded = false;
+    this._rewardResolved = false;
+    this.gameStartedAt = 0;
 
 
   }
@@ -98,6 +101,7 @@ export class Game extends Phaser.Scene {
     this._perspectiveTurn = "w";
     this._modalOpen = false;
     this._resultRecorded = false;
+    this._rewardResolved = false;
 
     this._lineFxLayer = null;
     this._lastCheckKey = null;
@@ -121,6 +125,7 @@ export class Game extends Phaser.Scene {
     this.aiDifficulty = AI_DIFFICULTY_IDS.has(requestedDifficulty) ? requestedDifficulty : "normal";
     if (this.isAIMode()) this.registry.set("aiDifficulty", this.aiDifficulty);
     this.gameSessionId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    this.gameStartedAt = Date.now();
 
     this.game = new Chess(); // White 선공
     this._perspectiveTurn = this.game.turn();
@@ -416,23 +421,34 @@ export class Game extends Phaser.Scene {
     const bottomBarY = Math.min(height - 170, boardBottom + 58);
 
     const labelStyle = { fontFamily: KUMA_FONT_SANS, fontSize: "18px", color: KUMA_COLORS.ink, fontStyle: "500" };
+    const faceToFace = !this.isAIMode();
+    const boardLeft = this.boardX;
+    const boardRight = this.boardX + this.squareSize * 8;
 
-    const labelBlack = this.add.text(this.boardX - 18, topBarY, t("game.captured"), labelStyle).setOrigin(0, 0.5);
-    const labelWhite = this.add.text(this.boardX - 18, bottomBarY, t("game.captured"), labelStyle).setOrigin(0, 0.5);
+    const labelBlack = this.add.text(
+      faceToFace ? boardRight + 18 : boardLeft - 18,
+      topBarY,
+      t("game.captured"),
+      labelStyle
+    ).setOrigin(0, 0.5).setAngle(faceToFace ? 180 : 0);
+    const labelWhite = this.add.text(boardLeft - 18, bottomBarY, t("game.captured"), labelStyle).setOrigin(0, 0.5);
     this._capLayer.add([labelBlack, labelWhite]);
 
-    const startX = Math.max(this.boardX + 122, labelBlack.x + labelBlack.width + 18);
-    const maxX = this.boardX + this.squareSize * 8 - 8;
+    const minX = boardLeft + 8;
+    const maxX = boardRight - 8;
+    const leftStartX = Math.max(boardLeft + 122, labelWhite.x + labelWhite.width + 18);
+    const rightStartX = Math.min(boardRight - 122, labelBlack.x - labelBlack.width - 18);
 
-    const drawRow = (arr, baseY) => {
+    const drawRow = (arr, baseY, { startX, direction, perspectiveTurn, upsideDown }) => {
+      const availableWidth = direction > 0 ? maxX - startX : startX - minX;
       const gap = arr.length > 1
-        ? Math.min(44, (maxX - startX) / (arr.length - 1))
+        ? Math.min(44, availableWidth / (arr.length - 1))
         : 0;
       const artWidth = arr.length > 10 ? 38 : arr.length > 7 ? 44 : 50;
       arr.forEach((p, i) => {
-        const x = startX + i * gap;
+        const x = startX + direction * i * gap;
         const skin = this.getRenderSkin(p.color);
-        const facing = this.getPieceFacing(p.color, this._perspectiveTurn);
+        const facing = this.getPieceFacing(p.color, perspectiveTurn);
         const v = createPieceView(this, x, baseY, 58, skin, p.color, p.type, facing);
         v._color = p.color;
         v._type = p.type;
@@ -444,13 +460,23 @@ export class Game extends Phaser.Scene {
           image.setDisplaySize(artWidth, skin === "icon" ? artWidth : artWidth * 1.5);
         }
         v.setDepth(91);
-        v.setAngle(!this.isAIMode() && this._perspectiveTurn === "b" ? 180 : 0);
+        v.setAngle(upsideDown ? 180 : 0);
         this._capLayer.add(v);
       });
     };
 
-    drawRow(this.capturedBy.b, topBarY);
-    drawRow(this.capturedBy.w, bottomBarY);
+    drawRow(this.capturedBy.b, topBarY, {
+      startX: faceToFace ? rightStartX : leftStartX,
+      direction: faceToFace ? -1 : 1,
+      perspectiveTurn: faceToFace ? "b" : this._perspectiveTurn,
+      upsideDown: faceToFace,
+    });
+    drawRow(this.capturedBy.w, bottomBarY, {
+      startX: leftStartX,
+      direction: 1,
+      perspectiveTurn: faceToFace ? "w" : this._perspectiveTurn,
+      upsideDown: false,
+    });
   }
 
   showGameConfirm(opts) {
@@ -721,6 +747,11 @@ export class Game extends Phaser.Scene {
 
   getResultPayload() {
     let winnerColor = null;
+    const medalContext = {
+      history: this.game.history({ verbose: true }),
+      finalPieces: this.game.board(),
+      durationMs: Math.max(0, Date.now() - this.gameStartedAt),
+    };
 
     if (this.game.isCheckmate()) {
       const loser = this.game.turn();
@@ -734,6 +765,7 @@ export class Game extends Phaser.Scene {
         playerColor: this.playerColor,
         difficulty: this.isAIMode() ? this.aiDifficulty : null,
         gameSessionId: this.gameSessionId,
+        ...medalContext,
       };
     }
 
@@ -747,6 +779,7 @@ export class Game extends Phaser.Scene {
         playerColor: this.playerColor,
         difficulty: this.isAIMode() ? this.aiDifficulty : null,
         gameSessionId: this.gameSessionId,
+        ...medalContext,
       };
     }
 
@@ -759,6 +792,7 @@ export class Game extends Phaser.Scene {
       playerColor: this.playerColor,
       difficulty: this.isAIMode() ? this.aiDifficulty : null,
       gameSessionId: this.gameSessionId,
+      ...medalContext,
     };
   }
 
@@ -773,14 +807,27 @@ export class Game extends Phaser.Scene {
         difficulty: this.aiDifficulty,
         playerColor: this.playerColor,
       });
-      return;
+    } else {
+      recordGameResult({
+        mode: "pvp",
+        result: payload.result,
+        winnerColor: payload.winnerColor,
+      });
     }
 
-    recordGameResult({
-      mode: "pvp",
+    const medalResult = recordCompletedGame({
+      gameSessionId: payload.gameSessionId,
+      mode: payload.mode,
       result: payload.result,
+      reason: payload.reason,
       winnerColor: payload.winnerColor,
+      playerColor: payload.playerColor,
+      skins: payload.skins,
+      history: payload.history,
+      finalPieces: payload.finalPieces,
+      durationMs: payload.durationMs,
     });
+    payload.newlyUnlocked = medalResult.newlyUnlocked;
   }
 
   awardResultOnce(payload) {
@@ -1694,6 +1741,12 @@ showLineText(message, opts = {}) {
     const panelH = 647;
     const px = width / 2;
     const py = height / 2;
+
+    // Local PVP black plays from the opposite seat, so the complete picker
+    // (including its input hit areas) must face that player around screen center.
+    if (!this.isAIMode() && color === "b") {
+      layer.setPosition(width, height).setAngle(180);
+    }
 
     const panel = addPanel(this, px, py, panelW, panelH, 10001);
     layer.add(panel);

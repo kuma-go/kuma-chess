@@ -3,15 +3,16 @@ import {
   getSkinUnlockState,
   readPlayerState,
   SKIN_SHOP,
-} from "../playerState.js?v=20260716-mobile26";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260716-mobile26";
+} from "../playerState.js?v=20260719-medals35";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260719-medals35";
+import { getMedalSummary } from "../medals.js?v=20260719-medals35";
 import {
   addLargeTextButton,
   addPanel,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260716-mobile26";
+} from "./KumaUi.js?v=20260719-medals35";
 
 const COPY = {
   ko: {
@@ -28,6 +29,8 @@ const COPY = {
     pvpRecord: "{played}회  백 {white}승 · 흑 {black}승 · {draws}무",
     pieces: "보유 기물",
     owned: "총 {total}개 중 {owned}개 보유",
+    medals: "메달 도감",
+    medalOwned: "총 {total}개 중 {owned}개 획득",
     quests: "퀘스트",
     whiteQuest: "백 고양이 · 퍼즐",
     blackQuest: "흑 고양이 · AI 대전",
@@ -48,6 +51,8 @@ const COPY = {
     pvpRecord: "{played} played  White {white} · Black {black} · Draw {draws}",
     pieces: "Piece Sets",
     owned: "{owned} of {total} color sets owned",
+    medals: "Medals",
+    medalOwned: "{owned} of {total} acquired",
     quests: "Quests",
     whiteQuest: "White Cat · Puzzles",
     blackQuest: "Black Cat · AI matches",
@@ -68,6 +73,8 @@ const COPY = {
     pvpRecord: "{played}回  白 {white}勝 · 黒 {black}勝 · {draws}分",
     pieces: "所持駒",
     owned: "全{total}種中 {owned}種所持",
+    medals: "メダル図鑑",
+    medalOwned: "全{total}個中 {owned}個獲得",
     quests: "クエスト",
     whiteQuest: "白ネコ · パズル",
     blackQuest: "黒ネコ · AI対戦",
@@ -104,8 +111,8 @@ function addLabel(scene, layer, x, y, text, options = {}) {
   return label;
 }
 
-function addSectionRow(scene, layer, copy, key, value, y, valueSize = 21) {
-  addLabel(scene, layer, 177, y, copy[key], { size: 21, color: "#92775c", weight: "700" });
+function addSectionRow(scene, layer, copy, key, value, y, valueSize = 22) {
+  addLabel(scene, layer, 177, y, copy[key], { size: 22, color: "#92775c", weight: "700" });
   addLabel(scene, layer, 543, y, value, {
     size: valueSize,
     color: KUMA_COLORS.teal,
@@ -119,9 +126,9 @@ function addQuest(scene, layer, label, unlockState, y, copy) {
   const progress = Math.min(unlockState.progress, unlockState.target);
   const ratio = unlockState.target > 0 ? progress / unlockState.target : 1;
   const value = unlockState.unlocked ? copy.complete : `${progress}/${unlockState.target}`;
-  addLabel(scene, layer, 177, y, label, { size: 18, color: "#6e5843", weight: "700" });
+  addLabel(scene, layer, 177, y, label, { size: 20, color: "#6e5843", weight: "700" });
   addLabel(scene, layer, 543, y, value, {
-    size: 18,
+    size: 20,
     color: unlockState.unlocked ? KUMA_COLORS.teal : "#846648",
     weight: "800",
     originX: 1,
@@ -152,29 +159,32 @@ export function showPlayInfoPopup(scene) {
   const totalSets = SKIN_SHOP.length * 2;
   const whiteQuest = getSkinUnlockState("cat", "w");
   const blackQuest = getSkinUnlockState("cat", "b");
+  const medals = getMedalSummary();
 
   const backdrop = createModalBackdrop(scene, 9990);
   const layer = scene.add.container(0, 0).setDepth(10000);
   scene.playInfoLayer = layer;
   const px = scene.scale.width / 2;
-  const py = scene.scale.height / 2 + 4;
-  const panelW = Math.min(527, scene.scale.width * 0.82);
-  const panelH = Math.min(660, scene.scale.height - 160);
-  const panel = addPanel(scene, px, py, panelW, panelH, 10001);
+  const py = scene.scale.height / 2;
+  const panelW = Math.min(640, scene.scale.width - 52);
+  const panelH = Math.min(896, scene.scale.height - 118);
+  const panel = scene.textures.exists("kuma_ui_book_bg")
+    ? scene.add.image(px, py, "kuma_ui_book_bg").setDisplaySize(panelW, panelH).setDepth(10001)
+    : addPanel(scene, px, py, panelW, panelH, 10001);
   layer.add(panel);
 
-  addLabel(scene, layer, px, py - 201, copy.title, {
+  addLabel(scene, layer, px, py - 294, copy.title, {
     size: 29,
     weight: "900",
     originX: 0.5,
   });
-  const divider = scene.add.rectangle(px, py - 175, panelW * 0.72, 2, 0xc69d72)
+  const divider = scene.add.rectangle(px, py - 264, panelW * 0.62, 2, 0xc69d72)
     .setDepth(10002);
   layer.add(divider);
 
-  const viewportTop = py - 151;
-  const viewportHeight = 331;
-  const contentHeight = 708;
+  const viewportTop = py - 232;
+  const viewportHeight = 470;
+  const contentHeight = 788;
   const maxScroll = Math.max(0, contentHeight - viewportHeight);
   const content = scene.add.container(0, viewportTop).setDepth(10003);
   layer.add(content);
@@ -188,12 +198,12 @@ export function showPlayInfoPopup(scene) {
   ["easy", "normal", "hard"].forEach((difficulty, index) => {
     const item = stats.ai[difficulty];
     addLabel(scene, content, 206, 139 + index * 42, copy[difficulty], {
-      size: 18,
+      size: 20,
       color: "#846f59",
       weight: "700",
     });
     addLabel(scene, content, 543, 139 + index * 42, format(copy, "aiRecord", item), {
-      size: 18,
+      size: 20,
       color: "#3d3125",
       weight: "500",
       originX: 1,
@@ -211,7 +221,7 @@ export function showPlayInfoPopup(scene) {
     black: stats.pvp.bWins,
     draws: stats.pvp.draws,
   }), {
-    size: language === "en" ? 15 : 17,
+    size: language === "en" ? 17 : 19,
     color: "#3d3125",
     weight: "500",
     originX: 1,
@@ -221,15 +231,26 @@ export function showPlayInfoPopup(scene) {
   addSectionRow(scene, content, copy, "pieces", format(copy, "owned", {
     total: totalSets,
     owned,
-  }), 384, 19);
+  }), 384, 20);
 
-  addLabel(scene, content, 177, 454, copy.quests, {
+  addSectionRow(scene, content, copy, "medals", format(copy, "medalOwned", {
+    total: medals.available,
+    owned: medals.unlocked,
+  }), 454, 20);
+  if (medals.newCount > 0) {
+    const badge = scene.add.image(555, 454, "kuma_ui_icon_new")
+      .setDisplaySize(18, 24)
+      .setDepth(10006);
+    content.add(badge);
+  }
+
+  addLabel(scene, content, 177, 524, copy.quests, {
     size: 21,
     color: "#92775c",
     weight: "700",
   });
-  addQuest(scene, content, copy.whiteQuest, whiteQuest, 510, copy);
-  addQuest(scene, content, copy.blackQuest, blackQuest, 596, copy);
+  addQuest(scene, content, copy.whiteQuest, whiteQuest, 580, copy);
+  addQuest(scene, content, copy.blackQuest, blackQuest, 666, copy);
 
   const maskShape = scene.make.graphics({ x: 0, y: 0, add: false });
   maskShape.fillStyle(0xffffff, 1);
@@ -289,7 +310,7 @@ export function showPlayInfoPopup(scene) {
     layer.destroy();
     scene.playInfoLayer = null;
   };
-  const confirm = addLargeTextButton(scene, px, py + 239, copy.confirm, "", close, {
+  const confirm = addLargeTextButton(scene, px, py + 290, copy.confirm, "", close, {
     width: 210,
     height: 76,
     fontSize: 27,

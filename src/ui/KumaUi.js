@@ -1,13 +1,13 @@
-import { readPlayerState, writePlayerState } from "../playerState.js?v=20260716-mobile26";
-import { t } from "../i18n.js?v=20260716-mobile26";
-import { SpriteButton } from "./SpriteButton.js?v=20260716-mobile26";
-import { setMenuBgmVolume } from "../menuBgm.js?v=20260716-mobile26";
+import { readPlayerState, writePlayerState } from "../playerState.js?v=20260719-medals35";
+import { t } from "../i18n.js?v=20260719-medals35";
+import { SpriteButton } from "./SpriteButton.js?v=20260719-medals35";
+import { setMenuBgmVolume } from "../menuBgm.js?v=20260719-medals35";
 import {
   isVibrationSupported,
   playFeedback,
   primeAudioFromGesture,
   vibrateFeedback,
-} from "../feedback.js?v=20260716-mobile26";
+} from "../feedback.js?v=20260719-medals35";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
@@ -300,7 +300,7 @@ export function createModalBackdrop(scene, depth = 9990) {
         hiddenObjects.push(obj);
         obj.setVisible(false);
       }
-      snapshot.postFX?.addBlur(0, 1.2, 1.2, 0.9, 0xffffff, 2);
+      snapshot.postFX?.addBlur(0, 1.6, 1.6, 0.9, 0xffffff, 2);
     } catch (error) {
       for (const obj of hiddenObjects) obj.setVisible(true);
       hiddenObjects.length = 0;
@@ -309,7 +309,7 @@ export function createModalBackdrop(scene, depth = 9990) {
     }
   }
 
-  const dim = scene.add.rectangle(0, 0, width, height, 0x2b2118, 0.32)
+  const dim = scene.add.rectangle(0, 0, width, height, 0x2b2118, 0.36)
     .setOrigin(0)
     .setDepth(depth + 1)
     .setInteractive();

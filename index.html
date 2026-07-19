@@ -45,12 +45,12 @@
       html, body {
         margin: 0; padding: 0;
         width: 100%; height: 100%;
-        background: #000;
+        background: #EDDEC1;
         overflow: hidden;
         overscroll-behavior: none;
         -webkit-tap-highlight-color: transparent;
       }
-      body { position: fixed; inset: 0; }
+      body { position: fixed; inset: 0; isolation: isolate; }
       :root {
         --kuma-ad-height: 0px;
         --kuma-vw: 100vw;
@@ -59,6 +59,46 @@
         --kuma-vv-top: 0px;
       }
       body.ad-visible { --kuma-ad-height: clamp(50px, 9dvh, 90px); }
+      #ambient-background {
+        position: fixed;
+        left: var(--kuma-vv-left);
+        top: var(--kuma-vv-top);
+        width: var(--kuma-vw);
+        height: var(--kuma-vh);
+        overflow: hidden;
+        pointer-events: none;
+        background: #EDDEC1;
+        z-index: 0;
+      }
+      #ambient-bottom {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: min(400px, 10.65vw);
+        background: url("./assets/kuma/ui/pattern_bottom_bg.png") center bottom / 100% 100% no-repeat;
+      }
+      #ambient-pattern {
+        position: absolute;
+        inset: -18vmax;
+        transform: rotate(-6deg);
+        transform-origin: center;
+      }
+      #ambient-pattern::before {
+        content: "";
+        position: absolute;
+        inset: -420px;
+        background: url("./assets/kuma/ui/pattern.png") 0 0 / 420px 420px repeat;
+        animation: kuma-pattern-drift 600s linear infinite;
+        will-change: transform;
+      }
+      @keyframes kuma-pattern-drift {
+        from { transform: translate3d(0, 0, 0); }
+        to { transform: translate3d(420px, 420px, 0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #ambient-pattern::before { animation: none; will-change: auto; }
+      }
       #ad-shell {
         position: fixed;
         left: calc(var(--kuma-vv-left) + env(safe-area-inset-left, 0px));
@@ -87,7 +127,8 @@
         padding-bottom: env(safe-area-inset-bottom, 0px);
         padding-left: env(safe-area-inset-left, 0px);
         overflow: hidden;
-        background: #000;
+        background: transparent;
+        z-index: 1;
       }
       #game-container {
         position: relative;
@@ -96,6 +137,7 @@
         min-width: 0;
         min-height: 0;
         overflow: hidden;
+        background: transparent;
       }
       canvas {
         display: block;
@@ -106,6 +148,10 @@
     </style>
   </head>
   <body>
+    <div id="ambient-background" aria-hidden="true">
+      <div id="ambient-bottom"></div>
+      <div id="ambient-pattern"></div>
+    </div>
     <aside id="ad-shell" aria-label="광고" hidden></aside>
     <main id="game-viewport">
       <div id="game-container"></div>
@@ -115,7 +161,7 @@
     <script src="./phaser.js"></script>
     <script src="./ads-config.js"></script>
     <!-- Main -->
-    <script type="module" src="./src/main.js?v=20260716-mobile26"></script>
-    <script src="./app-init.js?v=20260716-mobile26"></script>
+    <script type="module" src="./src/main.js?v=20260719-medals35"></script>
+    <script src="./app-init.js?v=20260719-medals35"></script>
   </body>
 </html>
