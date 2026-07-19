@@ -3,7 +3,7 @@ import {
   isPuzzleCleared,
   markPuzzleCleared,
   PUZZLE_PROGRESS_KEY,
-} from "./playerState.js?v=20260719-medals35";
+} from "./playerState.js?v=20260719-wakelock36";
 
 export {
   getClearedPuzzleIds,

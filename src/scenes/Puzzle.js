@@ -1,10 +1,10 @@
-import { Chess } from "../vendor-chess.js?v=20260719-medals35";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260719-medals35";
-import { playFeedback } from "../feedback.js?v=20260719-medals35";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260719-medals35";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260719-medals35";
-import { recordPuzzleCompletion, recordPuzzleHint } from "../medals.js?v=20260719-medals35";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260719-medals35";
+import { Chess } from "../vendor-chess.js?v=20260719-wakelock36";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260719-wakelock36";
+import { playFeedback } from "../feedback.js?v=20260719-wakelock36";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260719-wakelock36";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260719-wakelock36";
+import { recordPuzzleCompletion, recordPuzzleHint } from "../medals.js?v=20260719-wakelock36";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260719-wakelock36";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -16,8 +16,8 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260719-medals35";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260719-medals35";
+} from "../ui/KumaUi.js?v=20260719-wakelock36";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260719-wakelock36";
 
 const FILES = "abcdefgh";
 

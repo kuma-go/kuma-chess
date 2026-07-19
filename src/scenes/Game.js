@@ -1,11 +1,12 @@
-import { Chess } from "../vendor-chess.js?v=20260719-medals35";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260719-medals35";
-import { t } from "../i18n.js?v=20260719-medals35";
-import { playFeedback } from "../feedback.js?v=20260719-medals35";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260719-medals35";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260719-medals35";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260719-medals35";
-import { recordCompletedGame } from "../medals.js?v=20260719-medals35";
+import { Chess } from "../vendor-chess.js?v=20260719-wakelock36";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260719-wakelock36";
+import { t } from "../i18n.js?v=20260719-wakelock36";
+import { playFeedback } from "../feedback.js?v=20260719-wakelock36";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260719-wakelock36";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260719-wakelock36";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260719-wakelock36";
+import { recordCompletedGame } from "../medals.js?v=20260719-wakelock36";
+import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260719-wakelock36";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -16,7 +17,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260719-medals35";
+} from "../ui/KumaUi.js?v=20260719-wakelock36";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
@@ -118,6 +119,8 @@ export class Game extends Phaser.Scene {
 
 
   create() {
+    keepScreenAwakeDuringMatch();
+
     // --- mode ---
     this.mode = this.registry.get("gameMode") || "pvp";
     this.playerColor = this.registry.get("playerColor") || "w";
@@ -163,6 +166,7 @@ export class Game extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.cancelPendingAI();
       this.cancelGameOverTimers();
+      allowScreenSleep();
     });
 
     this.updateStatus();

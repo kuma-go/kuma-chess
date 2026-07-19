@@ -1,14 +1,14 @@
-import { createPieceView } from "../pieceStyles.js?v=20260719-medals35";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260719-medals35";
+import { createPieceView } from "../pieceStyles.js?v=20260719-wakelock36";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260719-wakelock36";
 import {
   getSkinUnlockState,
   isSkinUnlocked,
   readPlayerState,
   SKIN_SHOP,
   unlockSkin,
-} from "../playerState.js?v=20260719-medals35";
-import { skinName, t } from "../i18n.js?v=20260719-medals35";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260719-medals35";
+} from "../playerState.js?v=20260719-wakelock36";
+import { skinName, t } from "../i18n.js?v=20260719-wakelock36";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260719-wakelock36";
 import {
   addBackButton,
   addCoinPill,
@@ -26,7 +26,7 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260719-medals35";
+} from "../ui/KumaUi.js?v=20260719-wakelock36";
 
 const SHOP = SKIN_SHOP;
 

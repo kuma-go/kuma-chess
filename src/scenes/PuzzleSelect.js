@@ -1,6 +1,6 @@
-import { getPuzzleUnlockCount, isPuzzleUnlocked, REWARDS } from "../playerState.js?v=20260719-medals35";
-import { isPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260719-medals35";
-import { puzzleTags, puzzleText, t } from "../i18n.js?v=20260719-medals35";
+import { getPuzzleUnlockCount, isPuzzleUnlocked, REWARDS } from "../playerState.js?v=20260719-wakelock36";
+import { isPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260719-wakelock36";
+import { puzzleTags, puzzleText, t } from "../i18n.js?v=20260719-wakelock36";
 import {
   addBackButton,
   addCoinPill,
@@ -13,7 +13,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260719-medals35";
+} from "../ui/KumaUi.js?v=20260719-wakelock36";
 
 const CARD_HEIGHT = 98;
 const CARD_GAP = 113;

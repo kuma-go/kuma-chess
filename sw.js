@@ -1,5 +1,5 @@
-const CACHE_NAME = "kuma-chess-20260719-medals35";
-const MODULE_VERSION = "20260719-medals35";
+const CACHE_NAME = "kuma-chess-20260719-wakelock36";
+const MODULE_VERSION = "20260719-wakelock36";
 const APP_MODULE_PATHS = [
   "./src/adManager.js",
   "./src/feedback.js",
@@ -11,6 +11,7 @@ const APP_MODULE_PATHS = [
   "./src/pieceStyles.js",
   "./src/playerState.js",
   "./src/puzzles.js",
+  "./src/screenWakeLock.js",
   "./src/scenes/Boot.js",
   "./src/scenes/Game.js",
   "./src/scenes/MedalCatalog.js",

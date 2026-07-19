@@ -1,8 +1,8 @@
-import { createPieceView } from "../pieceStyles.js?v=20260719-medals35";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260719-medals35";
-import { t } from "../i18n.js?v=20260719-medals35";
-import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260719-medals35";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260719-medals35";
+import { createPieceView } from "../pieceStyles.js?v=20260719-wakelock36";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260719-wakelock36";
+import { t } from "../i18n.js?v=20260719-wakelock36";
+import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260719-wakelock36";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260719-wakelock36";
 
 const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35 });
 const DIFFICULTY_LABELS = Object.freeze({

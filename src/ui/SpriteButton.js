@@ -1,4 +1,4 @@
-import { playFeedback } from "../feedback.js?v=20260719-medals35";
+import { playFeedback } from "../feedback.js?v=20260719-wakelock36";
 
 /**
  * SpriteButton

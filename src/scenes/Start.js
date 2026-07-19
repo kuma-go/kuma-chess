@@ -4,10 +4,10 @@ import {
   readPlayerState,
   REWARDS,
   SKIN_SHOP,
-} from "../playerState.js?v=20260719-medals35";
-import { hasNewMedals, syncContextMedals } from "../medals.js?v=20260719-medals35";
-import { setTopAdVisible } from "../adManager.js?v=20260719-medals35";
-import { t } from "../i18n.js?v=20260719-medals35";
+} from "../playerState.js?v=20260719-wakelock36";
+import { hasNewMedals, syncContextMedals } from "../medals.js?v=20260719-wakelock36";
+import { setTopAdVisible } from "../adManager.js?v=20260719-wakelock36";
+import { t } from "../i18n.js?v=20260719-wakelock36";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -18,10 +18,10 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260719-medals35";
-import { playFeedback } from "../feedback.js?v=20260719-medals35";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260719-medals35";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260719-medals35";
+} from "../ui/KumaUi.js?v=20260719-wakelock36";
+import { playFeedback } from "../feedback.js?v=20260719-wakelock36";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260719-wakelock36";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260719-wakelock36";
 
 const BUTTONS = [
   { y: 873, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
