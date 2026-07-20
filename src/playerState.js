@@ -8,6 +8,10 @@ export const REWARDS = {
   install: 20,
 };
 
+export const COSTS = Object.freeze({
+  puzzleHint: 2,
+});
+
 export const AI_DIFFICULTIES = Object.freeze({
   easy: Object.freeze({ id: "easy", reward: 5 }),
   normal: Object.freeze({ id: "normal", reward: 15 }),

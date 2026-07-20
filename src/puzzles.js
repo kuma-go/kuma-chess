@@ -3,7 +3,9 @@ import {
   isPuzzleCleared,
   markPuzzleCleared,
   PUZZLE_PROGRESS_KEY,
-} from "./playerState.js?v=20260719-wakelock36";
+} from "./playerState.js?v=20260720-puzzles100hint37";
+import { ADVANCED_PUZZLES_A } from "./puzzlesAdvancedA.js?v=20260720-puzzles100hint37";
+import { ADVANCED_PUZZLES_B } from "./puzzlesAdvancedB.js?v=20260720-puzzles100hint37";
 
 export {
   getClearedPuzzleIds,
@@ -168,7 +170,7 @@ export const PUZZLES = [
     title: "흑 퀸의 반격",
     prompt: "BLACK: 체크를 해결하면서 백 퀸을 잡으세요.",
     hint: "흑 퀸이 e2 칸으로 이동할 수 있습니다.",
-    fen: "6k1/5ppp/8/8/8/8/4Q1PP/3q2K1 b - - 0 1",
+    fen: "4k3/5ppp/8/8/8/8/4Q1PP/3q1RK1 b - - 0 1",
     playerColor: "b",
     solutionSteps: [["d1e2"]],
     tags: ["check", "capture"],
@@ -813,6 +815,8 @@ export const PUZZLES = [
       ja: { title: "デコイからロイヤルフォーク", prompt: "WHITE: ルークを犠牲にしてキングをe7へ誘い、ナイトのチェックでクイーンも取ってください。", hint: "Rxe7+ Kxe7、Nd5+ Kd6のあとNxb6です。デコイとは、相手の駒を戦術が成立するマスへ誘い込む手筋です。" },
     },
   },
+  ...ADVANCED_PUZZLES_A,
+  ...ADVANCED_PUZZLES_B,
 ];
 
 export function getPuzzle(indexOrId) {

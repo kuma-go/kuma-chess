@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260719-wakelock36";
+import { readPlayerState } from "./playerState.js?v=20260720-puzzles100hint37";
 
 const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
 

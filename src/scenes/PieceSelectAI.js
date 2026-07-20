@@ -1,5 +1,5 @@
-import { createPieceView } from "../pieceStyles.js?v=20260719-wakelock36";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260719-wakelock36";
+import { createPieceView } from "../pieceStyles.js?v=20260720-puzzles100hint37";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260720-puzzles100hint37";
 import {
   AI_DIFFICULTIES,
   DEFAULT_AI_DIFFICULTY,
@@ -8,8 +8,8 @@ import {
   readPlayerState,
   SKIN_SHOP,
   unlockSkin,
-} from "../playerState.js?v=20260719-wakelock36";
-import { skinName, t } from "../i18n.js?v=20260719-wakelock36";
+} from "../playerState.js?v=20260720-puzzles100hint37";
+import { skinName, t } from "../i18n.js?v=20260720-puzzles100hint37";
 import {
   addBackButton,
   addCoinPill,
@@ -27,7 +27,7 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260719-wakelock36";
+} from "../ui/KumaUi.js?v=20260720-puzzles100hint37";
 
 const SHOP = SKIN_SHOP;
 

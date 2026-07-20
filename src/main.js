@@ -1,14 +1,14 @@
-import { Boot } from "./scenes/Boot.js?v=20260719-wakelock36";
-import { Start } from "./scenes/Start.js?v=20260719-wakelock36";
-import { PieceSelect } from "./scenes/PieceSelect.js?v=20260719-wakelock36";
-import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260719-wakelock36";
-import { Game } from "./scenes/Game.js?v=20260719-wakelock36";
-import { Result } from "./scenes/Result.js?v=20260719-wakelock36";
-import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260719-wakelock36";
-import { Puzzle } from "./scenes/Puzzle.js?v=20260719-wakelock36";
-import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260719-wakelock36";
-import { installFeedbackUnlock } from "./feedback.js?v=20260719-wakelock36";
-import { installMenuBgm, installMenuBgmSceneHooks } from "./menuBgm.js?v=20260719-wakelock36";
+import { Boot } from "./scenes/Boot.js?v=20260720-puzzles100hint37";
+import { Start } from "./scenes/Start.js?v=20260720-puzzles100hint37";
+import { PieceSelect } from "./scenes/PieceSelect.js?v=20260720-puzzles100hint37";
+import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260720-puzzles100hint37";
+import { Game } from "./scenes/Game.js?v=20260720-puzzles100hint37";
+import { Result } from "./scenes/Result.js?v=20260720-puzzles100hint37";
+import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260720-puzzles100hint37";
+import { Puzzle } from "./scenes/Puzzle.js?v=20260720-puzzles100hint37";
+import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260720-puzzles100hint37";
+import { installFeedbackUnlock } from "./feedback.js?v=20260720-puzzles100hint37";
+import { installMenuBgm, installMenuBgmSceneHooks } from "./menuBgm.js?v=20260720-puzzles100hint37";
 
 const config = {
   type: Phaser.AUTO,

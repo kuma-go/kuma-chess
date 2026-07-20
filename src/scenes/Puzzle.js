@@ -1,14 +1,16 @@
-import { Chess } from "../vendor-chess.js?v=20260719-wakelock36";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260719-wakelock36";
-import { playFeedback } from "../feedback.js?v=20260719-wakelock36";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260719-wakelock36";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260719-wakelock36";
-import { recordPuzzleCompletion, recordPuzzleHint } from "../medals.js?v=20260719-wakelock36";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260719-wakelock36";
+import { Chess } from "../vendor-chess.js?v=20260720-puzzles100hint37";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260720-puzzles100hint37";
+import { playFeedback } from "../feedback.js?v=20260720-puzzles100hint37";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260720-puzzles100hint37";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260720-puzzles100hint37";
+import { recordPuzzleCompletion, recordPuzzleHint } from "../medals.js?v=20260720-puzzles100hint37";
+import { COSTS, spendCoins } from "../playerState.js?v=20260720-puzzles100hint37";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260720-puzzles100hint37";
 import {
   addDarkTopBar,
   addChessBoard,
   addLargeTextButton,
+  addMiniCoin,
   addPanel,
   createModalBackdrop,
   getChessBoardLayout,
@@ -16,8 +18,8 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260719-wakelock36";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260719-wakelock36";
+} from "../ui/KumaUi.js?v=20260720-puzzles100hint37";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260720-puzzles100hint37";
 
 const FILES = "abcdefgh";
 
@@ -53,6 +55,7 @@ export class Puzzle extends Phaser.Scene {
     this._moveBusy = false;
     this._feedbackLine = null;
     this.puzzleSessionId = "";
+    this.hintUsed = false;
   }
 
   init(data) {
@@ -73,6 +76,7 @@ export class Puzzle extends Phaser.Scene {
     this._moveBusy = false;
     this._feedbackLine = null;
     this.puzzleSessionId = `${this.puzzle.id}:${Date.now()}:${Math.floor(Math.random() * 100000)}`;
+    this.hintUsed = false;
   }
 
   create() {
@@ -165,6 +169,7 @@ export class Puzzle extends Phaser.Scene {
     const hintBtn = this.add.image(150, height - 68, "kuma_ui_btn_hint").setDisplaySize(70, 70)
       .setDepth(60).setInteractive({ useHandCursor: true });
     hintBtn.on("pointerdown", () => this.showHint());
+    this.hintCostGroup = addMiniCoin(this, 137, height - 20, COSTS.puzzleHint, 60);
 
     const backBtn = new SpriteButton(this, 67, height - 68, {
       normal: "kuma_ui_btn_back",
@@ -815,8 +820,29 @@ export class Puzzle extends Phaser.Scene {
   }
 
   showHint() {
+    if (this.hintUsed) {
+      this.hintText.setText(puzzleText(this.puzzle, "hint"));
+      this.flashMessage(t("puzzle.hintAgain"), KUMA_COLORS.orange);
+      return;
+    }
+
+    const purchase = spendCoins(COSTS.puzzleHint);
+    if (!purchase.ok) {
+      showRewardLine(this, t("puzzle.hintNotEnough", {
+        coins: purchase.coins,
+        cost: COSTS.puzzleHint,
+      }), {
+        y: this.scale.height * 0.62,
+        tone: "failure",
+        showCoin: false,
+      });
+      return;
+    }
+
+    this.hintUsed = true;
+    this.hintCostGroup?.setAlpha(0.42);
     this.hintText.setText(puzzleText(this.puzzle, "hint"));
-    this.flashMessage(t("puzzle.hintNotice"), KUMA_COLORS.orange);
+    this.flashMessage(t("puzzle.hintNotice", { cost: COSTS.puzzleHint }), KUMA_COLORS.orange);
     const medalResult = recordPuzzleHint({ sessionId: this.puzzleSessionId });
     if (medalResult.newlyUnlocked.length) {
       this.time.delayedCall(350, () => {

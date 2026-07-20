@@ -41,6 +41,10 @@ function colorSwapPositionKey(fen) {
   return `${swappedBoard} ${turn === "w" ? "b" : "w"} ${swappedCastling} ${swappedEp}`;
 }
 
+function findKingSquare(game, color) {
+  return game.board().flat().find((piece) => piece?.type === "k" && piece.color === color)?.square;
+}
+
 for (const puzzle of PUZZLES) {
   if (!puzzle?.id || typeof puzzle.id !== "string") {
     fail(puzzle, "missing string id");
@@ -75,6 +79,15 @@ for (const puzzle of PUZZLES) {
     continue;
   }
 
+  const inactiveColor = game.turn() === "w" ? "b" : "w";
+  const inactiveKing = findKingSquare(game, inactiveColor);
+  if (inactiveKing && game.isAttacked(inactiveKing, game.turn())) {
+    fail(puzzle, "the side that just moved left its own king in check");
+  }
+  if (game.isGameOver()) {
+    fail(puzzle, "initial position is already game over");
+  }
+
   if (!['w', 'b'].includes(puzzle.playerColor)) {
     fail(puzzle, `invalid playerColor: ${puzzle.playerColor}`);
     continue;
@@ -88,6 +101,15 @@ for (const puzzle of PUZZLES) {
   }
 
   const puzzleIndex = PUZZLES.indexOf(puzzle);
+  const isNewAdvancedPuzzle = puzzleIndex >= 64;
+  for (const field of ["title", "prompt", "hint"]) {
+    if (typeof puzzle[field] !== "string" || !puzzle[field].trim()) {
+      fail(puzzle, `missing ${field}`);
+    }
+  }
+  if (!Array.isArray(puzzle.tags) || puzzle.tags.length === 0) {
+    fail(puzzle, "tags must be a non-empty array");
+  }
   if (puzzleIndex >= 24) {
     for (const language of ["en", "ja"]) {
       for (const field of ["title", "prompt", "hint"]) {
@@ -99,6 +121,17 @@ for (const puzzle of PUZZLES) {
   }
   if (puzzle.solutionSteps.length % 2 === 0) {
     fail(puzzle, "solutionSteps must end with a player move");
+  }
+  if (isNewAdvancedPuzzle && puzzle.solutionSteps.length < 3) {
+    fail(puzzle, "new advanced puzzles must have at least two player moves");
+  }
+  if (isNewAdvancedPuzzle) {
+    if (puzzle.source?.provider !== "lichess" || typeof puzzle.source?.puzzleId !== "string") {
+      fail(puzzle, "new advanced puzzle is missing its Lichess source metadata");
+    }
+    if (!Number.isFinite(puzzle.source?.rating) || puzzle.source.rating < 1950) {
+      fail(puzzle, "new advanced puzzle rating must be at least 1950");
+    }
   }
 
   let playerCaptured = false;
@@ -120,6 +153,9 @@ for (const puzzle of PUZZLES) {
       fail(puzzle, `step ${stepIndex + 1} has no UCI choices`);
       lineCompleted = false;
       break;
+    }
+    if (stepIndex % 2 === 1 && choices.length !== 1) {
+      fail(puzzle, `automatic response at step ${stepIndex + 1} must contain exactly one move`);
     }
 
     const positionFen = game.fen();
@@ -149,6 +185,12 @@ for (const puzzle of PUZZLES) {
       break;
     }
 
+    if (isNewAdvancedPuzzle && stepIndex < puzzle.solutionSteps.length - 1 && game.isGameOver()) {
+      fail(puzzle, `scripted line ends before step ${puzzle.solutionSteps.length}`);
+      lineCompleted = false;
+      break;
+    }
+
     if (stepIndex % 2 === 1 && game.turn() !== puzzle.playerColor) {
       fail(puzzle, `after automatic response ${selected}, turn did not return to player`);
       break;
@@ -157,25 +199,30 @@ for (const puzzle of PUZZLES) {
 
   if (lineCompleted) {
     const tags = Array.isArray(puzzle.tags) ? puzzle.tags : [];
-    const claimsMate = tags.some((tag) => tag.includes("mate"));
+    const normalizedTags = tags.map((tag) => String(tag).toLowerCase());
+    const claimsMate = normalizedTags.some((tag) => tag.includes("mate"));
     if (claimsMate && !game.isCheckmate()) {
       fail(puzzle, "scripted line is tagged as mate but does not end in checkmate");
     }
-    if (puzzleIndex >= 48 && tags.includes("capture") && !playerCaptured) {
+    if (puzzleIndex >= 48 && normalizedTags.includes("capture") && !playerCaptured) {
       fail(puzzle, "advanced capture puzzle line does not include a player capture");
     }
-    if (puzzleIndex >= 48 && tags.includes("promotion") && !playerPromoted) {
+    if (puzzleIndex >= 48 && normalizedTags.includes("promotion") && !playerPromoted) {
       fail(puzzle, "advanced promotion puzzle line does not include a player promotion");
     }
   }
 }
 
 const newPuzzles = PUZZLES.slice(24);
+const advancedPuzzles = PUZZLES.slice(64);
 const multiStepCount = PUZZLES.filter((puzzle) => puzzle.solutionSteps.length >= 3).length;
+const longAdvancedCount = advancedPuzzles.filter((puzzle) => puzzle.solutionSteps.length >= 5).length;
 
-if (PUZZLES.length !== 64) errors.push(`expected exactly 64 puzzles, found ${PUZZLES.length}`);
-if (newPuzzles.length < 40) errors.push(`expected at least 40 localized puzzles, found ${newPuzzles.length}`);
-if (multiStepCount < 20) errors.push(`expected at least 20 multi-step puzzles, found ${multiStepCount}`);
+if (PUZZLES.length !== 100) errors.push(`expected exactly 100 puzzles, found ${PUZZLES.length}`);
+if (newPuzzles.length < 76) errors.push(`expected at least 76 localized puzzles, found ${newPuzzles.length}`);
+if (advancedPuzzles.length !== 36) errors.push(`expected exactly 36 new advanced puzzles, found ${advancedPuzzles.length}`);
+if (multiStepCount < 65) errors.push(`expected at least 65 multi-step puzzles, found ${multiStepCount}`);
+if (longAdvancedCount < 30) errors.push(`expected at least 30 advanced puzzles with three or more player moves, found ${longAdvancedCount}`);
 
 if (errors.length > 0) {
   console.error(`Puzzle validation failed with ${errors.length} error(s):`);
@@ -183,4 +230,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Validated ${PUZZLES.length} puzzles (${newPuzzles.length} localized, ${multiStepCount} multi-step).`);
+console.log(`Validated ${PUZZLES.length} puzzles (${newPuzzles.length} localized, ${multiStepCount} multi-step, ${longAdvancedCount} long advanced).`);

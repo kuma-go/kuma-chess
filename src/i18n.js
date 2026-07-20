@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260719-wakelock36";
+import { readPlayerState } from "./playerState.js?v=20260720-puzzles100hint37";
 
 const TEXT = {
   ko: {
@@ -15,7 +15,8 @@ const TEXT = {
     "footer.contact": "제작/제보 carksk@naver.com 카카오ID : carksk2",
     "puzzle.title": "퍼즐", "puzzle.listSub": "순서대로 클리어해서 다음 문제를 여세요 ({count}/{total})",
     "puzzle.locked": "이전 퍼즐을 먼저 클리어하세요.", "puzzle.reward": "보상",
-    "puzzle.menu": "퍼즐 메뉴", "puzzle.next": "다음 퍼즐", "puzzle.hintNotice": "힌트를 확인하세요.",
+    "puzzle.menu": "퍼즐 메뉴", "puzzle.next": "다음 퍼즐", "puzzle.hintNotice": "힌트를 확인하세요. (-{cost} 코인)",
+    "puzzle.hintAgain": "이미 구매한 힌트입니다.", "puzzle.hintNotEnough": "힌트에 필요한 코인이 부족합니다. ({coins}/{cost})",
     "puzzle.progress": "퍼즐 {current}/{total}  ·  단계 {step}/{steps}", "puzzle.clear": "퍼즐 클리어!",
     "puzzle.tryAnother": "다른 수를 찾아보세요.", "puzzle.illegal": "지금은 둘 수 없는 수입니다.",
     "puzzle.wrong": "아깝습니다. 다시 시도해보세요.", "puzzle.correct": "정답!",
@@ -48,7 +49,8 @@ const TEXT = {
     "footer.contact": "Contact carksk@naver.com  Kakao ID: carksk2",
     "puzzle.title": "Puzzle", "puzzle.listSub": "Clear each puzzle in order to unlock the next ({count}/{total})",
     "puzzle.locked": "Clear the previous puzzle first.", "puzzle.reward": "Reward",
-    "puzzle.menu": "Puzzle Menu", "puzzle.next": "Next Puzzle", "puzzle.hintNotice": "Check the hint.",
+    "puzzle.menu": "Puzzle Menu", "puzzle.next": "Next Puzzle", "puzzle.hintNotice": "Hint unlocked. (-{cost} coins)",
+    "puzzle.hintAgain": "This hint is already unlocked.", "puzzle.hintNotEnough": "Not enough coins for a hint. ({coins}/{cost})",
     "puzzle.progress": "Puzzle {current}/{total}  ·  Step {step}/{steps}", "puzzle.clear": "PUZZLE CLEAR!",
     "puzzle.tryAnother": "Find another move.", "puzzle.illegal": "That move is not available now.",
     "puzzle.wrong": "Almost. Try again.", "puzzle.correct": "Correct!",
@@ -81,7 +83,8 @@ const TEXT = {
     "footer.contact": "お問い合わせ carksk@naver.com  Kakao ID: carksk2",
     "puzzle.title": "パズル", "puzzle.listSub": "順番にクリアして次の問題を開放 ({count}/{total})",
     "puzzle.locked": "前のパズルを先にクリアしてください。", "puzzle.reward": "報酬",
-    "puzzle.menu": "パズルメニュー", "puzzle.next": "次のパズル", "puzzle.hintNotice": "ヒントを確認してください。",
+    "puzzle.menu": "パズルメニュー", "puzzle.next": "次のパズル", "puzzle.hintNotice": "ヒントを開放しました。(-{cost}コイン)",
+    "puzzle.hintAgain": "このヒントは開放済みです。", "puzzle.hintNotEnough": "ヒントに必要なコインが足りません。({coins}/{cost})",
     "puzzle.progress": "パズル {current}/{total}  ·  手順 {step}/{steps}", "puzzle.clear": "パズルクリア！",
     "puzzle.tryAnother": "別の手を探してください。", "puzzle.illegal": "今はその手を指せません。",
     "puzzle.wrong": "惜しいです。もう一度。", "puzzle.correct": "正解！",

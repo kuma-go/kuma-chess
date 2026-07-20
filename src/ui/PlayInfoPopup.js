@@ -3,16 +3,16 @@ import {
   getSkinUnlockState,
   readPlayerState,
   SKIN_SHOP,
-} from "../playerState.js?v=20260719-wakelock36";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260719-wakelock36";
-import { getMedalSummary } from "../medals.js?v=20260719-wakelock36";
+} from "../playerState.js?v=20260720-puzzles100hint37";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260720-puzzles100hint37";
+import { getMedalSummary } from "../medals.js?v=20260720-puzzles100hint37";
 import {
   addLargeTextButton,
   addPanel,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260719-wakelock36";
+} from "./KumaUi.js?v=20260720-puzzles100hint37";
 
 const COPY = {
   ko: {

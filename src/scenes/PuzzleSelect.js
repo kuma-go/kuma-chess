@@ -1,6 +1,6 @@
-import { getPuzzleUnlockCount, isPuzzleUnlocked, REWARDS } from "../playerState.js?v=20260719-wakelock36";
-import { isPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260719-wakelock36";
-import { puzzleTags, puzzleText, t } from "../i18n.js?v=20260719-wakelock36";
+import { getPuzzleUnlockCount, REWARDS } from "../playerState.js?v=20260720-puzzles100hint37";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260720-puzzles100hint37";
+import { puzzleTags, puzzleText, t } from "../i18n.js?v=20260720-puzzles100hint37";
 import {
   addBackButton,
   addCoinPill,
@@ -13,7 +13,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260719-wakelock36";
+} from "../ui/KumaUi.js?v=20260720-puzzles100hint37";
 
 const CARD_HEIGHT = 98;
 const CARD_GAP = 113;
@@ -38,6 +38,7 @@ export class PuzzleSelect extends Phaser.Scene {
     addSettingsButton(this, () => showSettingsPanel(this));
 
     const unlockCount = getPuzzleUnlockCount(PUZZLES);
+    const clearedIds = new Set(getClearedPuzzleIds());
     addPageTitle(this, t("puzzle.title"), t("puzzle.listSub", {
       count: unlockCount,
       total: PUZZLES.length,
@@ -49,7 +50,16 @@ export class PuzzleSelect extends Phaser.Scene {
     const firstCenterY = 225;
 
     PUZZLES.forEach((puzzle, index) => {
-      const card = this.drawPuzzleCard(width / 2, firstCenterY + index * CARD_GAP, cardWidth, CARD_HEIGHT, puzzle, index);
+      const card = this.drawPuzzleCard(
+        width / 2,
+        firstCenterY + index * CARD_GAP,
+        cardWidth,
+        CARD_HEIGHT,
+        puzzle,
+        index,
+        index < unlockCount,
+        clearedIds.has(puzzle.id)
+      );
       this.scrollLayer.add(card);
     });
 
@@ -108,9 +118,7 @@ export class PuzzleSelect extends Phaser.Scene {
     this.scrollThumb.setVisible(this.maxScroll > 0);
   }
 
-  drawPuzzleCard(cx, cy, w, h, puzzle, index) {
-    const unlocked = isPuzzleUnlocked(index, PUZZLES);
-    const cleared = isPuzzleCleared(puzzle.id);
+  drawPuzzleCard(cx, cy, w, h, puzzle, index, unlocked, cleared) {
     const group = this.add.container(cx, cy);
     const bg = this.add.graphics();
     bg.fillStyle(0xfffbf2, unlocked ? 0.86 : 0.5);
@@ -140,7 +148,7 @@ export class PuzzleSelect extends Phaser.Scene {
       color: KUMA_COLORS.ink,
       fontStyle: "800",
     }).setOrigin(0, 0.5).setAlpha(alpha);
-    const tags = this.add.text(-w / 2 + 96, 18, puzzleTags(puzzle.tags).join(" / "), {
+    const tags = this.add.text(-w / 2 + 96, 18, puzzleTags(puzzle.tags).slice(0, 2).join(" / "), {
       fontFamily: KUMA_FONT_SANS,
       fontSize: "16px",
       color: KUMA_COLORS.ink,

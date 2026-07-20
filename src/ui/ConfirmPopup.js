@@ -1,6 +1,6 @@
-import { SpriteButton } from "./SpriteButton.js?v=20260719-wakelock36";
-import { t as translate } from "../i18n.js?v=20260719-wakelock36";
-import { createModalBackdrop, KUMA_FONT_SANS } from "./KumaUi.js?v=20260719-wakelock36";
+import { SpriteButton } from "./SpriteButton.js?v=20260720-puzzles100hint37";
+import { t as translate } from "../i18n.js?v=20260720-puzzles100hint37";
+import { createModalBackdrop, KUMA_FONT_SANS } from "./KumaUi.js?v=20260720-puzzles100hint37";
 
 /**
  * 공용 Confirm Popup
