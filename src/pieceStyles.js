@@ -8,6 +8,8 @@ export const SKINS = [
   { id: "eagle", name: "EAGLE" },
   { id: "owl", name: "OWL" },
   { id: "capybara", name: "CAPYBARA" },
+  { id: "brownBear", name: "BROWN BEAR" },
+  { id: "goldBear", name: "GOLD BEAR" },
 ];
 
 export const PIECE_SYMBOL = {

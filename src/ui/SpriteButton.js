@@ -1,4 +1,4 @@
-import { playFeedback } from "../feedback.js?v=20260720-puzzles100hint37";
+import { playFeedback } from "../feedback.js?v=20260731-special65";
 
 /**
  * SpriteButton

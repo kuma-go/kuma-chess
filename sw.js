@@ -1,7 +1,8 @@
-const CACHE_NAME = "kuma-chess-20260720-puzzles100hint37";
-const MODULE_VERSION = "20260720-puzzles100hint37";
+const CACHE_NAME = "kuma-chess-20260731-special65";
+const MODULE_VERSION = "20260731-special65";
 const APP_MODULE_PATHS = [
   "./src/adManager.js",
+  "./src/dailyMissions.js",
   "./src/feedback.js",
   "./src/i18n.js",
   "./src/main.js",
@@ -10,11 +11,14 @@ const APP_MODULE_PATHS = [
   "./src/pieceAssets.js",
   "./src/pieceStyles.js",
   "./src/playerState.js",
+  "./src/profileState.js",
   "./src/puzzles.js",
   "./src/puzzlesAdvancedA.js",
   "./src/puzzlesAdvancedB.js",
   "./src/screenWakeLock.js",
+  "./src/storage.js",
   "./src/scenes/Boot.js",
+  "./src/scenes/Demo.js",
   "./src/scenes/Game.js",
   "./src/scenes/MedalCatalog.js",
   "./src/scenes/PieceSelect.js",
@@ -24,6 +28,7 @@ const APP_MODULE_PATHS = [
   "./src/scenes/Result.js",
   "./src/scenes/Start.js",
   "./src/ui/ConfirmPopup.js",
+  "./src/ui/DailyMissionPopup.js",
   "./src/ui/KumaUi.js",
   "./src/ui/MedalAward.js",
   "./src/ui/NineSlice.js",
@@ -50,6 +55,13 @@ const CORE_FILES = [
   "./assets/icons/apple-touch-icon.png",
   "./assets/kuma/ui/pattern.png",
   "./assets/kuma/ui/pattern_bottom_bg.png",
+  "./assets/kuma/ui/btn_daily.png",
+  "./assets/kuma/ui/daily_popup.png",
+  "./assets/kuma/ui/메달_골드_곰.png",
+  "./assets/kuma/ui/메달_브라운_곰.png",
+  "./assets/kuma/ui/메달_성실한기사.png",
+  "./assets/kuma/ui/메달_왕국의일과.png",
+  "./assets/kuma/ui/메달_백일의수련.png",
   `./app-init.js?v=${MODULE_VERSION}`,
   ...APP_MODULE_PATHS.map((path) => `${path}?v=${MODULE_VERSION}`)
 ];

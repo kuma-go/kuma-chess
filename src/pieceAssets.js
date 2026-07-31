@@ -1,4 +1,4 @@
-export const PIECE_SKINS = ["classic", "rabbit", "bear", "cat", "wolf", "sheep", "eagle", "owl", "capybara"];
+export const PIECE_SKINS = ["classic", "rabbit", "bear", "cat", "wolf", "sheep", "eagle", "owl", "capybara", "brownBear", "goldBear"];
 export const PIECE_TYPES = ["p", "n", "b", "r", "q", "k"];
 export const PIECE_FACINGS = ["front", "back"];
 
@@ -25,6 +25,10 @@ export function queueInitialPieceAssets(scene) {
   for (const skin of PIECE_SKINS) {
     if (skin === "classic") continue;
     for (const color of ["w", "b"]) queuePiece(scene, skin, color, "k", "front");
+  }
+
+  for (const type of PIECE_TYPES) {
+    queuePiece(scene, "goldBear", "w", type, "front");
   }
 }
 

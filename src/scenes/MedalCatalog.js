@@ -4,17 +4,18 @@ import {
   getMedalEntries,
   markMedalsSeen,
   medalTextureKey,
-} from "../medals.js?v=20260720-puzzles100hint37";
-import { readPlayerState } from "../playerState.js?v=20260720-puzzles100hint37";
-import { t } from "../i18n.js?v=20260720-puzzles100hint37";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260720-puzzles100hint37";
+} from "../medals.js?v=20260731-special65";
+import { readPlayerState } from "../playerState.js?v=20260731-special65";
+import { t } from "../i18n.js?v=20260731-special65";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260731-special65";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260731-special65";
 import {
   addLargeTextButton,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260720-puzzles100hint37";
+} from "../ui/KumaUi.js?v=20260731-special65";
 
 const UI_ROOT = "assets/kuma/ui/";
 const UI_ASSETS = Object.freeze([
@@ -189,6 +190,9 @@ export class MedalCatalog extends Phaser.Scene {
     this.maxScroll = 0;
     this.encounteredNewIds = new Set();
     this.revealedIds = new Set();
+    this.catalogAwardedIds = new Set();
+    this.pendingAwardTimer = null;
+    this.awardSequenceActive = false;
   }
 
   init(data = {}) {
@@ -241,7 +245,9 @@ export class MedalCatalog extends Phaser.Scene {
     this.categoryIndex = Phaser.Math.Clamp(this.categoryIndex, 0, Math.max(0, this.categories.length - 1));
     this.encounteredNewIds = new Set();
     this.revealedIds = new Set();
-    this.hasMarkedSeen = false;
+    this.catalogAwardedIds = new Set();
+    this.pendingAwardTimer = null;
+    this.awardSequenceActive = false;
     this.dragPointerId = null;
     this.lastDragY = 0;
 
@@ -451,6 +457,8 @@ export class MedalCatalog extends Phaser.Scene {
   }
 
   renderCategory() {
+    this.pendingAwardTimer?.remove(false);
+    this.pendingAwardTimer = null;
     this.closeMedalDetail(false);
     this.gridLayer.removeAll(true);
     this.scrollY = 0;
@@ -504,6 +512,33 @@ export class MedalCatalog extends Phaser.Scene {
     const contentHeight = rows * GRID_ROW_HEIGHT;
     this.maxScroll = Math.max(0, contentHeight - VIEWPORT.height + 6);
     this.updateViewportFades();
+    this.queueNewMedalAwards(entries);
+  }
+
+  queueNewMedalAwards(entries) {
+    if (this.awardSequenceActive) return;
+    const freshIds = entries
+      .filter(isNew)
+      .map(medalId)
+      .filter((id) => id && !this.catalogAwardedIds.has(id));
+    if (freshIds.length === 0) return;
+
+    this.pendingAwardTimer = this.time.delayedCall(520, async () => {
+      this.pendingAwardTimer = null;
+      if (!this.scene.isActive() || this.detailLayer || this.awardSequenceActive) return;
+      this.awardSequenceActive = true;
+      const confirmedIds = await showMedalAwardSequence(this, freshIds, {
+        y: this.scale.height * 0.48,
+      });
+      if (!this.scene.isActive()) return;
+      markMedalsSeen(confirmedIds);
+      confirmedIds.forEach((id) => {
+        this.catalogAwardedIds.add(id);
+        this.encounteredNewIds.delete(id);
+      });
+      this.awardSequenceActive = false;
+      this.renderCategory();
+    });
   }
 
   drawMedalCard(entry, x, y) {
@@ -708,20 +743,18 @@ export class MedalCatalog extends Phaser.Scene {
     this.detailBackdrop?.cleanup();
     this.detailBackdrop = null;
     if (!markSeen || !id) return;
+    const entry = this.currentEntries?.find((candidate) => medalId(candidate) === id);
+    if (entry && isNew(entry)) {
+      this.renderCategory();
+      return;
+    }
     markMedalsSeen([id]);
     this.encounteredNewIds.delete(id);
     this.renderCategory();
   }
 
-  markEncounteredSeen() {
-    if (this.hasMarkedSeen) return;
-    this.hasMarkedSeen = true;
-    markMedalsSeen();
-  }
-
   leave() {
     this.closeMedalDetail(false);
-    this.markEncounteredSeen();
     const parent = this.parentSceneKey ? this.scene.get(this.parentSceneKey) : null;
     if (parent) {
       parent.medalCatalogBackdrop?.cleanup();
@@ -735,8 +768,9 @@ export class MedalCatalog extends Phaser.Scene {
   }
 
   shutdown() {
+    this.pendingAwardTimer?.remove(false);
+    this.pendingAwardTimer = null;
     this.closeMedalDetail(false);
-    this.markEncounteredSeen();
     this.load.off("progress", this.onLoadProgress);
     this.load.off("loaderror", this.onLoadError);
     this.dragZone?.off("pointerdown", this.onDragStart);

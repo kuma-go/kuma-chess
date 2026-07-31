@@ -1,12 +1,13 @@
-import { Chess } from "../vendor-chess.js?v=20260720-puzzles100hint37";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260720-puzzles100hint37";
-import { t } from "../i18n.js?v=20260720-puzzles100hint37";
-import { playFeedback } from "../feedback.js?v=20260720-puzzles100hint37";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260720-puzzles100hint37";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260720-puzzles100hint37";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260720-puzzles100hint37";
-import { recordCompletedGame } from "../medals.js?v=20260720-puzzles100hint37";
-import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260720-puzzles100hint37";
+import { Chess } from "../vendor-chess.js?v=20260731-special65";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260731-special65";
+import { t } from "../i18n.js?v=20260731-special65";
+import { playFeedback } from "../feedback.js?v=20260731-special65";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260731-special65";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260731-special65";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260731-special65";
+import { recordCompletedGame } from "../medals.js?v=20260731-special65";
+import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260731-special65";
+import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260731-special65";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -17,7 +18,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260720-puzzles100hint37";
+} from "../ui/KumaUi.js?v=20260731-special65";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
@@ -831,7 +832,21 @@ export class Game extends Phaser.Scene {
       finalPieces: payload.finalPieces,
       durationMs: payload.durationMs,
     });
-    payload.newlyUnlocked = medalResult.newlyUnlocked;
+    const dailyResult = recordDailyGameCompletion({
+      gameSessionId: payload.gameSessionId,
+      mode: payload.mode,
+      result: payload.result,
+      reason: payload.reason,
+      winnerColor: payload.winnerColor,
+      playerColor: payload.playerColor,
+      difficulty: payload.difficulty,
+      history: payload.history,
+    });
+    payload.dailyMissionUpdate = dailyResult;
+    payload.newlyUnlocked = Array.from(new Set([
+      ...medalResult.newlyUnlocked,
+      ...dailyResult.newlyUnlocked,
+    ]));
   }
 
   awardResultOnce(payload) {

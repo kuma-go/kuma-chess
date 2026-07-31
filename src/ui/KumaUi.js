@@ -1,13 +1,13 @@
-import { readPlayerState, writePlayerState } from "../playerState.js?v=20260720-puzzles100hint37";
-import { t } from "../i18n.js?v=20260720-puzzles100hint37";
-import { SpriteButton } from "./SpriteButton.js?v=20260720-puzzles100hint37";
-import { setMenuBgmVolume } from "../menuBgm.js?v=20260720-puzzles100hint37";
+import { readPlayerState, redeemHiddenRewardCoupon, writePlayerState } from "../playerState.js?v=20260731-special65";
+import { t } from "../i18n.js?v=20260731-special65";
+import { SpriteButton } from "./SpriteButton.js?v=20260731-special65";
+import { setMenuBgmVolume } from "../menuBgm.js?v=20260731-special65";
 import {
   isVibrationSupported,
   playFeedback,
   primeAudioFromGesture,
   vibrateFeedback,
-} from "../feedback.js?v=20260720-puzzles100hint37";
+} from "../feedback.js?v=20260731-special65";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
@@ -462,24 +462,25 @@ export function showSettingsPanel(scene) {
   scene.settingsLayer = layer;
 
   const panelW = Math.min(514, width * 0.86);
-  const panelH = 760;
+  const panelH = 800;
   const px = width / 2;
   const py = height / 2;
+  const contentY = py - 44;
   const panel = addPanel(scene, px, py, panelW, panelH, 10001);
-  const title = scene.add.text(px, py - 250, t("settings.title", {}, current.language), {
+  const title = scene.add.text(px, contentY - 250, t("settings.title", {}, current.language), {
     fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
     fontSize: "28px",
     color: KUMA_COLORS.ink,
     fontStyle: "900",
   }).setOrigin(0.5).setDepth(10002);
-  const divider = scene.add.rectangle(px, py - 210, panelW * 0.72, 2, 0xc69d72).setDepth(10002);
+  const divider = scene.add.rectangle(px, contentY - 210, panelW * 0.72, 2, 0xc69d72).setDepth(10002);
   layer.add([panel, title, divider]);
 
   const redraw = () => {
     controls?.destroy();
     title.setText(t("settings.title", {}, pending.language));
     controls = scene.add.container(0, 0).setDepth(10003);
-    const langTitle = scene.add.text(px, py - 165, t("settings.language", {}, pending.language), {
+    const langTitle = scene.add.text(px, contentY - 165, t("settings.language", {}, pending.language), {
       fontFamily: KUMA_FONT_SANS,
       fontSize: "28px",
       color: KUMA_COLORS.ink,
@@ -496,16 +497,16 @@ export function showSettingsPanel(scene) {
       const selected = pending.language === lang.key;
       const box = scene.add.graphics();
       box.fillStyle(selected ? 0xfff1c8 : 0xfff8eb, 0.95);
-      box.fillRoundedRect(x - 42, py - 123, 84, 58, 6);
+      box.fillRoundedRect(x - 42, contentY - 123, 84, 58, 6);
       box.lineStyle(2, selected ? 0xd8a344 : 0xc69d72, 1);
-      box.strokeRoundedRect(x - 42, py - 123, 84, 58, 6);
-      box.setInteractive(new Phaser.Geom.Rectangle(x - 42, py - 123, 84, 58), Phaser.Geom.Rectangle.Contains);
+      box.strokeRoundedRect(x - 42, contentY - 123, 84, 58, 6);
+      box.setInteractive(new Phaser.Geom.Rectangle(x - 42, contentY - 123, 84, 58), Phaser.Geom.Rectangle.Contains);
       box.on("pointerdown", () => {
         playFeedback("ui");
         pending.language = lang.key;
         redraw();
       });
-      const txt = scene.add.text(x, py - 94, lang.label, {
+      const txt = scene.add.text(x, contentY - 94, lang.label, {
         fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
         fontSize: "24px",
         color: selected ? KUMA_COLORS.teal : "#876f58",
@@ -531,7 +532,7 @@ export function showSettingsPanel(scene) {
       controls.add([labelObj, button]);
     };
 
-    makeToggle(px - 110, py + 12, t("settings.sound", {}, pending.language), "btn_sound", pending.soundEnabled, () => {
+    makeToggle(px - 110, contentY + 12, t("settings.sound", {}, pending.language), "btn_sound", pending.soundEnabled, () => {
       pending.soundEnabled = !pending.soundEnabled;
       if (pending.soundEnabled) {
         primeAudioFromGesture(true);
@@ -539,22 +540,22 @@ export function showSettingsPanel(scene) {
       }
       redraw();
     });
-    makeToggle(px + 110, py + 12, t("settings.vibration", {}, pending.language), "btn_vibration", pending.vibrationEnabled !== false, () => {
+    makeToggle(px + 110, contentY + 12, t("settings.vibration", {}, pending.language), "btn_vibration", pending.vibrationEnabled !== false, () => {
       pending.vibrationEnabled = pending.vibrationEnabled === false;
       if (pending.vibrationEnabled) vibrateFeedback("success", true);
       redraw();
     }, vibrationAvailable);
 
-    const sliderY = py + 137;
+    const sliderY = contentY + 137;
     const sliderLeft = px - 145;
     const sliderRight = px + 145;
-    const volumeLabel = scene.add.text(sliderLeft, py + 90, t("settings.bgmVolume", {}, pending.language), {
+    const volumeLabel = scene.add.text(sliderLeft, contentY + 90, t("settings.bgmVolume", {}, pending.language), {
       fontFamily: KUMA_FONT_SANS,
       fontSize: "23px",
       color: KUMA_COLORS.ink,
       fontStyle: "800",
     }).setOrigin(0, 0.5);
-    const volumeValue = scene.add.text(sliderRight, py + 90, "", {
+    const volumeValue = scene.add.text(sliderRight, contentY + 90, "", {
       fontFamily: KUMA_FONT_SANS,
       fontSize: "22px",
       color: KUMA_COLORS.teal,
@@ -597,7 +598,7 @@ export function showSettingsPanel(scene) {
     drawSlider();
     controls.add([volumeLabel, volumeValue, slider, sliderHit]);
 
-    const contact = scene.add.text(px, py + 195, t("settings.contact", {}, pending.language), {
+    const contact = scene.add.text(px, contentY + 180, t("settings.contact", {}, pending.language), {
       fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
       fontSize: "22px",
       color: "#c49a74",
@@ -605,13 +606,40 @@ export function showSettingsPanel(scene) {
     }).setOrigin(0.5);
     controls.add(contact);
 
-    const cancel = addLargeTextButton(scene, px - 100, py + 260, t("common.cancel", {}, pending.language), "", () => close(false), {
+    const coupon = addLargeTextButton(scene, px, contentY + 228, t("settings.coupon", {}, pending.language), "", () => {
+      const code = window.prompt(t("settings.couponPrompt", {}, pending.language));
+      if (code === null) return;
+      const result = redeemHiddenRewardCoupon(code);
+      if (result.ok) {
+        const refreshed = readPlayerState();
+        pending.unlockedSkinColors = refreshed.unlockedSkinColors;
+        pending.rewardClaims = refreshed.rewardClaims;
+      }
+      const message = result.ok
+        ? result.alreadyUnlocked
+          ? t("settings.couponAlready", {}, pending.language)
+          : t("settings.couponSuccess", {}, pending.language)
+        : t("settings.couponInvalid", {}, pending.language);
+      showRewardLine(scene, message, {
+        tone: result.ok ? "success" : "failure",
+        showCoin: false,
+        depth: 10100,
+      });
+    }, {
+      width: 180,
+      height: 58,
+      fontSize: 22,
+      depth: 10004,
+    });
+    controls.add([coupon.button, coupon.title]);
+
+    const cancel = addLargeTextButton(scene, px - 100, contentY + 300, t("common.cancel", {}, pending.language), "", () => close(false), {
       width: 180,
       height: 70,
       fontSize: 24,
       depth: 10004,
     });
-    const apply = addLargeTextButton(scene, px + 100, py + 260, t("common.apply", {}, pending.language), "", () => close(true), {
+    const apply = addLargeTextButton(scene, px + 100, contentY + 300, t("common.apply", {}, pending.language), "", () => close(true), {
       width: 180,
       height: 70,
       fontSize: 24,

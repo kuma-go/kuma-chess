@@ -34,3 +34,5 @@ jobs:
           node scripts/validate-puzzles.mjs
           node scripts/validate-player-state.mjs
           node scripts/validate-piece-assets.mjs
+          node scripts/validate-medals.mjs
+          node scripts/validate-daily-missions.mjs

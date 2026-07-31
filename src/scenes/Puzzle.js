@@ -1,11 +1,16 @@
-import { Chess } from "../vendor-chess.js?v=20260720-puzzles100hint37";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260720-puzzles100hint37";
-import { playFeedback } from "../feedback.js?v=20260720-puzzles100hint37";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260720-puzzles100hint37";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260720-puzzles100hint37";
-import { recordPuzzleCompletion, recordPuzzleHint } from "../medals.js?v=20260720-puzzles100hint37";
-import { COSTS, spendCoins } from "../playerState.js?v=20260720-puzzles100hint37";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260720-puzzles100hint37";
+import { Chess } from "../vendor-chess.js?v=20260731-special65";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260731-special65";
+import { playFeedback } from "../feedback.js?v=20260731-special65";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260731-special65";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260731-special65";
+import {
+  markMedalsSeen,
+  recordPuzzleCompletion,
+  recordPuzzleHint,
+} from "../medals.js?v=20260731-special65";
+import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260731-special65";
+import { COSTS, spendCoins } from "../playerState.js?v=20260731-special65";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260731-special65";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -18,8 +23,8 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260720-puzzles100hint37";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260720-puzzles100hint37";
+} from "../ui/KumaUi.js?v=20260731-special65";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260731-special65";
 
 const FILES = "abcdefgh";
 
@@ -738,6 +743,12 @@ export class Puzzle extends Phaser.Scene {
       firstClear: result.firstClear,
       totalCleared: new Set(getClearedPuzzleIds()).size,
     });
+    const dailyResult = recordDailyPuzzleCompletion({
+      sessionId: this.puzzleSessionId,
+      puzzleId: this.puzzle.id,
+      firstClear: result.firstClear,
+      hintUsed: this.hintUsed,
+    });
     this.hintText?.setText("");
     this.messageText?.setVisible(false);
     const rewardText = result.reward?.awarded ? `   +${result.reward.amount} COIN` : "";
@@ -748,9 +759,16 @@ export class Puzzle extends Phaser.Scene {
       particleScale: 1.6,
       feedbackType: result.reward?.awarded ? "reward" : "success",
     });
-    if (medalResult.newlyUnlocked.length) {
-      this.time.delayedCall(650, () => {
-        showMedalAwardSequence(this, medalResult.newlyUnlocked, { y: this.scale.height * 0.48 });
+    const newlyUnlocked = Array.from(new Set([
+      ...medalResult.newlyUnlocked,
+      ...dailyResult.newlyUnlocked,
+    ]));
+    if (newlyUnlocked.length) {
+      this.time.delayedCall(2850, async () => {
+        const confirmedIds = await showMedalAwardSequence(this, newlyUnlocked, {
+          y: this.scale.height * 0.48,
+        });
+        if (confirmedIds.length) markMedalsSeen(confirmedIds);
       });
     }
     this.showNextButton();
@@ -845,8 +863,11 @@ export class Puzzle extends Phaser.Scene {
     this.flashMessage(t("puzzle.hintNotice", { cost: COSTS.puzzleHint }), KUMA_COLORS.orange);
     const medalResult = recordPuzzleHint({ sessionId: this.puzzleSessionId });
     if (medalResult.newlyUnlocked.length) {
-      this.time.delayedCall(350, () => {
-        showMedalAwardSequence(this, medalResult.newlyUnlocked, { y: this.scale.height * 0.48 });
+      this.time.delayedCall(350, async () => {
+        const confirmedIds = await showMedalAwardSequence(this, medalResult.newlyUnlocked, {
+          y: this.scale.height * 0.48,
+        });
+        if (confirmedIds.length) markMedalsSeen(confirmedIds);
       });
     }
   }

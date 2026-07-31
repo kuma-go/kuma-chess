@@ -1,7 +1,7 @@
-import { getMedalEntries, medalTextureKey } from "../medals.js?v=20260720-puzzles100hint37";
-import { readPlayerState } from "../playerState.js?v=20260720-puzzles100hint37";
-import { playFeedback } from "../feedback.js?v=20260720-puzzles100hint37";
-import { KUMA_FONT_SANS } from "./KumaUi.js?v=20260720-puzzles100hint37";
+import { getMedalEntries, medalTextureKey } from "../medals.js?v=20260731-special65";
+import { readPlayerState } from "../playerState.js?v=20260731-special65";
+import { playFeedback } from "../feedback.js?v=20260731-special65";
+import { KUMA_FONT_SANS } from "./KumaUi.js?v=20260731-special65";
 
 const UI_ROOT = "assets/kuma/ui/";
 const NORMAL_TIMING = Object.freeze({ gather: 1040, settle: 430, exit: 240 });
@@ -55,7 +55,7 @@ function ensureTexture(scene, entry) {
 function showOne(scene, entry, key, options = {}) {
   return new Promise((resolve) => {
     if (!scene.scene?.isActive()) {
-      resolve();
+      resolve(false);
       return;
     }
 
@@ -273,7 +273,7 @@ function showOne(scene, entry, key, options = {}) {
           if (settled) return;
           cleanup();
           settled = true;
-          resolve();
+          resolve(true);
         },
       });
     };
@@ -283,7 +283,7 @@ function showOne(scene, entry, key, options = {}) {
       finished = true;
       cleanup();
       settled = true;
-      resolve();
+      resolve(false);
     };
 
     backdrop.on("pointerup", finish);
@@ -294,17 +294,21 @@ function showOne(scene, entry, key, options = {}) {
 
 export async function showMedalAwardSequence(scene, items, options = {}) {
   const entries = resolvedEntries(items);
+  const confirmedIds = [];
   for (let index = 0; index < entries.length; index += 1) {
-    if (!scene.scene?.isActive()) return;
+    if (!scene.scene?.isActive()) return confirmedIds;
     const entry = entries[index];
     const key = await ensureTexture(scene, entry);
-    await showOne(scene, entry, key, {
+    const confirmed = await showOne(scene, entry, key, {
       y: options.y,
       index,
       total: entries.length,
     });
+    if (!confirmed) return confirmedIds;
+    confirmedIds.push(entry.id);
     if (index < entries.length - 1 && scene.scene?.isActive()) {
       await new Promise((resolve) => scene.time.delayedCall(120, resolve));
     }
   }
+  return confirmedIds;
 }

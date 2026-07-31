@@ -19,9 +19,21 @@ find src -name '*.js' -print0 | xargs -0 -n1 node --check
 node scripts/validate-puzzles.mjs
 node scripts/validate-player-state.mjs
 node scripts/validate-piece-assets.mjs
+node scripts/validate-medals.mjs
+node scripts/validate-daily-missions.mjs
 node scripts/security-check.mjs
 node scripts/security-check.mjs --history
 ```
+
+## Project documentation
+
+- [Project context](./docs/PROJECT_CONTEXT.md)
+- [Product vision](./docs/PROJECT.md)
+- [Roadmap](./docs/ROADMAP.md)
+- [Design system](./docs/DESIGN_SYSTEM.md)
+- [Economy](./docs/ECONOMY.md)
+- [Game rules](./docs/GAME_RULES.md)
+- [Decision log](./docs/DECISIONS.md)
 
 ## Privacy and security
 

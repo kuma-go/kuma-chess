@@ -1,18 +1,19 @@
 import {
+  getCollectionSkinColorTotal,
+  getOwnedCollectionSkinColorCount,
   getPlayStats,
   getSkinUnlockState,
   readPlayerState,
-  SKIN_SHOP,
-} from "../playerState.js?v=20260720-puzzles100hint37";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260720-puzzles100hint37";
-import { getMedalSummary } from "../medals.js?v=20260720-puzzles100hint37";
+} from "../playerState.js?v=20260731-special65";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260731-special65";
+import { getMedalSummary } from "../medals.js?v=20260731-special65";
 import {
   addLargeTextButton,
   addPanel,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260720-puzzles100hint37";
+} from "./KumaUi.js?v=20260731-special65";
 
 const COPY = {
   ko: {
@@ -151,12 +152,8 @@ export function showPlayInfoPopup(scene) {
   const copy = COPY[language] || COPY.ko;
   const clearedCount = new Set(getClearedPuzzleIds()).size;
   const aiTotal = sumAiStats(stats.ai);
-  const owned = SKIN_SHOP.reduce((count, skin) => (
-    count
-      + Number(getSkinUnlockState(skin.id, "w").unlocked)
-      + Number(getSkinUnlockState(skin.id, "b").unlocked)
-  ), 0);
-  const totalSets = SKIN_SHOP.length * 2;
+  const owned = getOwnedCollectionSkinColorCount();
+  const totalSets = getCollectionSkinColorTotal();
   const whiteQuest = getSkinUnlockState("cat", "w");
   const blackQuest = getSkinUnlockState("cat", "b");
   const medals = getMedalSummary();

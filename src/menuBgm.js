@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260720-puzzles100hint37";
+import { readPlayerState } from "./playerState.js?v=20260731-special65";
 
 const TRACKS = Object.freeze([
   Object.freeze({
@@ -18,7 +18,7 @@ const TRACKS = Object.freeze([
   }),
 ]);
 
-const BGM_BLOCKING_SCENES = new Set(["Game", "Puzzle"]);
+const BGM_BLOCKING_SCENES = new Set(["Game", "Puzzle", "Demo"]);
 
 let audio = null;
 let currentTrack = null;

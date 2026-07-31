@@ -1,13 +1,15 @@
 import {
   claimDailyReward,
+  getCollectionSkinColorTotal,
+  getOwnedCollectionSkinColorCount,
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-  SKIN_SHOP,
-} from "../playerState.js?v=20260720-puzzles100hint37";
-import { hasNewMedals, syncContextMedals } from "../medals.js?v=20260720-puzzles100hint37";
-import { setTopAdVisible } from "../adManager.js?v=20260720-puzzles100hint37";
-import { t } from "../i18n.js?v=20260720-puzzles100hint37";
+} from "../playerState.js?v=20260731-special65";
+import { hasNewMedals, syncContextMedals } from "../medals.js?v=20260731-special65";
+import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260731-special65";
+import { setTopAdVisible } from "../adManager.js?v=20260731-special65";
+import { t } from "../i18n.js?v=20260731-special65";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -18,10 +20,11 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260720-puzzles100hint37";
-import { playFeedback } from "../feedback.js?v=20260720-puzzles100hint37";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260720-puzzles100hint37";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260720-puzzles100hint37";
+} from "../ui/KumaUi.js?v=20260731-special65";
+import { playFeedback } from "../feedback.js?v=20260731-special65";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260731-special65";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260731-special65";
+import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260731-special65";
 
 const BUTTONS = [
   { y: 873, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
@@ -90,6 +93,7 @@ export class Start extends Phaser.Scene {
     this.refreshCoins();
     addSettingsButton(this, () => showSettingsPanel(this));
     this.addPlayInfoButton();
+    this.addDailyMissionButton();
     this.addInstallButton();
     const consumeInstallReward = () => {
       if (!this.scene.isActive() || !window.KumaInstall?.consumeVerifiedInstall?.()) return;
@@ -136,8 +140,8 @@ export class Start extends Phaser.Scene {
     const latestState = readPlayerState();
     const medalSync = syncContextMedals({
       coins: latestState.coins,
-      ownedSkinCount: latestState.unlockedSkinColors.length,
-      totalSkinCount: SKIN_SHOP.length * 2,
+      ownedSkinCount: getOwnedCollectionSkinColorCount(latestState),
+      totalSkinCount: getCollectionSkinColorTotal(),
     });
     this.addMedalButton();
     if (medalSync.newlyUnlocked.length) {
@@ -189,6 +193,112 @@ export class Start extends Phaser.Scene {
     this.addMedalButton();
   }
 
+  addDailyMissionButton() {
+    const x = 67;
+    const y = 139;
+    const snapshot = getDailyMissionSnapshot();
+    const completedCount = snapshot.missions.filter((mission) => mission.complete).length;
+    if (this.dailyMissionButtonGroup?.list) {
+      this.tweens.killTweensOf(this.dailyMissionButtonGroup.list);
+    }
+    this.dailyMissionButtonGroup?.destroy();
+    const group = this.add.container(x, y).setDepth(930);
+    this.dailyMissionButtonGroup = group;
+    const hasPendingReward = snapshot.pendingRewardTotal > 0;
+    const rewardGlow = hasPendingReward
+      ? this.add.circle(0, 0, 44, 0xffd65c, 0.18)
+        .setStrokeStyle(4, 0xffc640, 0.95)
+        .setBlendMode(Phaser.BlendModes.ADD)
+      : null;
+    const rewardRing = hasPendingReward
+      ? this.add.circle(0, 0, 34, 0xffffff, 0)
+        .setStrokeStyle(3, 0xffffcf, 0.9)
+      : null;
+    const button = this.add.image(0, 0, "kuma_ui_btn_daily").setDisplaySize(67, 67);
+    const hit = this.add.circle(0, 0, 36, 0xffffff, 0.001)
+      .setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => {
+      playFeedback("ui");
+      showDailyMissionPopup(this, {
+        onReward: () => {
+          this.refreshCoins();
+        },
+        onClose: () => {
+          this.refreshCoins();
+          this.addDailyMissionButton();
+        },
+      });
+    });
+    group.add([
+      ...(hasPendingReward ? [rewardGlow, rewardRing] : []),
+      button,
+      hit,
+    ]);
+    group.add(this.add.text(0, 47, `${completedCount}/3`, {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "17px",
+      color: "#846648",
+      fontStyle: "600",
+    }).setOrigin(0.5));
+    if (hasPendingReward) {
+      const rewardBadge = this.add.container(0, -44);
+      const badgeBack = this.add.graphics();
+      badgeBack.fillStyle(0xfff7dd, 0.96);
+      badgeBack.fillRoundedRect(-32, -15, 64, 30, 14);
+      badgeBack.lineStyle(2, 0xd8a344, 0.92);
+      badgeBack.strokeRoundedRect(-32, -15, 64, 30, 14);
+      const coin = this.add.image(-17, 0, "kuma_ui_coin_small").setDisplaySize(20, 20);
+      const badgeLabel = this.add.text(-4, 0, `+${Math.min(snapshot.pendingRewardTotal, 99)}`, {
+        fontFamily: KUMA_FONT_SANS,
+        fontSize: snapshot.pendingRewardTotal >= 10 ? "14px" : "16px",
+        color: "#4d3519",
+        fontStyle: "900",
+      }).setOrigin(0, 0.5);
+      rewardBadge.add([badgeBack, coin, badgeLabel]);
+      const sparkleLeft = this.add.star(-30, -58, 5, 4, 13, 0xffffd6)
+        .setAlpha(0.78)
+        .setAngle(45);
+      const sparkleRight = this.add.star(28, -31, 5, 3, 9, 0xffd665)
+        .setAlpha(0.72)
+        .setAngle(45);
+      group.add([rewardBadge, sparkleLeft, sparkleRight]);
+      this.tweens.add({
+        targets: [rewardGlow, rewardRing],
+        alpha: { from: 0.28, to: 0.9 },
+        scaleX: { from: 0.92, to: 1.2 },
+        scaleY: { from: 0.92, to: 1.2 },
+        duration: 860,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.InOut",
+      });
+      this.tweens.add({
+        targets: rewardBadge,
+        y: { from: -46, to: -42 },
+        scaleX: { from: 1, to: 1.08 },
+        scaleY: { from: 1, to: 1.08 },
+        duration: 700,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.InOut",
+      });
+      this.tweens.add({
+        targets: [sparkleLeft, sparkleRight],
+        alpha: { from: 0.35, to: 1 },
+        scaleX: { from: 0.72, to: 1.22 },
+        scaleY: { from: 0.72, to: 1.22 },
+        angle: { from: 22, to: 68 },
+        duration: 620,
+        yoyo: true,
+        repeat: -1,
+        repeatDelay: 420,
+        ease: "Sine.InOut",
+      });
+    }
+    if (!snapshot.hasNotice) return;
+    group.add(this.add.image(25, 24, "kuma_ui_icon_new").setDisplaySize(22, 29));
+  }
+
   addInstallButton() {
     let group = null;
     const draw = () => {
@@ -202,7 +312,7 @@ export class Start extends Phaser.Scene {
       if (group) return;
 
       const x = this.scale.width - 67;
-      const y = 291;
+      const y = 367;
       group = this.add.container(x, y).setDepth(930);
       const button = this.add.image(0, 0, "kuma_ui_btn_install").setDisplaySize(67, 67);
       const alreadyClaimed = readPlayerState().rewardClaims.includes("pwa-install-v1");

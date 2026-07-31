@@ -61,10 +61,11 @@
       body.ad-visible { --kuma-ad-height: clamp(50px, 9dvh, 90px); }
       #ambient-background {
         position: fixed;
-        left: var(--kuma-vv-left);
-        top: var(--kuma-vv-top);
-        width: var(--kuma-vw);
-        height: var(--kuma-vh);
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        min-height: 100dvh;
+        min-height: 100lvh;
         overflow: hidden;
         pointer-events: none;
         background: #EDDEC1;
@@ -161,7 +162,7 @@
     <script src="./phaser.js"></script>
     <script src="./ads-config.js"></script>
     <!-- Main -->
-    <script type="module" src="./src/main.js?v=20260720-puzzles100hint37"></script>
-    <script src="./app-init.js?v=20260720-puzzles100hint37"></script>
+    <script type="module" src="./src/main.js?v=20260731-special65"></script>
+    <script src="./app-init.js?v=20260731-special65"></script>
   </body>
 </html>

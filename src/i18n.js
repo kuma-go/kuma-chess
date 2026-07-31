@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260720-puzzles100hint37";
+import { readPlayerState } from "./playerState.js?v=20260731-special65";
 
 const TEXT = {
   ko: {
@@ -8,6 +8,9 @@ const TEXT = {
     "reward.daily": "접속 보상 +{amount}", "reward.ai": "AI 승리 보상  +{amount} COIN",
     "settings.title": "설정", "settings.language": "언어", "settings.sound": "효과음", "settings.bgmVolume": "배경음악",
     "settings.vibration": "진동", "settings.contact": "문의/제작 carksk@naver.com", "common.cancel": "취소", "common.apply": "적용",
+    "settings.coupon": "쿠폰", "settings.couponPrompt": "쿠폰 코드를 입력하세요.",
+    "settings.couponInvalid": "아직 아무 일도 일어나지 않았습니다.", "settings.couponSuccess": "무언가 조용히 깨어났습니다.",
+    "settings.couponAlready": "이미 깨어난 기운입니다.",
     "common.buy": "구입", "common.change": "변경", "common.back": "뒤로", "common.confirm": "확인",
     "install.title": "홈 화면에 추가", "install.ios": "브라우저의 공유 버튼을 누른 뒤\n'홈 화면에 추가'를 선택하세요.",
     "install.browser": "브라우저 메뉴에서\n'앱 설치' 또는 '홈 화면에 추가'를 선택하세요.",
@@ -26,6 +29,10 @@ const TEXT = {
     "select.purchaseMessage": "{cost} 코인으로 '{color} {skin}'\n체스말을 구입하시겠습니까?",
     "select.notEnough": "코인이 부족합니다 ({coins}/{cost})", "select.purchased": "{color} {skin} 구입 완료",
     "select.loadFailed": "기물을 불러오지 못했습니다. 다시 시도해 주세요.",
+    "select.goldBearTitle": "황금 곰 수집", "select.goldBearGuide": "기물을 모두 모으면 황금 곰을 사용할 수 있습니다. ({owned}/{total})",
+    "select.goldBearSetUnlocked": "황금 곰 세트 해금!", "select.goldBearPieceDone": "{piece} 수집 완료", "select.pieceComplete": "완료",
+    "select.alreadyUnlocked": "이미 해금된 세트입니다.",
+    "select.hiddenWait": "어딘가에서 기다리고 있습니다.",
     "color.w": "백", "color.b": "흑", "side.w": "백 진영", "side.b": "흑 진영",
     "game.homeTitle": "메인으로 이동", "game.homeMessage": "정말 메인으로 돌아갈까요?\n진행 중인 게임은 종료됩니다.",
     "game.move": "이동", "game.conceptOff": "컨셉 끄기", "game.undoUnavailable": "무를 수 없습니다.",
@@ -42,6 +49,9 @@ const TEXT = {
     "reward.daily": "Daily reward +{amount}", "reward.ai": "AI win reward  +{amount} COIN",
     "settings.title": "Settings", "settings.language": "Language", "settings.sound": "SFX", "settings.bgmVolume": "BGM Volume",
     "settings.vibration": "Vibration", "settings.contact": "Contact carksk@naver.com", "common.cancel": "Cancel", "common.apply": "Apply",
+    "settings.coupon": "Coupon", "settings.couponPrompt": "Enter a coupon code.",
+    "settings.couponInvalid": "Nothing happened yet.", "settings.couponSuccess": "Something quietly awakened.",
+    "settings.couponAlready": "That presence is already awake.",
     "common.buy": "Buy", "common.change": "Change", "common.back": "Back", "common.confirm": "Confirm",
     "install.title": "Add to Home Screen", "install.ios": "Tap the browser's Share button, then choose\n'Add to Home Screen.'",
     "install.browser": "Open the browser menu and choose\n'Install app' or 'Add to Home Screen.'",
@@ -60,6 +70,10 @@ const TEXT = {
     "select.purchaseMessage": "Buy the '{color} {skin}' piece set\nfor {cost} coins?",
     "select.notEnough": "Not enough coins ({coins}/{cost})", "select.purchased": "{color} {skin} purchased",
     "select.loadFailed": "Could not load the pieces. Please try again.",
+    "select.goldBearTitle": "Gold Bear Collection", "select.goldBearGuide": "Collect every piece to use Gold Bear. ({owned}/{total})",
+    "select.goldBearSetUnlocked": "Gold Bear set unlocked!", "select.goldBearPieceDone": "{piece} collected", "select.pieceComplete": "Complete",
+    "select.alreadyUnlocked": "This set is already unlocked.",
+    "select.hiddenWait": "It is waiting somewhere.",
     "color.w": "White", "color.b": "Black", "side.w": "White", "side.b": "Black",
     "game.homeTitle": "Return to Main", "game.homeMessage": "Return to the main screen?\nThe current game will end.",
     "game.move": "Move", "game.conceptOff": "Concept Off", "game.undoUnavailable": "No move to undo.",
@@ -76,6 +90,9 @@ const TEXT = {
     "reward.daily": "ログイン報酬 +{amount}", "reward.ai": "AI勝利報酬  +{amount} COIN",
     "settings.title": "設定", "settings.language": "言語", "settings.sound": "効果音", "settings.bgmVolume": "BGM音量",
     "settings.vibration": "振動", "settings.contact": "お問い合わせ carksk@naver.com", "common.cancel": "取消", "common.apply": "適用",
+    "settings.coupon": "クーポン", "settings.couponPrompt": "クーポンコードを入力してください。",
+    "settings.couponInvalid": "まだ何も起きません。", "settings.couponSuccess": "何かが静かに目覚めました。",
+    "settings.couponAlready": "その気配はすでに目覚めています。",
     "common.buy": "購入", "common.change": "変更", "common.back": "戻る", "common.confirm": "確認",
     "install.title": "ホーム画面に追加", "install.ios": "ブラウザの共有ボタンを押し、\n「ホーム画面に追加」を選択してください。",
     "install.browser": "ブラウザのメニューから\n「アプリをインストール」を選択してください。",
@@ -94,6 +111,10 @@ const TEXT = {
     "select.purchaseMessage": "{cost}コインで「{color} {skin}」の\n駒を購入しますか？",
     "select.notEnough": "コインが足りません ({coins}/{cost})", "select.purchased": "{color} {skin}を購入しました",
     "select.loadFailed": "駒を読み込めませんでした。もう一度お試しください。",
+    "select.goldBearTitle": "ゴールドベア収集", "select.goldBearGuide": "すべての駒を集めるとゴールドベアを使えます。({owned}/{total})",
+    "select.goldBearSetUnlocked": "ゴールドベアセット開放！", "select.goldBearPieceDone": "{piece}を集めました", "select.pieceComplete": "完了",
+    "select.alreadyUnlocked": "すでに開放済みのセットです。",
+    "select.hiddenWait": "どこかで待っています。",
     "color.w": "白", "color.b": "黒", "side.w": "白陣営", "side.b": "黒陣営",
     "game.homeTitle": "メインへ戻る", "game.homeMessage": "メイン画面へ戻りますか？\n進行中のゲームは終了します。",
     "game.move": "移動", "game.conceptOff": "コンセプトOFF", "game.undoUnavailable": "戻せる手がありません。",
@@ -132,7 +153,19 @@ const PUZZLES = {
   black_castle_long: { en: ["Queenside Castling Check", "BLACK: Castle queenside to move the king and open a rook check at the same time.", "O-O-O+ places the king on c8 and the rook on d8, checking the white king on d1."], ja: ["チェックになるロングキャスリング", "BLACK：ロングキャスリングでキングを動かし、同時にルークのチェックを開いてください。", "O-O-O+でキングはc8、ルークはd8へ移動し、d1の白キングをチェックします。"] },
 };
 
-const SKIN_JA = { classic: "基本", bear: "クマ", rabbit: "ウサギ", cat: "ネコ", wolf: "オオカミ", sheep: "ヒツジ", eagle: "ワシ", owl: "フクロウ", capybara: "カピバラ" };
+const SKIN_JA = {
+  classic: "基本",
+  bear: "クマ",
+  rabbit: "ウサギ",
+  cat: "ネコ",
+  wolf: "オオカミ",
+  sheep: "ヒツジ",
+  eagle: "ワシ",
+  owl: "フクロウ",
+  capybara: "カピバラ",
+  brownBear: "ブラウンベア",
+  goldBear: "ゴールドベア",
+};
 const TAGS = {
   en: { beginner: "beginner", capture: "capture", check: "check", fork: "fork", knight: "knight", rule: "rule", castle: "castle", promotion: "promotion", rook: "rook", bishop: "bishop", queen: "queen", "en-passant": "en passant", pin: "pin", skewer: "skewer", "double-attack": "double attack", "discovered-check": "discovered check", underpromotion: "underpromotion", "two-step": "two-step", sacrifice: "sacrifice", deflection: "deflection", removal: "remove defender", clearance: "clearance", attack: "attack", "mate-in-2": "mate in 2", "back-rank": "back rank", invasion: "invasion" },
   ja: { beginner: "初級", capture: "駒取り", check: "チェック", fork: "フォーク", knight: "ナイト", rule: "ルール", castle: "キャスリング", promotion: "昇格", rook: "ルーク", bishop: "ビショップ", queen: "クイーン", "en-passant": "アンパッサン", pin: "ピン", skewer: "スキュアー", "double-attack": "両取り", "discovered-check": "ディスカバードチェック", underpromotion: "アンダープロモーション", "two-step": "2手", sacrifice: "サクリファイス", deflection: "そらし", removal: "守備駒の排除", clearance: "クリアランス", attack: "攻撃", "mate-in-2": "2手メイト", "back-rank": "バックランク", invasion: "侵入" },

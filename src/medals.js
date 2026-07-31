@@ -1,4 +1,7 @@
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260731-special65";
+
 const STORAGE_KEY = "kumaChessMedalsV1";
+const BACKUP_STORAGE_KEY = "kumaChessMedalsBackupV1";
 const STATE_VERSION = 1;
 const PROCESSED_ID_LIMIT = 200;
 const LANGUAGES = new Set(["ko", "en", "ja"]);
@@ -14,7 +17,7 @@ function medal(id, category, asset, target, name, description, extra = {}) {
   return Object.freeze({
     id,
     category,
-    asset: `메달_${asset}.webp`,
+    asset: extra.assetFile || `메달_${asset}.webp`,
     target,
     name: Object.freeze(name),
     description: Object.freeze(description),
@@ -55,6 +58,29 @@ const KINGDOM_MEDALS = SKINS.flatMap(([skinId, ko, en, ja]) => [
     { skinId, color: "b" },
   ),
 ]);
+
+const SPECIAL_KINGDOM_MEDALS = [
+  medal("gold-bear", "kingdom", "골드_곰", 5,
+    { ko: "황금 곰의 영광", en: "Glory of the Gold Bear", ja: "ゴールドベアの栄光" },
+    {
+      ko: "황금 곰 기물 세트로 5승을 달성하세요.",
+      en: "Win 5 games with the complete Gold Bear set.",
+      ja: "ゴールドベアの駒セットで5勝しましょう。",
+    },
+    { assetFile: "메달_골드_곰.png", specialSkinId: "goldBear" }),
+  medal("brown-bear", "kingdom", "브라운_곰", 5,
+    { ko: "브라운 곰의 영광", en: "Glory of the Brown Bear", ja: "ブラウンベアの栄光" },
+    {
+      ko: "브라운 곰 기물 세트로 5승을 달성하세요.",
+      en: "Win 5 games with the Brown Bear set.",
+      ja: "ブラウンベアの駒セットで5勝しましょう。",
+    },
+    {
+      assetFile: "메달_브라운_곰.png",
+      specialSkinId: "brownBear",
+      countsTowardCollection: false,
+    }),
+];
 
 const CHALLENGE_MEDALS = [
   medal("last-pawn-hunter", "challenge", "마지막병사의반격", 30,
@@ -119,6 +145,30 @@ const CHALLENGE_MEDALS = [
   medal("bare-kings-draw-5", "challenge", "킹대킹", 5,
     { ko: "킹 대 킹", en: "King vs. King", ja: "キング対キング" },
     { ko: "킹만 남은 상태로 5회 무승부를 기록하세요.", en: "Draw 5 games with only the two kings remaining.", ja: "キングだけが残った状態で5回引き分けましょう。" }),
+  medal("diligent-knight", "challenge", "성실한기사", 7,
+    { ko: "성실한 기사", en: "The Diligent Knight", ja: "誠実な騎士" },
+    {
+      ko: "데일리 미션을 7일 연속 모두 완료하세요.",
+      en: "Complete every daily mission for 7 consecutive days.",
+      ja: "デイリーミッションを7日連続ですべて達成しましょう。",
+    },
+    { assetFile: "메달_성실한기사.png", dailyMetric: "streak" }),
+  medal("kingdom-routine", "challenge", "왕국의일과", 30,
+    { ko: "왕국의 일과", en: "The Kingdom's Routine", ja: "王国の日課" },
+    {
+      ko: "데일리 미션을 모두 완료한 날을 30일 달성하세요.",
+      en: "Fully complete daily missions on 30 days.",
+      ja: "デイリーミッションをすべて達成した日を30日記録しましょう。",
+    },
+    { assetFile: "메달_왕국의일과.png", dailyMetric: "totalDays" }),
+  medal("hundred-day-training", "challenge", "백일의수련", 100,
+    { ko: "백일의 수련", en: "One Hundred Days of Training", ja: "百日の修練" },
+    {
+      ko: "데일리 미션을 모두 완료한 날을 100일 달성하세요.",
+      en: "Fully complete daily missions on 100 days.",
+      ja: "デイリーミッションをすべて達成した日を100日記録しましょう。",
+    },
+    { assetFile: "메달_백일의수련.png", dailyMetric: "totalDays" }),
 ];
 
 const PUZZLE_MEDALS = [10, 25, 50, 75, 100].map((target, index) => medal(
@@ -151,6 +201,7 @@ const RANK_MEDALS = [25, 50, 75, 100].map((target) => medal(
 
 export const MEDALS = Object.freeze([
   ...KINGDOM_MEDALS,
+  ...SPECIAL_KINGDOM_MEDALS,
   ...CHALLENGE_MEDALS,
   ...PUZZLE_MEDALS,
   ...RANK_MEDALS,
@@ -158,7 +209,10 @@ export const MEDALS = Object.freeze([
 
 const MEDAL_BY_ID = new Map(MEDALS.map((item) => [item.id, item]));
 const SKIN_MEDAL_BY_KEY = new Map(KINGDOM_MEDALS.map((item) => [`${item.skinId}:${item.color}`, item]));
-const BASE_MEDALS = MEDALS.filter((item) => item.category !== "rank" && !item.collector && !item.unavailable);
+const BASE_MEDALS = MEDALS.filter((item) => item.category !== "rank"
+  && !item.collector
+  && !item.unavailable
+  && item.countsTowardCollection !== false);
 
 export function medalTextureKey(id) {
   return `kuma_medal_${String(id || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
@@ -248,21 +302,9 @@ function normalizeState(source) {
   return state;
 }
 
-function storage() {
-  try {
-    return globalThis.localStorage || null;
-  } catch (_error) {
-    return null;
-  }
-}
-
 function saveState(state) {
   const normalized = normalizeState(state);
-  try {
-    storage()?.setItem(STORAGE_KEY, JSON.stringify(normalized));
-  } catch (_error) {
-    // Medal progress is optional when storage is blocked or full.
-  }
+  writeJsonToStorage([STORAGE_KEY, BACKUP_STORAGE_KEY], normalized);
   return normalized;
 }
 
@@ -305,23 +347,12 @@ function evaluate(state) {
 }
 
 export function readMedalState() {
-  let source = null;
-  let raw = "";
-  try {
-    raw = storage()?.getItem(STORAGE_KEY) || "";
-    source = raw ? JSON.parse(raw) : null;
-  } catch (_error) {
-    source = null;
-  }
-  const state = normalizeState(source);
+  const saved = readJsonFromStorage([STORAGE_KEY, BACKUP_STORAGE_KEY], null);
+  const state = normalizeState(saved.value);
   evaluate(state);
   const serialized = JSON.stringify(state);
-  if (serialized !== raw) {
-    try {
-      storage()?.setItem(STORAGE_KEY, serialized);
-    } catch (_error) {
-      // Reading remains safe in privacy modes that reject storage writes.
-    }
+  if (saved.recovered || serialized !== saved.raw) {
+    writeJsonToStorage([STORAGE_KEY, BACKUP_STORAGE_KEY], state);
   }
   return state;
 }
@@ -567,6 +598,12 @@ function skinForColor(skins, color) {
 
 function recordSkinWin(state, skins, color) {
   const skinId = normalizeId(skinForColor(skins, color));
+  if (["goldBear", "gold-bear", "gold_bear"].includes(skinId)) {
+    addProgress(state, "gold-bear");
+  }
+  if (["brownBear", "brown-bear", "brown_bear"].includes(skinId)) {
+    addProgress(state, "brown-bear");
+  }
   const key = `${skinId}:${color}`;
   if (!SKIN_MEDAL_BY_KEY.has(key)) return;
   state.skinWins[key] = count(state.skinWins[key]) + 1;
@@ -642,6 +679,25 @@ export function recordPuzzleCompletion({ sessionId, firstClear, totalCleared } =
       addProgress(state, "puzzle-replay-10");
       addProgress(state, "puzzle-replay-70");
     }
+  });
+}
+
+export function recordDailyMissionDay({ currentStreak, totalCompletedDays } = {}) {
+  return update((state) => {
+    const streak = count(currentStreak);
+    const totalDays = count(totalCompletedDays);
+    state.progress["diligent-knight"] = Math.max(
+      count(state.progress["diligent-knight"]),
+      streak,
+    );
+    state.progress["kingdom-routine"] = Math.max(
+      count(state.progress["kingdom-routine"]),
+      totalDays,
+    );
+    state.progress["hundred-day-training"] = Math.max(
+      count(state.progress["hundred-day-training"]),
+      totalDays,
+    );
   });
 }
 

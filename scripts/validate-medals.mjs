@@ -10,7 +10,7 @@ globalThis.localStorage = {
 const medals = await import(`../src/medals.js?validation=${Date.now()}`);
 const entries = medals.getMedalEntries("ko");
 
-assert.equal(entries.length, 45, "The catalog must contain all 45 medal definitions.");
+assert.equal(entries.length, 50, "The catalog must contain all 50 medal definitions.");
 for (const entry of entries) {
   assert.ok(entry.name && entry.description, `Missing Korean copy for ${entry.id}`);
   assert.ok(fs.existsSync(new URL(`../assets/kuma/ui/${entry.asset}`, import.meta.url)), `Missing asset ${entry.asset}`);
@@ -26,6 +26,9 @@ assert.ok(result.newlyUnlocked.includes("coin-master"), "Coin medal did not unlo
 assert.ok(medals.hasNewMedals(), "A newly unlocked medal must expose the NEW state.");
 medals.markMedalsSeen();
 assert.equal(medals.hasNewMedals(), false, "Confirming the catalog must clear every NEW badge.");
+memory.set("kumaChessMedalsV1", "{broken json");
+assert.ok(medals.readMedalState().unlockedAt["coin-master"], "Medals must recover from the backup key.");
+assert.ok(JSON.parse(memory.get("kumaChessMedalsV1")).unlockedAt["coin-master"], "Medal backup recovery must repair the primary key.");
 
 for (let index = 0; index < 30; index += 1) {
   medals.recordPuzzleHint({ sessionId: `hint-${index}` });
@@ -53,5 +56,34 @@ assert.equal(
   progressBeforeDuplicate,
   "A duplicate game session was counted twice."
 );
+
+for (let index = 0; index < 5; index += 1) {
+  medals.recordCompletedGame({
+    gameSessionId: `gold-bear-${index}`,
+    mode: "ai",
+    result: "w_win",
+    winnerColor: "w",
+    playerColor: "w",
+    skins: { w: "goldBear", b: "classic" },
+  });
+}
+assert.ok(medals.readMedalState().unlockedAt["gold-bear"], "Gold Bear medal did not unlock.");
+for (let index = 0; index < 5; index += 1) {
+  medals.recordCompletedGame({
+    gameSessionId: `brown-bear-${index}`,
+    mode: "ai",
+    result: "w_win",
+    winnerColor: "w",
+    playerColor: "w",
+    skins: { w: "brownBear", b: "classic" },
+  });
+}
+assert.ok(medals.readMedalState().unlockedAt["brown-bear"], "Brown Bear medal did not unlock.");
+
+result = medals.recordDailyMissionDay({ currentStreak: 7, totalCompletedDays: 7 });
+assert.ok(result.newlyUnlocked.includes("diligent-knight"), "Seven-day streak medal did not unlock.");
+result = medals.recordDailyMissionDay({ currentStreak: 2, totalCompletedDays: 100 });
+assert.ok(result.newlyUnlocked.includes("kingdom-routine"), "Thirty-day daily medal did not unlock.");
+assert.ok(result.newlyUnlocked.includes("hundred-day-training"), "Hundred-day daily medal did not unlock.");
 
 console.log(`Validated ${entries.length} medals, localized copy, assets, unlocks, and idempotency.`);
