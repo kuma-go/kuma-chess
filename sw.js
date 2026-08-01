@@ -1,5 +1,5 @@
-const CACHE_NAME = "kuma-chess-20260731-special65";
-const MODULE_VERSION = "20260731-special65";
+const CACHE_NAME = "kuma-chess-20260802-medal66";
+const MODULE_VERSION = "20260802-medal66";
 const APP_MODULE_PATHS = [
   "./src/adManager.js",
   "./src/dailyMissions.js",

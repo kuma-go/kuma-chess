@@ -1,4 +1,4 @@
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260731-special65";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260802-medal66";
 
 export const PROFILE_STATE_KEY = "kumaChessProfileState";
 export const PROFILE_STATE_BACKUP_KEY = "kumaChessProfileStateBackupV1";

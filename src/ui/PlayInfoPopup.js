@@ -4,16 +4,16 @@ import {
   getPlayStats,
   getSkinUnlockState,
   readPlayerState,
-} from "../playerState.js?v=20260731-special65";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260731-special65";
-import { getMedalSummary } from "../medals.js?v=20260731-special65";
+} from "../playerState.js?v=20260802-medal66";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260802-medal66";
+import { getMedalSummary } from "../medals.js?v=20260802-medal66";
 import {
   addLargeTextButton,
   addPanel,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260731-special65";
+} from "./KumaUi.js?v=20260802-medal66";
 
 const COPY = {
   ko: {

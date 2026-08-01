@@ -5,11 +5,11 @@ import {
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260731-special65";
-import { hasNewMedals, syncContextMedals } from "../medals.js?v=20260731-special65";
-import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260731-special65";
-import { setTopAdVisible } from "../adManager.js?v=20260731-special65";
-import { t } from "../i18n.js?v=20260731-special65";
+} from "../playerState.js?v=20260802-medal66";
+import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260802-medal66";
+import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260802-medal66";
+import { setTopAdVisible } from "../adManager.js?v=20260802-medal66";
+import { t } from "../i18n.js?v=20260802-medal66";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -20,11 +20,11 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260731-special65";
-import { playFeedback } from "../feedback.js?v=20260731-special65";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260731-special65";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260731-special65";
-import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260731-special65";
+} from "../ui/KumaUi.js?v=20260802-medal66";
+import { playFeedback } from "../feedback.js?v=20260802-medal66";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260802-medal66";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260802-medal66";
+import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260802-medal66";
 
 const BUTTONS = [
   { y: 873, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
@@ -145,8 +145,9 @@ export class Start extends Phaser.Scene {
     });
     this.addMedalButton();
     if (medalSync.newlyUnlocked.length) {
-      this.time.delayedCall(reward.claimed ? 2850 : 650, () => {
-        showMedalAwardSequence(this, medalSync.newlyUnlocked, { y: this.scale.height * 0.48 });
+      this.time.delayedCall(reward.claimed ? 2850 : 650, async () => {
+        const confirmedIds = await showMedalAwardSequence(this, medalSync.newlyUnlocked, { y: this.scale.height * 0.48 });
+        if (confirmedIds.length) markMedalsSeen(confirmedIds);
       });
     }
   }

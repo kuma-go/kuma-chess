@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260731-special65";
+import { readPlayerState } from "./playerState.js?v=20260802-medal66";
 
 const TRACKS = Object.freeze([
   Object.freeze({

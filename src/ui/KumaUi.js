@@ -1,13 +1,13 @@
-import { readPlayerState, redeemHiddenRewardCoupon, writePlayerState } from "../playerState.js?v=20260731-special65";
-import { t } from "../i18n.js?v=20260731-special65";
-import { SpriteButton } from "./SpriteButton.js?v=20260731-special65";
-import { setMenuBgmVolume } from "../menuBgm.js?v=20260731-special65";
+import { readPlayerState, redeemHiddenRewardCoupon, writePlayerState } from "../playerState.js?v=20260802-medal66";
+import { t } from "../i18n.js?v=20260802-medal66";
+import { SpriteButton } from "./SpriteButton.js?v=20260802-medal66";
+import { setMenuBgmVolume } from "../menuBgm.js?v=20260802-medal66";
 import {
   isVibrationSupported,
   playFeedback,
   primeAudioFromGesture,
   vibrateFeedback,
-} from "../feedback.js?v=20260731-special65";
+} from "../feedback.js?v=20260802-medal66";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';

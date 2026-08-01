@@ -4,8 +4,8 @@ import {
   readProfileState,
   stripProfileFields,
   writeProfileState,
-} from "./profileState.js?v=20260731-special65";
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260731-special65";
+} from "./profileState.js?v=20260802-medal66";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260802-medal66";
 
 export const PLAYER_STATE_KEY = "kumaChessPlayerState";
 export const PUZZLE_PROGRESS_KEY = "kumaChessPuzzleClears";

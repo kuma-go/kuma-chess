@@ -1,4 +1,4 @@
-import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260731-special65";
+import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260802-medal66";
 
 export class Boot extends Phaser.Scene {
   constructor() {
@@ -41,7 +41,7 @@ export class Boot extends Phaser.Scene {
       "icon_Queen_w", "icon_Queen_b", "icon_King_w", "icon_King_b",
     ];
     for (const name of uiFiles) {
-      const version = name === "btn_install" ? "?v=20260731-special65" : "";
+      const version = name === "btn_install" ? "?v=20260802-medal66" : "";
       this.load.image(`kuma_ui_${name}`, `${uiRoot}${name}.png${version}`);
     }
     this.load.image("kuma_ui_book_bg", `${uiRoot}book_bg.webp`);

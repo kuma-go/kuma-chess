@@ -1,4 +1,4 @@
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260731-special65";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260802-medal66";
 
 const STORAGE_KEY = "kumaChessMedalsV1";
 const BACKUP_STORAGE_KEY = "kumaChessMedalsBackupV1";

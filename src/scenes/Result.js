@@ -1,8 +1,9 @@
-import { createPieceView } from "../pieceStyles.js?v=20260731-special65";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260731-special65";
-import { t } from "../i18n.js?v=20260731-special65";
-import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260731-special65";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260731-special65";
+import { createPieceView } from "../pieceStyles.js?v=20260802-medal66";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260802-medal66";
+import { t } from "../i18n.js?v=20260802-medal66";
+import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260802-medal66";
+import { markMedalsSeen } from "../medals.js?v=20260802-medal66";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260802-medal66";
 
 const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35 });
 const DIFFICULTY_LABELS = Object.freeze({
@@ -97,8 +98,9 @@ export class Result extends Phaser.Scene {
       });
     }
     if (this.dataIn?.newlyUnlocked?.length) {
-      this.time.delayedCall(reward.awarded ? 3100 : 700, () => {
-        showMedalAwardSequence(this, this.dataIn.newlyUnlocked, { y: height * 0.47 });
+      this.time.delayedCall(reward.awarded ? 3100 : 700, async () => {
+        const confirmedIds = await showMedalAwardSequence(this, this.dataIn.newlyUnlocked, { y: height * 0.47 });
+        if (confirmedIds.length) markMedalsSeen(confirmedIds);
       });
     }
 

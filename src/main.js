@@ -1,15 +1,15 @@
-import { Boot } from "./scenes/Boot.js?v=20260731-special65";
-import { Start } from "./scenes/Start.js?v=20260731-special65";
-import { PieceSelect } from "./scenes/PieceSelect.js?v=20260731-special65";
-import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260731-special65";
-import { Game } from "./scenes/Game.js?v=20260731-special65";
-import { Result } from "./scenes/Result.js?v=20260731-special65";
-import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260731-special65";
-import { Puzzle } from "./scenes/Puzzle.js?v=20260731-special65";
-import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260731-special65";
-import { Demo } from "./scenes/Demo.js?v=20260731-special65";
-import { installFeedbackUnlock } from "./feedback.js?v=20260731-special65";
-import { installMenuBgm, installMenuBgmSceneHooks } from "./menuBgm.js?v=20260731-special65";
+import { Boot } from "./scenes/Boot.js?v=20260802-medal66";
+import { Start } from "./scenes/Start.js?v=20260802-medal66";
+import { PieceSelect } from "./scenes/PieceSelect.js?v=20260802-medal66";
+import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260802-medal66";
+import { Game } from "./scenes/Game.js?v=20260802-medal66";
+import { Result } from "./scenes/Result.js?v=20260802-medal66";
+import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260802-medal66";
+import { Puzzle } from "./scenes/Puzzle.js?v=20260802-medal66";
+import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260802-medal66";
+import { Demo } from "./scenes/Demo.js?v=20260802-medal66";
+import { installFeedbackUnlock } from "./feedback.js?v=20260802-medal66";
+import { installMenuBgm, installMenuBgmSceneHooks } from "./menuBgm.js?v=20260802-medal66";
 
 const config = {
   type: Phaser.AUTO,

@@ -1,16 +1,16 @@
-import { Chess } from "../vendor-chess.js?v=20260731-special65";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260731-special65";
-import { playFeedback } from "../feedback.js?v=20260731-special65";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260731-special65";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260731-special65";
+import { Chess } from "../vendor-chess.js?v=20260802-medal66";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260802-medal66";
+import { playFeedback } from "../feedback.js?v=20260802-medal66";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260802-medal66";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260802-medal66";
 import {
   markMedalsSeen,
   recordPuzzleCompletion,
   recordPuzzleHint,
-} from "../medals.js?v=20260731-special65";
-import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260731-special65";
-import { COSTS, spendCoins } from "../playerState.js?v=20260731-special65";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260731-special65";
+} from "../medals.js?v=20260802-medal66";
+import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260802-medal66";
+import { COSTS, spendCoins } from "../playerState.js?v=20260802-medal66";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260802-medal66";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -23,8 +23,8 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260731-special65";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260731-special65";
+} from "../ui/KumaUi.js?v=20260802-medal66";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260802-medal66";
 
 const FILES = "abcdefgh";
 

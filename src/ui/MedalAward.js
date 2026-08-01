@@ -1,11 +1,12 @@
-import { getMedalEntries, medalTextureKey } from "../medals.js?v=20260731-special65";
-import { readPlayerState } from "../playerState.js?v=20260731-special65";
-import { playFeedback } from "../feedback.js?v=20260731-special65";
-import { KUMA_FONT_SANS } from "./KumaUi.js?v=20260731-special65";
+import { getMedalEntries, medalTextureKey } from "../medals.js?v=20260802-medal66";
+import { readPlayerState } from "../playerState.js?v=20260802-medal66";
+import { playFeedback } from "../feedback.js?v=20260802-medal66";
+import { KUMA_FONT_SANS } from "./KumaUi.js?v=20260802-medal66";
 
 const UI_ROOT = "assets/kuma/ui/";
 const NORMAL_TIMING = Object.freeze({ gather: 1040, settle: 430, exit: 240 });
 const REDUCED_TIMING = Object.freeze({ gather: 160, settle: 120, exit: 100 });
+const MULTI_AWARD_AUTO_ADVANCE_MS = 1300;
 
 function resolvedEntries(items) {
   const all = getMedalEntries(readPlayerState().language || "ko");
@@ -288,6 +289,9 @@ function showOne(scene, entry, key, options = {}) {
 
     backdrop.on("pointerup", finish);
     art.setInteractive({ useHandCursor: true }).on("pointerup", finish);
+    if (options.autoAdvance) {
+      schedule(readyAt + (options.autoAdvanceDelay ?? MULTI_AWARD_AUTO_ADVANCE_MS), finish);
+    }
     scene.events.once("shutdown", onShutdown);
   });
 }
@@ -303,6 +307,8 @@ export async function showMedalAwardSequence(scene, items, options = {}) {
       y: options.y,
       index,
       total: entries.length,
+      autoAdvance: options.autoAdvance ?? entries.length > 1,
+      autoAdvanceDelay: options.autoAdvanceDelay,
     });
     if (!confirmed) return confirmedIds;
     confirmedIds.push(entry.id);
