@@ -1,13 +1,13 @@
-import { readPlayerState, redeemHiddenRewardCoupon, writePlayerState } from "../playerState.js?v=20260802-medal66";
-import { t } from "../i18n.js?v=20260802-medal66";
-import { SpriteButton } from "./SpriteButton.js?v=20260802-medal66";
-import { setMenuBgmVolume } from "../menuBgm.js?v=20260802-medal66";
+import { getPieceUnlockNotices, readPlayerState, redeemHiddenRewardCoupon, writePlayerState } from "../playerState.js?v=20260902-profile81";
+import { t } from "../i18n.js?v=20260902-profile81";
+import { SpriteButton } from "./SpriteButton.js?v=20260902-profile81";
+import { setMenuBgmVolume } from "../menuBgm.js?v=20260902-profile81";
 import {
   isVibrationSupported,
   playFeedback,
   primeAudioFromGesture,
   vibrateFeedback,
-} from "../feedback.js?v=20260802-medal66";
+} from "../feedback.js?v=20260902-profile81";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
@@ -249,6 +249,56 @@ export function addLargeTextButton(scene, x, y, label, subLabel, onClick, opts =
   return { button: btn, title, sub };
 }
 
+export function addOutlinedTextButton(scene, x, y, label, onClick, opts = {}) {
+  const width = opts.width ?? 300;
+  const height = opts.height ?? 62;
+  const depth = opts.depth ?? 50;
+  const button = scene.add.graphics().setPosition(x, y).setDepth(depth);
+  const title = scene.add.text(x, y, label, {
+    fontFamily: opts.fontFamily ?? KUMA_FONT_SANS,
+    fontSize: `${opts.fontSize ?? 22}px`,
+    color: opts.color ?? "#6f5942",
+    fontStyle: opts.fontStyle ?? "800",
+    align: "center",
+  }).setOrigin(0.5).setDepth(depth + 1);
+  let enabled = opts.enabled !== false;
+  let hovered = false;
+
+  const draw = () => {
+    button.clear();
+    button.fillStyle(hovered && enabled ? 0xfff3dc : 0xfff8ea, enabled ? 0.76 : 0.42);
+    button.fillRoundedRect(-width / 2, -height / 2, width, height, opts.radius ?? 7);
+    button.lineStyle(opts.lineWidth ?? 2, opts.stroke ?? 0xc7a57f, enabled ? 1 : 0.5);
+    button.strokeRoundedRect(-width / 2, -height / 2, width, height, opts.radius ?? 7);
+    title.setAlpha(enabled ? 1 : 0.48);
+  };
+  button.setInteractive(
+    new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+    Phaser.Geom.Rectangle.Contains,
+  );
+  button.input.cursor = enabled ? "pointer" : "default";
+  button.on("pointerover", () => {
+    hovered = true;
+    draw();
+  });
+  button.on("pointerout", () => {
+    hovered = false;
+    draw();
+  });
+  button.on("pointerdown", () => {
+    if (!enabled) return;
+    playFeedback("ui");
+    onClick?.();
+  });
+  const setEnabled = (nextEnabled) => {
+    enabled = nextEnabled !== false;
+    button.input.cursor = enabled ? "pointer" : "default";
+    draw();
+  };
+  draw();
+  return { button, title, setEnabled };
+}
+
 export function addDarkTopBar(scene, title = "Kuma Chess", opts = {}) {
   const { width } = scene.scale;
   const group = scene.add.container(0, 0).setDepth(900);
@@ -258,7 +308,7 @@ export function addDarkTopBar(scene, title = "Kuma Chess", opts = {}) {
   home.on("pointerdown", () => {
     playFeedback("ui");
     if (opts.onHome) opts.onHome();
-    else scene.scene.start("Start");
+    else if (!window.KumaEmbeddedRuntime?.returnHome?.()) scene.scene.start("Start");
   });
   const settings = scene.add.image(width - 90, 57, "kuma_ui_btn_seting").setDisplaySize(67, 67)
     .setInteractive({ useHandCursor: true });
@@ -270,9 +320,43 @@ export function addDarkTopBar(scene, title = "Kuma Chess", opts = {}) {
   return group;
 }
 
+export function addThreePatchPanel(scene, x, y, width, height, depth = 1000, options = {}) {
+  const prefix = options.texturePrefix ?? "kuma_ui_pop_3p";
+  const topKey = `${prefix}_top`;
+  const centerKey = `${prefix}_center`;
+  const bottomKey = `${prefix}_bottom`;
+  if (![topKey, centerKey, bottomKey].every((key) => scene.textures.exists(key))) return null;
+
+  const sourceWidth = options.sourceWidth ?? 789;
+  const topSourceHeight = options.topSourceHeight ?? 202;
+  const bottomSourceHeight = options.bottomSourceHeight ?? 159;
+  const scale = width / sourceWidth;
+  const topHeight = Math.round(topSourceHeight * scale);
+  const bottomHeight = Math.round(bottomSourceHeight * scale);
+  const overlap = Math.max(1, options.overlap ?? 2);
+  const centerHeight = Math.max(1, height - topHeight - bottomHeight + overlap * 2);
+  const container = scene.add.container(x, y).setDepth(depth);
+  const top = scene.add.image(0, -height / 2, topKey)
+    .setOrigin(0.5, 0).setDisplaySize(width, topHeight);
+  const center = scene.add.image(0, -height / 2 + topHeight - overlap, centerKey)
+    .setOrigin(0.5, 0).setDisplaySize(width, centerHeight);
+  const bottom = scene.add.image(0, height / 2 - bottomHeight, bottomKey)
+    .setOrigin(0.5, 0).setDisplaySize(width, bottomHeight);
+  container.add([center, top, bottom]);
+  return container;
+}
+
 export function addPanel(scene, x, y, width, height, depth = 1000) {
-  return scene.add.image(x, y, height > width * 1.05 ? "kuma_ui_popup_long" : "kuma_ui_popup")
-    .setDisplaySize(width, height)
+  return addThreePatchPanel(scene, x, y, width, height, depth)
+    || scene.add.image(x, y, height > width * 1.05 ? "kuma_ui_popup_long" : "kuma_ui_popup")
+      .setDisplaySize(width, height)
+      .setDepth(depth);
+}
+
+function addSettingsPanelArt(scene, x, y, width, depth = 1000) {
+  const scale = width / 790;
+  return scene.add.image(x, y, "kuma_ui_popup_long")
+    .setDisplaySize(width, 1130 * scale)
     .setDepth(depth);
 }
 
@@ -284,13 +368,13 @@ export function addLock(scene, x, y, size = 42, depth = 80) {
   return group;
 }
 
-export function createModalBackdrop(scene, depth = 9990) {
+export function createModalBackdrop(scene, depth = 9990, options = {}) {
   const { width, height } = scene.scale;
   const visibleObjects = scene.children.list.filter((obj) => obj.visible && obj.active !== false);
   const hiddenObjects = [];
   let snapshot = null;
 
-  if (scene.sys.game.renderer.type === Phaser.WEBGL) {
+  if (options.capture !== false && scene.sys.game.renderer.type === Phaser.WEBGL) {
     try {
       snapshot = scene.add.renderTexture(0, 0, width, height)
         .setOrigin(0)
@@ -309,7 +393,14 @@ export function createModalBackdrop(scene, depth = 9990) {
     }
   }
 
-  const dim = scene.add.rectangle(0, 0, width, height, 0x2b2118, 0.36)
+  const dim = scene.add.rectangle(
+    0,
+    0,
+    width,
+    height,
+    options.dimColor ?? 0x2b2118,
+    options.dimAlpha ?? 0.36,
+  )
     .setOrigin(0)
     .setDepth(depth + 1)
     .setInteractive();
@@ -345,6 +436,8 @@ export function showRewardLine(scene, message, options = {}) {
   const hold = options.hold ?? 1700;
   const depth = options.depth ?? 7000;
   const showCoin = options.showCoin !== false;
+  const customIcon = options.icon || null;
+  const hasIcon = showCoin || Boolean(customIcon);
   const particleScale = options.particleScale ?? 1;
   const tone = options.tone ?? "success";
   const isFailure = tone === "failure";
@@ -373,8 +466,9 @@ export function showRewardLine(scene, message, options = {}) {
   const coin = scene.add.image(-170, 0, "kuma_ui_coin_nomal")
     .setDisplaySize(46, 46)
     .setAlpha(0)
-    .setVisible(showCoin);
-  const label = scene.add.text(showCoin ? 18 : 0, 0, message, {
+    .setVisible(showCoin && !customIcon);
+  if (customIcon) customIcon.setPosition(-188, 0).setAlpha(0).setScale(0.72);
+  const label = scene.add.text(hasIcon ? 16 : 0, 0, message, {
     fontFamily: KUMA_FONT_SANS,
     fontSize: "29px",
     color: palette.text,
@@ -382,7 +476,9 @@ export function showRewardLine(scene, message, options = {}) {
     stroke: palette.stroke,
     strokeThickness: 3,
   }).setOrigin(0.5).setAlpha(0).setScale(0.82);
-  group.add([band, edgeTop, edgeBottom, coin, label]);
+  group.add([band, edgeTop, edgeBottom, coin]);
+  if (customIcon) group.add(customIcon);
+  group.add(label);
 
   scene.tweens.add({
     targets: [band, edgeTop, edgeBottom],
@@ -391,7 +487,7 @@ export function showRewardLine(scene, message, options = {}) {
     ease: "Cubic.Out",
   });
   scene.tweens.add({
-    targets: [coin, label],
+    targets: [customIcon || coin, label],
     alpha: 1,
     duration: 300,
     delay: 150,
@@ -405,13 +501,24 @@ export function showRewardLine(scene, message, options = {}) {
     delay: 150,
     ease: "Back.Out",
   });
-  scene.tweens.add({
-    targets: coin,
-    angle: 360,
-    duration: 700,
-    delay: 180,
-    ease: "Cubic.Out",
-  });
+  if (customIcon) {
+    scene.tweens.add({
+      targets: customIcon,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 430,
+      delay: 150,
+      ease: "Back.Out",
+    });
+  } else {
+    scene.tweens.add({
+      targets: coin,
+      angle: 360,
+      duration: 700,
+      delay: 180,
+      ease: "Cubic.Out",
+    });
+  }
 
   for (let i = 0; i < particleCount; i += 1) {
     const spark = scene.add.rectangle(
@@ -451,38 +558,45 @@ export function showRewardLine(scene, message, options = {}) {
   return group;
 }
 
-export function showSettingsPanel(scene) {
+export function showSettingsPanel(scene, options = {}) {
   if (scene.settingsLayer) return;
   const { width, height } = scene.scale;
   const current = readPlayerState();
   const pending = { ...current };
   const vibrationAvailable = isVibrationSupported();
-  const backdrop = createModalBackdrop(scene, 9990);
+  const backdrop = createModalBackdrop(scene, 9990, options.externalBackdrop
+    ? { capture: false, dimAlpha: 0.001 }
+    : undefined);
   const layer = scene.add.container(0, 0).setDepth(10000);
   scene.settingsLayer = layer;
 
-  const panelW = Math.min(514, width * 0.86);
-  const panelH = 800;
+  const panelW = Math.min(632, width * 0.88);
+  const panelScale = panelW / 790;
+  const panelH = 1130 * panelScale;
   const px = width / 2;
   const py = height / 2;
-  const contentY = py - 44;
-  const panel = addPanel(scene, px, py, panelW, panelH, 10001);
-  const title = scene.add.text(px, contentY - 250, t("settings.title", {}, current.language), {
+  const panelLeft = px - panelW / 2;
+  const panelTop = py - panelH / 2;
+  const sx = (value) => panelLeft + value * panelScale;
+  const sy = (value) => panelTop + value * panelScale;
+  const ss = (value) => value * panelScale;
+  const panel = addSettingsPanelArt(scene, px, py, panelW, 10001);
+  const title = scene.add.text(px, sy(160), t("settings.title", {}, current.language), {
     fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
-    fontSize: "28px",
+    fontSize: `${ss(44)}px`,
     color: KUMA_COLORS.ink,
     fontStyle: "900",
   }).setOrigin(0.5).setDepth(10002);
-  const divider = scene.add.rectangle(px, contentY - 210, panelW * 0.72, 2, 0xc69d72).setDepth(10002);
+  const divider = scene.add.rectangle(px, sy(203), ss(563), Math.max(2, ss(4)), 0xc49f78).setDepth(10002);
   layer.add([panel, title, divider]);
 
   const redraw = () => {
     controls?.destroy();
     title.setText(t("settings.title", {}, pending.language));
     controls = scene.add.container(0, 0).setDepth(10003);
-    const langTitle = scene.add.text(px, contentY - 165, t("settings.language", {}, pending.language), {
+    const langTitle = scene.add.text(px, sy(252), t("settings.language", {}, pending.language), {
       fontFamily: KUMA_FONT_SANS,
-      fontSize: "28px",
+      fontSize: `${ss(38)}px`,
       color: KUMA_COLORS.ink,
       fontStyle: "800",
     }).setOrigin(0.5);
@@ -493,37 +607,40 @@ export function showSettingsPanel(scene) {
       { key: "ja", label: "あ" },
     ];
     langs.forEach((lang, i) => {
-      const x = px - 100 + i * 100;
+      const x = sx(235 + i * 160);
       const selected = pending.language === lang.key;
       const box = scene.add.graphics();
       box.fillStyle(selected ? 0xfff1c8 : 0xfff8eb, 0.95);
-      box.fillRoundedRect(x - 42, contentY - 123, 84, 58, 6);
-      box.lineStyle(2, selected ? 0xd8a344 : 0xc69d72, 1);
-      box.strokeRoundedRect(x - 42, contentY - 123, 84, 58, 6);
-      box.setInteractive(new Phaser.Geom.Rectangle(x - 42, contentY - 123, 84, 58), Phaser.Geom.Rectangle.Contains);
+      box.fillRoundedRect(x - ss(68.5), sy(297.5), ss(137), ss(97), ss(8.5));
+      box.lineStyle(Math.max(2, ss(3)), selected ? 0xd8a344 : 0xc49f78, 1);
+      box.strokeRoundedRect(x - ss(68.5), sy(297.5), ss(137), ss(97), ss(8.5));
+      box.setInteractive(
+        new Phaser.Geom.Rectangle(x - ss(68.5), sy(297.5), ss(137), ss(97)),
+        Phaser.Geom.Rectangle.Contains
+      );
       box.on("pointerdown", () => {
         playFeedback("ui");
         pending.language = lang.key;
         redraw();
       });
-      const txt = scene.add.text(x, contentY - 94, lang.label, {
+      const txt = scene.add.text(x, sy(346), lang.label, {
         fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
-        fontSize: "24px",
+        fontSize: `${ss(36)}px`,
         color: selected ? KUMA_COLORS.teal : "#876f58",
         fontStyle: "900",
       }).setOrigin(0.5);
       controls.add([box, txt]);
     });
 
-    const makeToggle = (x, y, label, asset, value, onClick, enabled = true) => {
-      const labelObj = scene.add.text(x, y - 48, label, {
+    const makeToggle = (x, label, asset, value, onClick, enabled = true) => {
+      const labelObj = scene.add.text(x, sy(445), label, {
         fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
-        fontSize: "25px",
+        fontSize: `${ss(34)}px`,
         color: KUMA_COLORS.ink,
         fontStyle: "800",
       }).setOrigin(0.5);
-      const button = scene.add.image(x, y, `kuma_ui_${asset}_${value ? "on" : "off"}`)
-        .setDisplaySize(64, 64).setDepth(10004);
+      const button = scene.add.image(x, sy(525), `kuma_ui_${asset}_${value ? "on" : "off"}`)
+        .setDisplaySize(ss(100), ss(100)).setDepth(10004);
       if (enabled) button.setInteractive({ useHandCursor: true }).on("pointerdown", onClick);
       else button.setAlpha(0.46);
       if (!enabled) {
@@ -532,7 +649,7 @@ export function showSettingsPanel(scene) {
       controls.add([labelObj, button]);
     };
 
-    makeToggle(px - 110, contentY + 12, t("settings.sound", {}, pending.language), "btn_sound", pending.soundEnabled, () => {
+    makeToggle(sx(235), t("settings.sound", {}, pending.language), "btn_sound", pending.soundEnabled, () => {
       pending.soundEnabled = !pending.soundEnabled;
       if (pending.soundEnabled) {
         primeAudioFromGesture(true);
@@ -540,50 +657,50 @@ export function showSettingsPanel(scene) {
       }
       redraw();
     });
-    makeToggle(px + 110, contentY + 12, t("settings.vibration", {}, pending.language), "btn_vibration", pending.vibrationEnabled !== false, () => {
+    makeToggle(sx(555), t("settings.vibration", {}, pending.language), "btn_vibration", pending.vibrationEnabled !== false, () => {
       pending.vibrationEnabled = pending.vibrationEnabled === false;
       if (pending.vibrationEnabled) vibrateFeedback("success", true);
       redraw();
     }, vibrationAvailable);
 
-    const sliderY = contentY + 137;
-    const sliderLeft = px - 145;
-    const sliderRight = px + 145;
-    const volumeLabel = scene.add.text(sliderLeft, contentY + 90, t("settings.bgmVolume", {}, pending.language), {
+    const sliderY = sy(685);
+    const sliderLeft = sx(165);
+    const sliderRight = sx(625);
+    const volumeLabel = scene.add.text(sliderLeft, sy(635), t("settings.bgmVolume", {}, pending.language), {
       fontFamily: KUMA_FONT_SANS,
-      fontSize: "23px",
+      fontSize: `${ss(32)}px`,
       color: KUMA_COLORS.ink,
       fontStyle: "800",
     }).setOrigin(0, 0.5);
-    const volumeValue = scene.add.text(sliderRight, contentY + 90, "", {
+    const volumeValue = scene.add.text(sliderRight, sy(635), "", {
       fontFamily: KUMA_FONT_SANS,
-      fontSize: "22px",
+      fontSize: `${ss(34)}px`,
       color: KUMA_COLORS.teal,
       fontStyle: "800",
     }).setOrigin(1, 0.5);
     const slider = scene.add.graphics();
-    const sliderHit = scene.add.rectangle(px, sliderY, 330, 52, 0xffffff, 0.001)
+    const sliderHit = scene.add.rectangle(px, sliderY, ss(500), ss(56), 0xffffff, 0.001)
       .setInteractive({ useHandCursor: true });
     const drawSlider = () => {
       const value = Math.min(1, Math.max(0, Number(pending.bgmVolume) || 0));
       const thumbX = Phaser.Math.Linear(sliderLeft, sliderRight, value);
       slider.clear();
-      slider.lineStyle(10, 0xd8c6aa, 0.8);
+      slider.lineStyle(ss(10), 0xcab69e, 1);
       slider.beginPath();
       slider.moveTo(sliderLeft, sliderY);
       slider.lineTo(sliderRight, sliderY);
       slider.strokePath();
       if (value > 0) {
-        slider.lineStyle(10, 0xd8a344, 1);
+        slider.lineStyle(ss(20), 0x009cbc, 1);
         slider.beginPath();
         slider.moveTo(sliderLeft, sliderY);
         slider.lineTo(thumbX, sliderY);
         slider.strokePath();
       }
       slider.fillStyle(0xfff6e5, 1);
-      slider.fillCircle(thumbX, sliderY, 17);
-      slider.lineStyle(4, 0xbd852b, 1);
-      slider.strokeCircle(thumbX, sliderY, 17);
+      slider.fillCircle(thumbX, sliderY, ss(23));
+      slider.lineStyle(ss(4), 0x009cbc, 1);
+      slider.strokeCircle(thumbX, sliderY, ss(23));
       volumeValue.setText(`${Math.round(value * 100)}%`);
     };
     const updateVolume = (pointerX) => {
@@ -598,15 +715,7 @@ export function showSettingsPanel(scene) {
     drawSlider();
     controls.add([volumeLabel, volumeValue, slider, sliderHit]);
 
-    const contact = scene.add.text(px, contentY + 180, t("settings.contact", {}, pending.language), {
-      fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
-      fontSize: "22px",
-      color: "#c49a74",
-      fontStyle: "800",
-    }).setOrigin(0.5);
-    controls.add(contact);
-
-    const coupon = addLargeTextButton(scene, px, contentY + 228, t("settings.coupon", {}, pending.language), "", () => {
+    const redeemCoupon = () => {
       const code = window.prompt(t("settings.couponPrompt", {}, pending.language));
       if (code === null) return;
       const result = redeemHiddenRewardCoupon(code);
@@ -620,29 +729,62 @@ export function showSettingsPanel(scene) {
           ? t("settings.couponAlready", {}, pending.language)
           : t("settings.couponSuccess", {}, pending.language)
         : t("settings.couponInvalid", {}, pending.language);
-      showRewardLine(scene, message, {
-        tone: result.ok ? "success" : "failure",
-        showCoin: false,
-        depth: 10100,
-      });
-    }, {
-      width: 180,
-      height: 58,
-      fontSize: 22,
-      depth: 10004,
-    });
-    controls.add([coupon.button, coupon.title]);
+      const unlockNotices = result.ok && !result.alreadyUnlocked ? getPieceUnlockNotices() : [];
+      if (unlockNotices.length) {
+        import("./PieceUnlockLine.js?v=20260902-profile81").then(({ showPieceUnlockNoticeSequence }) => {
+          showPieceUnlockNoticeSequence(scene, unlockNotices, { depth: 10100 });
+        });
+      } else {
+        showRewardLine(scene, message, {
+          tone: result.ok ? "success" : "failure",
+          showCoin: false,
+          depth: 10100,
+        });
+      }
+    };
 
-    const cancel = addLargeTextButton(scene, px - 100, contentY + 300, t("common.cancel", {}, pending.language), "", () => close(false), {
-      width: 180,
-      height: 70,
-      fontSize: 24,
+    const couponX = px;
+    const couponY = sy(799);
+    const couponW = ss(457);
+    const couponH = ss(77);
+    const couponBox = scene.add.graphics();
+    couponBox.fillStyle(0xfff8eb, 0.18);
+    couponBox.fillRoundedRect(couponX - couponW / 2, couponY - couponH / 2, couponW, couponH, ss(8.5));
+    couponBox.lineStyle(Math.max(2, ss(3)), 0xc49f78, 1);
+    couponBox.strokeRoundedRect(couponX - couponW / 2, couponY - couponH / 2, couponW, couponH, ss(8.5));
+    couponBox.setInteractive(
+      new Phaser.Geom.Rectangle(couponX - couponW / 2, couponY - couponH / 2, couponW, couponH),
+      Phaser.Geom.Rectangle.Contains
+    ).on("pointerdown", () => {
+      playFeedback("ui");
+      redeemCoupon();
+    });
+    const couponText = scene.add.text(couponX, couponY, t("settings.coupon", {}, pending.language), {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: `${ss(34)}px`,
+      color: "#8a6e51",
+      fontStyle: "800",
+    }).setOrigin(0.5);
+    controls.add([couponBox, couponText]);
+
+    const contact = scene.add.text(px, sy(880), t("settings.contact", {}, pending.language), {
+      fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
+      fontSize: `${ss(29)}px`,
+      color: "#c49a74",
+      fontStyle: "800",
+    }).setOrigin(0.5);
+    controls.add(contact);
+
+    const cancel = addLargeTextButton(scene, sx(236), sy(983), t("common.cancel", {}, pending.language), "", () => close(false), {
+      width: ss(280),
+      height: ss(122),
+      fontSize: ss(34),
       depth: 10004,
     });
-    const apply = addLargeTextButton(scene, px + 100, contentY + 300, t("common.apply", {}, pending.language), "", () => close(true), {
-      width: 180,
-      height: 70,
-      fontSize: 24,
+    const apply = addLargeTextButton(scene, sx(549), sy(983), t("common.apply", {}, pending.language), "", () => close(true), {
+      width: ss(292),
+      height: ss(122),
+      fontSize: ss(34),
       dark: true,
       depth: 10004,
     });
@@ -665,6 +807,7 @@ export function showSettingsPanel(scene) {
     backdrop.cleanup();
     layer.destroy();
     scene.settingsLayer = null;
+    options.onClose?.({ applied: apply });
     if (languageChanged) {
       if (typeof scene.refreshLanguage === "function") scene.refreshLanguage();
       else scene.scene.restart();

@@ -1,0 +1,73 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+const failures = [];
+
+for (const file of [
+  "firebase.json",
+  "firestore.rules",
+  "firestore.indexes.json",
+  "src/firebaseConfig.js",
+  "src/firebaseClientEntry.js",
+  "firebase-client.js",
+]) {
+  if (!fs.existsSync(path.join(root, file))) failures.push(`${file}: missing`);
+}
+
+const rules = read("firestore.rules");
+for (const deniedPath of ["wallets", "rewardClaims", "gameEvents"]) {
+  const block = rules.match(new RegExp(`match \\/${deniedPath}[^}]+\\{([\\s\\S]*?)\\n    \\}`, "m"))?.[1] || "";
+  if (!block.includes("allow write: if false") && !block.includes("allow read, write: if false")) {
+    failures.push(`firestore.rules: ${deniedPath} client writes are not explicitly denied`);
+  }
+}
+if (!rules.includes("request.auth.uid == uid")) failures.push("firestore.rules: owner check is missing");
+if (!rules.includes("source == 'local-unverified'")) failures.push("firestore.rules: local progress trust label is missing");
+if (!rules.includes("match /leaderboards/{season}/entries/{entryId}")) {
+  failures.push("firestore.rules: read-only leaderboard path is missing");
+}
+if (!rules.includes("validAccountType(request.resource.data.accountType)")) {
+  failures.push("firestore.rules: account type is not bound to the authentication provider");
+}
+if (!rules.includes("match /nicknameClaims/{displayName}")
+  || !rules.includes("request.resource.data.displayName == displayName")
+  || !rules.includes("nicknameClaims/$(request.resource.data.displayName)")) {
+  failures.push("firestore.rules: unique nickname claims are not bound to profile writes");
+}
+
+const client = read("src/firebaseClientEntry.js");
+for (const forbiddenField of [
+  "coins",
+  "rewardClaims",
+  "specialPieces",
+  "unlockedSkinColors",
+  "ownedProfilePortraits",
+  "ownedProfileFrames",
+]) {
+  if (new RegExp(`\\b${forbiddenField}\\b`).test(client)) {
+    failures.push(`src/firebaseClientEntry.js: authoritative field ${forbiddenField} must not be uploaded`);
+  }
+}
+if (client.includes("getAnalytics") || client.includes("firebase/analytics")) {
+  failures.push("src/firebaseClientEntry.js: Analytics requires a separate consent decision");
+}
+if (!client.includes("getLeaderboard") || !client.includes("weekly-current") || !client.includes("all-time")) {
+  failures.push("src/firebaseClientEntry.js: verified leaderboard read API is missing");
+}
+if (!client.includes("reserveNickname") || !client.includes("runTransaction")
+  || !client.includes("nicknameClaims") || !client.includes("nicknameClaimsSupported")) {
+  failures.push("src/firebaseClientEntry.js: transactional nickname reservation is missing");
+}
+if (client.includes("uid: boundedText(snapshot.id")) {
+  failures.push("src/firebaseClientEntry.js: leaderboard responses must not expose document IDs as auth UIDs");
+}
+
+if (failures.length) {
+  console.error(failures.join("\n"));
+  process.exitCode = 1;
+} else {
+  console.log("Firebase validation passed: client sync is owner-scoped, unverified, and excludes authoritative economy fields.");
+}

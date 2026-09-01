@@ -6,5 +6,7 @@ window.KUMA_ADS_CONFIG = Object.freeze({
   enabled: false,
   client: "ca-pub-7173992156420612",
   topSlot: "",
+  sideSlot: "",
+  inlineSlot: "",
   testMode: false,
 });

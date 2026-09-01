@@ -59,7 +59,14 @@ function scanContent(label, content) {
   if (content.includes("\0")) return;
   for (const pattern of secretPatterns) {
     pattern.expression.lastIndex = 0;
-    if (pattern.expression.test(content)) findings.push(`${label}: possible ${pattern.name}`);
+    const isFirebaseWebBundle = /(?:^|:)(?:src\/firebaseConfig\.js|firebase-client\.js)(?:@|$)/.test(label)
+      && content.includes("kuma-chess.firebaseapp.com")
+      && content.includes("kuma-chess");
+    if (pattern.expression.test(content)) {
+      const publicFirebaseKey = isFirebaseWebBundle
+        && ["Google API key", "hard-coded credential"].includes(pattern.name);
+      if (!publicFirebaseKey) findings.push(`${label}: possible ${pattern.name}`);
+    }
   }
 }
 
@@ -116,6 +123,25 @@ if (scriptPolicy.includes("'unsafe-inline'")) findings.push("index.html: script-
 const adsConfig = fs.readFileSync(path.join(root, "ads-config.js"), "utf8");
 if (/enabled:\s*true/.test(adsConfig) && !/ca-pub-\d+/.test(adsConfig)) {
   findings.push("ads-config.js: ads enabled without a valid publisher id");
+}
+
+for (const page of ["index.html", "play.html", "privacy.html", "guide.html"]) {
+  const html = fs.readFileSync(path.join(root, page), "utf8");
+  if (/id=["']kuma-adsense-script["']/.test(html)) {
+    findings.push(`${page}: AdSense must be loaded only after the enabled configuration is validated`);
+  }
+}
+
+const responseHeaders = fs.readFileSync(path.join(root, "_headers"), "utf8");
+const responseCsp = responseHeaders.match(/Content-Security-Policy:\s*([^\n]+)/)?.[1] || "";
+const framePolicy = responseCsp.match(/frame-src\s+([^;]+)/)?.[1] || "";
+if (!responseCsp.includes("frame-ancestors 'self'")) findings.push("_headers: CSP must restrict frame ancestors");
+if (!framePolicy.includes("'self'")) findings.push("_headers: CSP must allow the same-origin game iframe");
+
+const serviceWorker = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+if (!serviceWorker.includes("cache.put(navigationCacheKey")
+  || !serviceWorker.includes("if (!response.ok) return response")) {
+  findings.push("sw.js: navigation responses must use normalized cache keys and cache only successful responses");
 }
 
 if (findings.length) {

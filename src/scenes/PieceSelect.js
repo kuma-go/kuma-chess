@@ -1,16 +1,17 @@
-import { createPieceView } from "../pieceStyles.js?v=20260802-medal66";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260802-medal66";
+import { createPieceView } from "../pieceStyles.js?v=20260902-profile81";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260902-profile81";
 import {
   getGoldBearProgress,
+  getPieceUnlockNotices,
   getSkinUnlockState,
   isSkinUnlocked,
   readPlayerState,
   SKIN_SHOP,
   unlockGoldBearPiece,
   unlockSkin,
-} from "../playerState.js?v=20260802-medal66";
-import { skinName, t } from "../i18n.js?v=20260802-medal66";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260802-medal66";
+} from "../playerState.js?v=20260902-profile81";
+import { skinName, t } from "../i18n.js?v=20260902-profile81";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260902-profile81";
 import {
   addBackButton,
   addCoinPill,
@@ -28,7 +29,8 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260802-medal66";
+} from "../ui/KumaUi.js?v=20260902-profile81";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-profile81";
 
 const SHOP = SKIN_SHOP;
 const COMPACT_SHOP = SHOP.length > 9;
@@ -63,7 +65,14 @@ export class PieceSelect extends Phaser.Scene {
     addScreenBg(this, "bg_select");
     this.refreshCoins();
     addSettingsButton(this, () => showSettingsPanel(this));
-    addPageTitle(this, t("select.title"), t("select.subtitle"), 68);
+    this.targetScene = this.registry.get("pieceSelectTargetScene") || "Game";
+    const isTug = this.targetScene === "KingdomTug";
+    const isRoad = this.targetScene === "RoyalRoad";
+    const isCrown = this.targetScene === "CrownClash";
+    const isSiege = this.targetScene === "KingdomSiege";
+    const titleKey = isTug ? "tug.selectTitle" : isRoad ? "road.selectTitle" : isCrown ? "crown.selectTitle" : isSiege ? "siege.selectTitle" : "select.title";
+    const subtitleKey = isTug ? "tug.selectSubtitle" : isRoad ? "road.selectSubtitle" : isCrown ? "crown.selectSubtitle" : isSiege ? "siege.selectSubtitle" : "select.subtitle";
+    addPageTitle(this, t(titleKey), t(subtitleKey), 68);
 
     const saved = this.registry.get("pieceSkin") || { w: "classic", b: "classic" };
     this.skinW = this.isUnlocked(saved.w, "w") ? saved.w : "classic";
@@ -74,8 +83,11 @@ export class PieceSelect extends Phaser.Scene {
     this.renderList();
     this.registerScrollInput();
 
-    addBackButton(this, () => this.scene.start("Start"), 67, height - 68);
-    addLargeTextButton(this, width / 2, 1129, t("select.start"), "", () => this.startGame(), {
+    addBackButton(this, () => {
+      if (!window.KumaEmbeddedRuntime?.returnHome?.()) this.scene.start("Start");
+    }, 67, height - 68);
+    const startKey = isTug ? "tug.start" : isRoad ? "road.start" : isCrown ? "crown.start" : isSiege ? "siege.start" : "select.start";
+    addLargeTextButton(this, width / 2, 1129, t(startKey), "", () => this.startGame(), {
       width: 447,
       height: 108,
       fontSize: 43,
@@ -106,7 +118,7 @@ export class PieceSelect extends Phaser.Scene {
       if (sceneRun !== this._sceneRun || !this.scene.isActive()) return;
       this.registry.set("gameMode", "pvp");
       this.registry.set("pieceSkin", { w: this.skinW, b: this.skinB });
-      this.scene.start("Game");
+      this.scene.start(this.targetScene || "Game");
     } catch (error) {
       if (this.scene.isActive()) {
         showRewardLine(this, t("select.loadFailed"), {
@@ -352,7 +364,9 @@ export class PieceSelect extends Phaser.Scene {
         const keepScroll = this.scrollY;
         this.renderList();
         this.setScroll(keepScroll);
-        showRewardLine(this, result.setUnlocked
+        const notices = getPieceUnlockNotices();
+        if (notices.length) showPieceUnlockNoticeSequence(this, notices);
+        else showRewardLine(this, result.setUnlocked
           ? t("select.goldBearSetUnlocked")
           : t("select.goldBearPieceDone", { piece: piece.nameKo }), {
           showCoin: false,

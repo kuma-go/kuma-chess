@@ -1,9 +1,16 @@
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260802-medal66";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260902-profile81";
+import {
+  DEFAULT_PROFILE_FRAME_ID,
+  DEFAULT_PROFILE_PORTRAIT_ID,
+  getProfileFrame,
+  getProfilePortrait,
+} from "./profileCatalog.js?v=20260902-profile81";
 
 export const PROFILE_STATE_KEY = "kumaChessProfileState";
 export const PROFILE_STATE_BACKUP_KEY = "kumaChessProfileStateBackupV1";
 
-const STATE_VERSION = 1;
+const STATE_VERSION = 2;
+const PLAYER_CODE_KEY = "kumaChessPlayerCode";
 const PROFILE_KEYS = Object.freeze([
   "displayName",
   "avatar",
@@ -16,7 +23,12 @@ const PROFILE_KEYS = Object.freeze([
 const DEFAULT_PROFILE = Object.freeze({
   version: STATE_VERSION,
   displayName: "",
-  avatar: Object.freeze({ skinId: "classic", color: "w" }),
+  avatar: Object.freeze({
+    portraitId: DEFAULT_PROFILE_PORTRAIT_ID,
+    frameId: DEFAULT_PROFILE_FRAME_ID,
+    skinId: "classic",
+    color: "w",
+  }),
   language: "ko",
   soundEnabled: true,
   bgmVolume: 0.35,
@@ -27,9 +39,37 @@ function cleanText(value, limit) {
   return String(value || "").trim().slice(0, limit);
 }
 
+export function normalizeDisplayName(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replaceAll("/", "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 16);
+}
+
+function defaultPlayerName() {
+  try {
+    let code = window.localStorage.getItem(PLAYER_CODE_KEY);
+    if (!/^\d{8}$/.test(code || "")) {
+      const random = new Uint32Array(1);
+      window.crypto?.getRandomValues?.(random);
+      code = String((random[0] || Math.floor(Math.random() * 100000000)) % 100000000)
+        .padStart(8, "0");
+      window.localStorage.setItem(PLAYER_CODE_KEY, code);
+    }
+    return `Player ${code}`;
+  } catch (_error) {
+    return "Player 00000000";
+  }
+}
+
 function normalizeAvatar(value) {
   const input = value && typeof value === "object" ? value : {};
   return {
+    portraitId: getProfilePortrait(input.portraitId).id,
+    frameId: getProfileFrame(input.frameId).id,
     skinId: cleanText(input.skinId || input.skin || "classic", 40) || "classic",
     color: input.color === "b" || input.color === "black" ? "b" : "w",
   };
@@ -55,7 +95,7 @@ export function normalizeProfile(source = null, legacy = null) {
 
   return {
     version: STATE_VERSION,
-    displayName: cleanText(saved.displayName ?? fallback.displayName, 24),
+    displayName: normalizeDisplayName(saved.displayName ?? fallback.displayName) || defaultPlayerName(),
     avatar: normalizeAvatar(saved.avatar ?? fallback.avatar),
     language,
     soundEnabled,
@@ -114,6 +154,9 @@ export function writeProfileState(profile) {
   writeJsonToStorage([PROFILE_STATE_KEY, PROFILE_STATE_BACKUP_KEY], normalized);
   try {
     window.dispatchEvent(new CustomEvent("kuma-profile-changed", { detail: normalized }));
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "kuma-profile-changed" }, window.location.origin);
+    }
   } catch (_error) {
     // Non-browser validation runs do not need DOM events.
   }

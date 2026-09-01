@@ -1,16 +1,16 @@
-import { Chess } from "../vendor-chess.js?v=20260802-medal66";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260802-medal66";
-import { playFeedback } from "../feedback.js?v=20260802-medal66";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260802-medal66";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260802-medal66";
+import { Chess } from "../vendor-chess.js?v=20260902-profile81";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260902-profile81";
+import { playFeedback } from "../feedback.js?v=20260902-profile81";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260902-profile81";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260902-profile81";
 import {
   markMedalsSeen,
   recordPuzzleCompletion,
   recordPuzzleHint,
-} from "../medals.js?v=20260802-medal66";
-import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260802-medal66";
-import { COSTS, spendCoins } from "../playerState.js?v=20260802-medal66";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260802-medal66";
+} from "../medals.js?v=20260902-profile81";
+import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260902-profile81";
+import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260902-profile81";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260902-profile81";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -23,8 +23,9 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260802-medal66";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260802-medal66";
+} from "../ui/KumaUi.js?v=20260902-profile81";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260902-profile81";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-profile81";
 
 const FILES = "abcdefgh";
 
@@ -763,15 +764,33 @@ export class Puzzle extends Phaser.Scene {
       ...medalResult.newlyUnlocked,
       ...dailyResult.newlyUnlocked,
     ]));
+    const pieceUnlockNotices = getPieceUnlockNotices();
+    const pieceNoticeDelay = 2850;
+    if (pieceUnlockNotices.length) {
+      this.time.delayedCall(pieceNoticeDelay, () => {
+        showPieceUnlockNoticeSequence(this, pieceUnlockNotices, {
+          y: this.scale.height * 0.48,
+        });
+      });
+    }
     if (newlyUnlocked.length) {
-      this.time.delayedCall(2850, async () => {
+      const medalDelay = pieceNoticeDelay
+        + (pieceUnlockNotices.length ? pieceUnlockSequenceDuration(pieceUnlockNotices) + 150 : 0);
+      this.time.delayedCall(medalDelay, async () => {
         const confirmedIds = await showMedalAwardSequence(this, newlyUnlocked, {
           y: this.scale.height * 0.48,
         });
         if (confirmedIds.length) markMedalsSeen(confirmedIds);
       });
     }
-    this.showNextButton();
+    if (pieceUnlockNotices.length) {
+      this.time.delayedCall(
+        pieceNoticeDelay + pieceUnlockSequenceDuration(pieceUnlockNotices),
+        () => this.showNextButton(),
+      );
+    } else {
+      this.showNextButton();
+    }
   }
 
   showNextButton() {

@@ -1,6 +1,10 @@
-import { SpriteButton } from "./SpriteButton.js?v=20260802-medal66";
-import { t as translate } from "../i18n.js?v=20260802-medal66";
-import { createModalBackdrop, KUMA_FONT_SANS } from "./KumaUi.js?v=20260802-medal66";
+import { t as translate } from "../i18n.js?v=20260902-profile81";
+import {
+  addLargeTextButton,
+  addPanel,
+  createModalBackdrop,
+  KUMA_FONT_SANS,
+} from "./KumaUi.js?v=20260902-profile81";
 
 /**
  * 공용 Confirm Popup
@@ -17,19 +21,20 @@ export function showConfirm(scene, opts) {
     cancelText = translate("common.cancel"),
     onConfirm,
     onCancel,
+    depth = 10000,
   } = opts;
 
   const { width, height } = scene.scale;
 
-  const backdrop = createModalBackdrop(scene, 9990);
-  const layer = scene.add.container(0, 0).setDepth(10000);
+  const backdrop = createModalBackdrop(scene, depth - 10);
+  const layer = scene.add.container(0, 0).setDepth(depth);
 
   const panelW = Math.min(514, width * 0.86);
   const panelH = 447;
   const px = width / 2;
   const py = height / 2;
 
-  const panel = scene.add.image(px, py, "kuma_ui_popup").setDisplaySize(panelW, panelH);
+  const panel = addPanel(scene, px, py, panelW, panelH, depth + 1);
   layer.add(panel);
 
   const t = scene.add.text(px, py - 110, title, {
@@ -56,52 +61,33 @@ export function showConfirm(scene, opts) {
   const leftX = px - 105;
   const rightX = px + 105;
 
-  const cancelBtn = new SpriteButton(scene, leftX, btnY, {
-    normal: "kuma_ui_btn_pop_w_normal",
-    hover: "kuma_ui_btn_pop_w_normal",
-    pressed: "kuma_ui_btn_pop_w_normal",
-  }, () => {
+  let closed = false;
+  const close = (confirmed) => {
+    if (closed) return;
+    closed = true;
+    scene.events.off(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
     backdrop.cleanup();
-    layer.destroy();
-    if (onCancel) onCancel();
-  }).setScaleTo(187, 81);
-  layer.add(cancelBtn);
+    if (layer.scene) layer.destroy();
+    if (confirmed) onConfirm?.();
+    else onCancel?.();
+  };
+  const onShutdown = () => close(false);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
 
-  const cancelLabel = scene.add.text(leftX, btnY, cancelText, {
-    fontFamily: KUMA_FONT_SANS,
-    fontSize: "22px",
-    color: "#0b1020",
-    fontStyle: "700",
-  }).setOrigin(0.5);
-  layer.add(cancelLabel);
-
-  const okBtn = new SpriteButton(scene, rightX, btnY, {
-    normal: "kuma_ui_btn_pop_b_normal",
-    hover: "kuma_ui_btn_pop_b_normal",
-    pressed: "kuma_ui_btn_pop_b_normal",
-  }, () => {
-    backdrop.cleanup();
-    layer.destroy();
-    if (onConfirm) onConfirm();
-  }).setScaleTo(195, 81);
-  layer.add(okBtn);
-
-  const okLabel = scene.add.text(rightX, btnY, confirmText, {
-    fontFamily: KUMA_FONT_SANS,
-    fontSize: "22px",
-    color: "#fff8dc",
-    fontStyle: "700",
-  }).setOrigin(0.5);
-  layer.add(okLabel);
+  const cancel = addLargeTextButton(scene, leftX, btnY, cancelText, "", () => close(false), {
+    width: 187, height: 81, fontSize: 22, depth: depth + 2,
+  });
+  const confirm = addLargeTextButton(scene, rightX, btnY, confirmText, "", () => close(true), {
+    width: 195, height: 81, fontSize: 22, dark: true, depth: depth + 2,
+  });
+  layer.add([cancel.button, cancel.title, confirm.button, confirm.title]);
 
   // esc로 닫기(데스크탑)
   const esc = scene.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
   if (esc) {
     esc.once("down", () => {
       if (!layer.scene) return;
-      backdrop.cleanup();
-      layer.destroy();
-      if (onCancel) onCancel();
+      close(false);
     });
   }
 

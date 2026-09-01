@@ -46,6 +46,15 @@ function completeDay(date, suffix) {
   daily.recordDailyPuzzleCompletion({ sessionId: `puzzle-a-${suffix}`, hintUsed: false }, date);
   daily.recordDailyPuzzleCompletion({ sessionId: `puzzle-b-${suffix}`, hintUsed: false }, date);
   daily.recordDailyGameCompletion(syntheticWinningGame(`game-${suffix}`), date);
+  for (const gameId of ["tug", "road", "crown"]) {
+    daily.recordDailyMiniGameCompletion({
+      sessionId: `${gameId}-${suffix}`,
+      gameId,
+      mode: "ai",
+      playerColor: "w",
+      winnerColor: "w",
+    }, date);
+  }
   return daily.getDailyMissionSnapshot(date);
 }
 
@@ -73,6 +82,16 @@ const coinsAfterFirst = player.readPlayerState().coins;
 daily.recordDailyGameCompletion(syntheticWinningGame("game-day-1"), firstDay);
 daily.markDailyMissionsSeen(firstDay);
 assert.equal(player.readPlayerState().coins, coinsAfterFirst, "A duplicate event awarded coins twice.");
+
+const miniGameDefinitions = daily.getDailyMissionDefinitions();
+assert.ok(
+  Object.values(miniGameDefinitions).flat().some((mission) => mission.metric === "miniGameCompletions"),
+  "Daily missions must include mini-game participation.",
+);
+assert.ok(
+  Object.values(miniGameDefinitions).flat().some((mission) => mission.metric === "miniGameVariety"),
+  "Daily missions must include distinct mini-game variety.",
+);
 
 for (let offset = 1; offset < 7; offset += 1) {
   const date = new Date(2026, 6, 24 + offset, 12);

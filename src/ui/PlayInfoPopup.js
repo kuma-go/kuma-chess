@@ -4,16 +4,21 @@ import {
   getPlayStats,
   getSkinUnlockState,
   readPlayerState,
-} from "../playerState.js?v=20260802-medal66";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260802-medal66";
-import { getMedalSummary } from "../medals.js?v=20260802-medal66";
+} from "../playerState.js?v=20260902-profile81";
+import { readProfileState } from "../profileState.js?v=20260902-profile81";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260902-profile81";
+import { getMedalSummary } from "../medals.js?v=20260902-profile81";
 import {
   addLargeTextButton,
+  addOutlinedTextButton,
   addPanel,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260802-medal66";
+} from "./KumaUi.js?v=20260902-profile81";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260902-profile81";
+import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260902-profile81";
+import { showLeaderboardPopup } from "./LeaderboardPopup.js?v=20260902-profile81";
 
 const COPY = {
   ko: {
@@ -25,6 +30,7 @@ const COPY = {
     easy: "쉬움",
     normal: "보통",
     hard: "어려움",
+    challenge: "도전",
     aiRecord: "{played}회  {wins}승 {losses}패 {draws}무",
     pvp: "PVP 대전",
     pvpRecord: "{played}회  백 {white}승 · 흑 {black}승 · {draws}무",
@@ -36,6 +42,8 @@ const COPY = {
     whiteQuest: "백 고양이 · 퍼즐",
     blackQuest: "흑 고양이 · AI 대전",
     complete: "완료",
+    profileChange: "프로필 변경",
+    leaderboard: "체스 순위",
     confirm: "확인",
   },
   en: {
@@ -47,6 +55,7 @@ const COPY = {
     easy: "Easy",
     normal: "Normal",
     hard: "Hard",
+    challenge: "Challenge",
     aiRecord: "{played} played  {wins}W {losses}L {draws}D",
     pvp: "PVP Matches",
     pvpRecord: "{played} played  White {white} · Black {black} · Draw {draws}",
@@ -58,6 +67,8 @@ const COPY = {
     whiteQuest: "White Cat · Puzzles",
     blackQuest: "Black Cat · AI matches",
     complete: "Complete",
+    profileChange: "Edit profile",
+    leaderboard: "Chess Ranking",
     confirm: "OK",
   },
   ja: {
@@ -69,6 +80,7 @@ const COPY = {
     easy: "やさしい",
     normal: "ふつう",
     hard: "むずかしい",
+    challenge: "チャレンジ",
     aiRecord: "{played}回  {wins}勝 {losses}敗 {draws}分",
     pvp: "PVP対戦",
     pvpRecord: "{played}回  白 {white}勝 · 黒 {black}勝 · {draws}分",
@@ -80,6 +92,8 @@ const COPY = {
     whiteQuest: "白ネコ · パズル",
     blackQuest: "黒ネコ · AI対戦",
     complete: "完了",
+    profileChange: "プロフィール変更",
+    leaderboard: "チェスランキング",
     confirm: "確認",
   },
 };
@@ -144,11 +158,13 @@ function addQuest(scene, layer, label, unlockState, y, copy) {
   layer.add([track, fill]);
 }
 
-export function showPlayInfoPopup(scene) {
+export function showPlayInfoPopup(scene, options = {}) {
   if (scene.playInfoLayer) return;
 
   const stats = getPlayStats();
-  const language = readPlayerState().language;
+  const player = readPlayerState();
+  const profile = readProfileState(player);
+  const language = player.language;
   const copy = COPY[language] || COPY.ko;
   const clearedCount = new Set(getClearedPuzzleIds()).size;
   const aiTotal = sumAiStats(stats.ai);
@@ -158,7 +174,9 @@ export function showPlayInfoPopup(scene) {
   const blackQuest = getSkinUnlockState("cat", "b");
   const medals = getMedalSummary();
 
-  const backdrop = createModalBackdrop(scene, 9990);
+  const backdrop = createModalBackdrop(scene, 9990, options.externalBackdrop
+    ? { capture: false, dimAlpha: 0.001 }
+    : undefined);
   const layer = scene.add.container(0, 0).setDepth(10000);
   scene.playInfoLayer = layer;
   const px = scene.scale.width / 2;
@@ -170,36 +188,55 @@ export function showPlayInfoPopup(scene) {
     : addPanel(scene, px, py, panelW, panelH, 10001);
   layer.add(panel);
 
-  addLabel(scene, layer, px, py - 294, copy.title, {
+  addLabel(scene, layer, px, py - 350, copy.title, {
     size: 29,
     weight: "900",
     originX: 0.5,
   });
-  const divider = scene.add.rectangle(px, py - 264, panelW * 0.62, 2, 0xc69d72)
+  const divider = scene.add.rectangle(px, py - 316, panelW * 0.62, 2, 0xc69d72)
     .setDepth(10002);
   layer.add(divider);
 
-  const viewportTop = py - 232;
-  const viewportHeight = 470;
-  const contentHeight = 788;
+  const viewportTop = py - 288;
+  const viewportHeight = 526;
+  const contentHeight = 980;
   const maxScroll = Math.max(0, contentHeight - viewportHeight);
   const content = scene.add.container(0, viewportTop).setDepth(10003);
   layer.add(content);
 
+  addProfileAvatar(scene, content, 232, 78, profile, { size: 112, maxFrameScale: 1.35, depth: 10004 });
+  addLabel(scene, content, 316, 53, profile.displayName, {
+    size: profile.displayName.length > 12 ? 20 : 24,
+    color: KUMA_COLORS.teal,
+    weight: "800",
+  });
+  const openProfileEditor = () => {
+    close(false);
+    showProfileEditorPopup(scene, {
+      externalBackdrop: options.externalBackdrop,
+      onClose: () => showPlayInfoPopup(scene, options),
+    });
+  };
+  const profileButton = addOutlinedTextButton(scene, 426, 113, copy.profileChange, openProfileEditor, {
+    width: 260, height: 58, fontSize: 20, depth: 10004,
+  });
+  content.add([profileButton.button, profileButton.title]);
+  content.add(scene.add.rectangle(360, 162, 366, 2, 0xc9aa87).setDepth(10003));
+
   addSectionRow(scene, content, copy, "puzzle", format(copy, "cleared", {
     total: PUZZLES.length,
     cleared: Math.min(clearedCount, PUZZLES.length),
-  }), 24);
+  }), 202);
 
-  addSectionRow(scene, content, copy, "ai", format(copy, "aiTotal", aiTotal), 94);
-  ["easy", "normal", "hard"].forEach((difficulty, index) => {
+  addSectionRow(scene, content, copy, "ai", format(copy, "aiTotal", aiTotal), 272);
+  ["easy", "normal", "hard", "challenge"].forEach((difficulty, index) => {
     const item = stats.ai[difficulty];
-    addLabel(scene, content, 206, 139 + index * 42, copy[difficulty], {
+    addLabel(scene, content, 206, 317 + index * 42, copy[difficulty], {
       size: 20,
       color: "#846f59",
       weight: "700",
     });
-    addLabel(scene, content, 543, 139 + index * 42, format(copy, "aiRecord", item), {
+    addLabel(scene, content, 543, 317 + index * 42, format(copy, "aiRecord", item), {
       size: 20,
       color: "#3d3125",
       weight: "500",
@@ -207,12 +244,12 @@ export function showPlayInfoPopup(scene) {
     });
   });
 
-  addLabel(scene, content, 177, 281, copy.pvp, {
+  addLabel(scene, content, 177, 506, copy.pvp, {
     size: 21,
     color: "#92775c",
     weight: "700",
   });
-  addLabel(scene, content, 543, 316, format(copy, "pvpRecord", {
+  addLabel(scene, content, 543, 541, format(copy, "pvpRecord", {
     played: stats.pvp.played,
     white: stats.pvp.wWins,
     black: stats.pvp.bWins,
@@ -228,26 +265,26 @@ export function showPlayInfoPopup(scene) {
   addSectionRow(scene, content, copy, "pieces", format(copy, "owned", {
     total: totalSets,
     owned,
-  }), 384, 20);
+  }), 610, 20);
 
   addSectionRow(scene, content, copy, "medals", format(copy, "medalOwned", {
     total: medals.available,
     owned: medals.unlocked,
-  }), 454, 20);
+  }), 680, 20);
   if (medals.newCount > 0) {
-    const badge = scene.add.image(555, 454, "kuma_ui_icon_new")
+    const badge = scene.add.image(555, 680, "kuma_ui_icon_new")
       .setDisplaySize(18, 24)
       .setDepth(10006);
     content.add(badge);
   }
 
-  addLabel(scene, content, 177, 524, copy.quests, {
+  addLabel(scene, content, 177, 750, copy.quests, {
     size: 21,
     color: "#92775c",
     weight: "700",
   });
-  addQuest(scene, content, copy.whiteQuest, whiteQuest, 580, copy);
-  addQuest(scene, content, copy.blackQuest, blackQuest, 666, copy);
+  addQuest(scene, content, copy.whiteQuest, whiteQuest, 806, copy);
+  addQuest(scene, content, copy.blackQuest, blackQuest, 892, copy);
 
   const maskShape = scene.make.graphics({ x: 0, y: 0, add: false });
   maskShape.fillStyle(0xffffff, 1);
@@ -256,9 +293,18 @@ export function showPlayInfoPopup(scene) {
   content.setMask(contentMask);
 
   const hit = scene.add.rectangle(px, viewportTop + viewportHeight / 2, panelW * 0.78, viewportHeight, 0xffffff, 0.001)
-    .setDepth(10005)
+    .setDepth(10002)
     .setInteractive({ useHandCursor: true });
   layer.add(hit);
+  const profileHit = scene.add.rectangle(426, viewportTop + 113, 260, 58, 0xffffff, 0.001)
+    .setDepth(10006)
+    .setInteractive({ useHandCursor: true });
+  profileHit.on("pointerdown", openProfileEditor);
+  const profileAvatarHit = scene.add.circle(232, viewportTop + 78, 62, 0xffffff, 0.001)
+    .setDepth(10006)
+    .setInteractive({ useHandCursor: true });
+  profileAvatarHit.on("pointerdown", openProfileEditor);
+  layer.add([profileHit, profileAvatarHit]);
   const scrollTrack = scene.add.rectangle(px + panelW * 0.39, viewportTop + viewportHeight / 2, 4, viewportHeight, 0xc9af91, 0.38)
     .setDepth(10004);
   const thumbHeight = Math.max(76, viewportHeight * (viewportHeight / contentHeight));
@@ -273,6 +319,16 @@ export function showPlayInfoPopup(scene) {
   const updateScroll = (next) => {
     scrollY = Phaser.Math.Clamp(next, 0, maxScroll);
     content.y = viewportTop - scrollY;
+    profileHit.y = viewportTop + 113 - scrollY;
+    profileAvatarHit.y = viewportTop + 78 - scrollY;
+    const profileVisible = profileHit.y >= viewportTop + 22 && profileHit.y <= viewportTop + viewportHeight - 22;
+    const avatarVisible = profileAvatarHit.y >= viewportTop + 62 && profileAvatarHit.y <= viewportTop + viewportHeight - 62;
+    profileHit.setVisible(profileVisible);
+    if (profileVisible && !profileHit.input?.enabled) profileHit.setInteractive({ useHandCursor: true });
+    if (!profileVisible && profileHit.input?.enabled) profileHit.disableInteractive();
+    profileAvatarHit.setVisible(avatarVisible);
+    if (avatarVisible && !profileAvatarHit.input?.enabled) profileAvatarHit.setInteractive({ useHandCursor: true });
+    if (!avatarVisible && profileAvatarHit.input?.enabled) profileAvatarHit.disableInteractive();
     const travel = viewportHeight - thumbHeight;
     scrollThumb.y = viewportTop + thumbHeight / 2 + (maxScroll ? travel * (scrollY / maxScroll) : 0);
   };
@@ -296,7 +352,7 @@ export function showPlayInfoPopup(scene) {
   scene.input.on("pointerup", onPointerUp);
   updateScroll(0);
 
-  const close = () => {
+  const close = (invokeCallback = true) => {
     scene.input.off("wheel", onWheel);
     scene.input.off("pointermove", onPointerMove);
     scene.input.off("pointerup", onPointerUp);
@@ -306,13 +362,26 @@ export function showPlayInfoPopup(scene) {
     backdrop.cleanup();
     layer.destroy();
     scene.playInfoLayer = null;
+    if (invokeCallback) options.onClose?.();
   };
-  const confirm = addLargeTextButton(scene, px, py + 290, copy.confirm, "", close, {
+  const leaderboard = addLargeTextButton(scene, px - 125, py + 290, copy.leaderboard, "", () => {
+    close(false);
+    showLeaderboardPopup(scene, {
+      externalBackdrop: options.externalBackdrop,
+      onClose: () => showPlayInfoPopup(scene, options),
+    });
+  }, {
+    width: 230,
+    height: 76,
+    fontSize: language === "en" ? 20 : 23,
+    depth: 10004,
+  });
+  const confirm = addLargeTextButton(scene, px + 125, py + 290, copy.confirm, "", close, {
     width: 210,
     height: 76,
-    fontSize: 27,
+    fontSize: 25,
     dark: true,
     depth: 10004,
   });
-  layer.add([confirm.button, confirm.title]);
+  layer.add([leaderboard.button, leaderboard.title, confirm.button, confirm.title]);
 }

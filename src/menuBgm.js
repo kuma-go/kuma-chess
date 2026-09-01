@@ -1,4 +1,5 @@
-import { readPlayerState } from "./playerState.js?v=20260802-medal66";
+import { readPlayerState } from "./playerState.js?v=20260902-profile81";
+import { recordAmbientMedalEvent } from "./medals.js?v=20260902-profile81";
 
 const TRACKS = Object.freeze([
   Object.freeze({
@@ -19,6 +20,7 @@ const TRACKS = Object.freeze([
 ]);
 
 const BGM_BLOCKING_SCENES = new Set(["Game", "Puzzle", "Demo"]);
+const IDLE_LISTEN_TARGET_MS = 30 * 60 * 1000;
 
 let audio = null;
 let currentTrack = null;
@@ -28,6 +30,10 @@ let installed = false;
 let sceneHooksInstalled = false;
 let liveVolume = 0.35;
 let consecutiveFailures = 0;
+let idleListeningMs = 0;
+let idleSampleAt = 0;
+let idleTimer = null;
+let idleMedalRecorded = false;
 
 function clampVolume(value) {
   const number = Number(value);
@@ -61,9 +67,18 @@ function ensureAudio() {
   audio = new Audio();
   audio.preload = "metadata";
   audio.playsInline = true;
+  audio.dataset.kumaMenuBgm = "host";
+  audio.hidden = true;
+  document.body?.append(audio);
   audio.volume = liveVolume;
   audio.addEventListener("ended", () => {
     consecutiveFailures = 0;
+    if (currentTrack) {
+      recordAmbientMedalEvent({
+        eventId: `bgm-track:${currentTrack.id}:v1`,
+        type: "bgm-track",
+      });
+    }
     chooseNextTrack();
     syncPlayback();
   });
@@ -99,8 +114,31 @@ function syncPlayback() {
 }
 
 function activateFromGesture() {
+  resetIdleListening();
   userActivated = true;
   syncPlayback();
+}
+
+function resetIdleListening() {
+  idleListeningMs = 0;
+  idleSampleAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
+function sampleIdleListening() {
+  const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+  const delta = idleSampleAt ? Math.min(2000, Math.max(0, now - idleSampleAt)) : 0;
+  idleSampleAt = now;
+  const listening = audio
+    && !audio.paused
+    && menuPlaybackWanted
+    && !document.body?.classList.contains("game-open")
+    && !document.hidden
+    && liveVolume > 0;
+  if (!listening || idleMedalRecorded) return;
+  idleListeningMs += delta;
+  if (idleListeningMs < IDLE_LISTEN_TARGET_MS) return;
+  idleMedalRecorded = true;
+  recordAmbientMedalEvent({ eventId: "bgm-idle-30:v1", type: "bgm-idle-30" });
 }
 
 function setActiveScene(sceneKey) {
@@ -115,6 +153,25 @@ export function setMenuBgmVolume(value) {
   return liveVolume;
 }
 
+export function setMenuBgmPlaybackWanted(wanted) {
+  menuPlaybackWanted = Boolean(wanted);
+  syncPlayback();
+}
+
+export function activateMenuBgm() {
+  activateFromGesture();
+}
+
+export function getMenuBgmPlaybackState() {
+  return {
+    hasAudio: Boolean(audio),
+    trackId: currentTrack?.id || "",
+    currentTime: Number(audio?.currentTime) || 0,
+    paused: audio?.paused !== false,
+    playbackWanted: menuPlaybackWanted,
+  };
+}
+
 export function installMenuBgm() {
   if (installed) return;
   installed = true;
@@ -124,6 +181,11 @@ export function installMenuBgm() {
   for (const eventName of gestureEvents) {
     window.addEventListener(eventName, activateFromGesture, { capture: true, passive: true });
   }
+  for (const eventName of ["pointerdown", "touchstart", "wheel"]) {
+    window.addEventListener(eventName, resetIdleListening, { capture: true, passive: true });
+  }
+  resetIdleListening();
+  idleTimer = window.setInterval(sampleIdleListening, 1000);
   document.addEventListener("visibilitychange", syncPlayback);
   window.addEventListener("pageshow", syncPlayback, { passive: true });
   window.addEventListener("kuma-state-changed", (event) => {

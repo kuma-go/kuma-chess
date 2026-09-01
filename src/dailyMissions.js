@@ -1,7 +1,7 @@
-import { updatePlayerState, readPlayerState } from "./playerState.js?v=20260802-medal66";
-import { recordDailyMissionDay } from "./medals.js?v=20260802-medal66";
+import { updatePlayerState, readPlayerState } from "./playerState.js?v=20260902-profile81";
+import { recordDailyMissionDay } from "./medals.js?v=20260902-profile81";
 
-const STATE_VERSION = 1;
+const STATE_VERSION = 2;
 const EVENT_ID_LIMIT = 160;
 const COMPLETED_DATE_LIMIT = 140;
 const ALL_CLEAR_REWARD = 5;
@@ -16,6 +16,8 @@ const MISSION_POOLS = Object.freeze({
       { ko: "기물 12회 움직이기", en: "Make 12 moves", ja: "駒を12回動かす" }),
     mission("capture-3", "captures", 3, 2,
       { ko: "상대 기물 3개 잡기", en: "Capture 3 pieces", ja: "相手の駒を3個取る" }),
+    mission("minigame-play-1", "miniGameCompletions", 1, 2,
+      { ko: "미니게임 1회 플레이", en: "Play a mini-game", ja: "ミニゲームを1回プレイ" }),
   ]),
   normal: Object.freeze([
     mission("puzzle-2", "puzzleCompletions", 2, 4,
@@ -26,6 +28,8 @@ const MISSION_POOLS = Object.freeze({
       { ko: "체크 2회 하기", en: "Give check twice", ja: "チェックを2回かける" }),
     mission("queen-capture-3", "queenCaptures", 3, 4,
       { ko: "여왕으로 3개 잡기", en: "Capture 3 pieces with a queen", ja: "クイーンで3個取る" }),
+    mission("minigame-win-1", "miniGameWins", 1, 4,
+      { ko: "미니게임에서 1회 승리", en: "Win a mini-game", ja: "ミニゲームで1回勝利" }),
   ]),
   challenge: Object.freeze([
     mission("puzzle-no-hint-2", "puzzleNoHint", 2, 7,
@@ -36,6 +40,8 @@ const MISSION_POOLS = Object.freeze({
       { ko: "상대 기물 8개 잡기", en: "Capture 8 pieces", ja: "相手の駒を8個取る" }),
     mission("checkmate-1", "checkmates", 1, 7,
       { ko: "체크메이트로 승리하기", en: "Win by checkmate", ja: "チェックメイトで勝利" }),
+    mission("minigame-variety-3", "miniGameVariety", 3, 7,
+      { ko: "서로 다른 미니게임 3종 플레이", en: "Play 3 different mini-games", ja: "3種類のミニゲームをプレイ" }),
   ]),
 });
 
@@ -120,6 +126,7 @@ function emptyDailyState(dateKey) {
     progress: {},
     completedAt: {},
     processedEventIds: [],
+    miniGamesPlayed: [],
     pendingRewards: [],
     completedDates: [],
     currentStreak: 0,
@@ -163,6 +170,7 @@ function normalizeDailyState(source, requestedDateKey) {
   next.progress = next.progress && typeof next.progress === "object" ? { ...next.progress } : {};
   next.completedAt = next.completedAt && typeof next.completedAt === "object" ? { ...next.completedAt } : {};
   next.processedEventIds = uniqueLimited(next.processedEventIds, EVENT_ID_LIMIT);
+  next.miniGamesPlayed = uniqueLimited(next.miniGamesPlayed, 12);
   next.pendingRewards = Array.isArray(next.pendingRewards)
     ? next.pendingRewards
       .filter((item) => item && normalizeId(item.claimKey) && count(item.amount))
@@ -291,9 +299,17 @@ function processEvent(eventId, increments, now = new Date()) {
     const pendingRewards = [];
 
     if (rememberEvent(daily, eventId)) {
+      const eventIncrements = { ...increments };
+      const miniGameId = normalizeId(eventIncrements.miniGameId);
+      if (miniGameId && !daily.miniGamesPlayed.includes(miniGameId)) {
+        daily.miniGamesPlayed.push(miniGameId);
+        eventIncrements.miniGameVariety = 1;
+      } else {
+        eventIncrements.miniGameVariety = 0;
+      }
       for (const id of daily.missionIds) {
         const item = missionById(id);
-        const amount = count(increments[item.metric]);
+        const amount = count(eventIncrements[item.metric]);
         if (!amount || daily.completedAt[id]) continue;
         daily.progress[id] = count(daily.progress[id]) + amount;
         if (daily.progress[id] >= item.target) {
@@ -419,7 +435,7 @@ export function recordDailyGameCompletion(record = {}, now = new Date()) {
     if (/[+#]/.test(String(move.san || ""))) checks += 1;
   }
 
-  const difficulty = ["easy", "normal", "hard"].includes(record.difficulty)
+  const difficulty = ["easy", "normal", "hard", "challenge"].includes(record.difficulty)
     ? record.difficulty
     : "normal";
   const checkmate = humanWon && (
@@ -436,6 +452,27 @@ export function recordDailyGameCompletion(record = {}, now = new Date()) {
     queenCaptures: mode === "ai" ? queenCaptures : 0,
     checks: mode === "ai" ? checks : 0,
     checkmates: checkmate ? 1 : 0,
+  }, now);
+}
+
+export function recordDailyMiniGameCompletion(record = {}, now = new Date()) {
+  const sessionId = normalizeId(record.sessionId || record.gameSessionId);
+  const gameId = normalizeId(record.gameId);
+  const supportedGames = new Set(["tug", "road", "road-puzzle", "crown", "siege"]);
+  if (!sessionId || !supportedGames.has(gameId)) return {
+    newlyCompleted: [], pendingRewards: [], completedDay: null, newlyUnlocked: [], totalReward: 0,
+    pendingRewardTotal: 0,
+    snapshot: getDailyMissionSnapshot(now),
+  };
+
+  const mode = ["ai", "pvp", "solo"].includes(record.mode) ? record.mode : "ai";
+  const playerColor = record.playerColor === "b" ? "b" : "w";
+  const winnerColor = record.winnerColor === "b" ? "b" : record.winnerColor === "w" ? "w" : "";
+  const playerWon = mode === "pvp" ? Boolean(winnerColor) : winnerColor === playerColor;
+  return processEvent(`minigame:${gameId}:${sessionId}`, {
+    miniGameCompletions: 1,
+    miniGameWins: playerWon ? 1 : 0,
+    miniGameId: gameId,
   }, now);
 }
 

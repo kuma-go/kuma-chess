@@ -1,15 +1,16 @@
-import { createPieceView } from "../pieceStyles.js?v=20260802-medal66";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260802-medal66";
-import { t } from "../i18n.js?v=20260802-medal66";
-import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260802-medal66";
-import { markMedalsSeen } from "../medals.js?v=20260802-medal66";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260802-medal66";
+import { createPieceView } from "../pieceStyles.js?v=20260902-profile81";
+import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260902-profile81";
+import { t } from "../i18n.js?v=20260902-profile81";
+import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260902-profile81";
+import { markMedalsSeen } from "../medals.js?v=20260902-profile81";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260902-profile81";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-profile81";
 
-const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35 });
+const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35, challenge: 100 });
 const DIFFICULTY_LABELS = Object.freeze({
-  ko: { easy: "쉬움", normal: "보통", hard: "어려움" },
-  en: { easy: "EASY", normal: "NORMAL", hard: "HARD" },
-  ja: { easy: "かんたん", normal: "ふつう", hard: "むずかしい" },
+  ko: { easy: "쉬움", normal: "보통", hard: "어려움", challenge: "도전" },
+  en: { easy: "EASY", normal: "NORMAL", hard: "HARD", challenge: "CHALLENGE" },
+  ja: { easy: "かんたん", normal: "ふつう", hard: "むずかしい", challenge: "挑戦" },
 });
 
 export class Result extends Phaser.Scene {
@@ -38,9 +39,9 @@ export class Result extends Phaser.Scene {
     const winReward = Number(difficulty?.reward)
       || AI_WIN_REWARDS[resolvedDifficultyId]
       || AI_WIN_REWARDS.normal;
-    const reward = this.dataIn?.reward ?? (playerWonAI
-      ? grantCoinsOnce(`ai-win:${this.dataIn.gameSessionId || Date.now()}`, winReward)
-      : { awarded: false, amount: 0, coins: readPlayerState().coins });
+    const reward = playerWonAI
+      ? this.dataIn?.reward ?? grantCoinsOnce(`ai-win:${this.dataIn.gameSessionId || Date.now()}`, winReward)
+      : { awarded: false, amount: 0, coins: readPlayerState().coins };
 
     const winnerColor =
       this.dataIn?.winnerColor ??
@@ -61,9 +62,16 @@ export class Result extends Phaser.Scene {
       fontStyle: "900",
     }).setOrigin(0.5).setDepth(40);
 
-    const stats = this.dataIn?.mode === "ai"
+    const sourceScene = this.dataIn?.sourceScene || "Game";
+    const isTug = sourceScene === "KingdomTug";
+    const isRoad = sourceScene === "RoyalRoad";
+    const isCrown = sourceScene === "CrownClash";
+    const isSiege = sourceScene === "KingdomSiege";
+    const stats = isTug || isRoad || isCrown || isSiege
+      ? this.reasonText(this.dataIn?.reason, this.dataIn)
+      : this.dataIn?.mode === "ai"
       ? (playerWonAI ? t("result.aiWin") : t("result.aiEnd"))
-      : this.reasonText(this.dataIn?.reason);
+      : this.reasonText(this.dataIn?.reason, this.dataIn);
     this.add.text(width / 2, 895, stats, {
       fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
       fontSize: "25px",
@@ -71,7 +79,7 @@ export class Result extends Phaser.Scene {
       fontStyle: "500",
     }).setOrigin(0.5).setDepth(40);
 
-    if (this.dataIn?.mode === "ai") {
+    if (playerWonAI) {
       const language = readPlayerState().language || "ko";
       const label = DIFFICULTY_LABELS[language]?.[resolvedDifficultyId]
         || DIFFICULTY_LABELS.en[resolvedDifficultyId]
@@ -97,8 +105,17 @@ export class Result extends Phaser.Scene {
         });
       });
     }
+    const pieceUnlockNotices = getPieceUnlockNotices();
+    const pieceNoticeDelay = reward.awarded ? 3100 : 700;
+    if (pieceUnlockNotices.length) {
+      this.time.delayedCall(pieceNoticeDelay, () => {
+        showPieceUnlockNoticeSequence(this, pieceUnlockNotices, { y: height * 0.5 });
+      });
+    }
     if (this.dataIn?.newlyUnlocked?.length) {
-      this.time.delayedCall(reward.awarded ? 3100 : 700, async () => {
+      const medalDelay = pieceNoticeDelay
+        + (pieceUnlockNotices.length ? pieceUnlockSequenceDuration(pieceUnlockNotices) + 150 : 0);
+      this.time.delayedCall(medalDelay, async () => {
         const confirmedIds = await showMedalAwardSequence(this, this.dataIn.newlyUnlocked, { y: height * 0.47 });
         if (confirmedIds.length) markMedalsSeen(confirmedIds);
       });
@@ -110,11 +127,12 @@ export class Result extends Phaser.Scene {
       if (this.dataIn?.playerColor) this.registry.set("playerColor", this.dataIn.playerColor);
       if (this.dataIn?.difficulty) this.registry.set("aiDifficulty", this.dataIn.difficulty);
       this.registry.set("pieceSkin", skins);
-      this.scene.start("Game");
+      this.registry.set("pieceSelectTargetScene", sourceScene);
+      this.scene.start(sourceScene);
     }, { width: 300, height: 82, fontSize: 25, depth: 80 });
 
     addLargeTextButton(this, width / 2 + 165, yBtn, t("result.main"), "", () => {
-      this.scene.start("Start");
+      if (!window.KumaEmbeddedRuntime?.returnHome?.()) this.scene.start("Start");
     }, { width: 300, height: 82, fontSize: 25, dark: true, depth: 80 });
   }
 
@@ -179,8 +197,25 @@ export class Result extends Phaser.Scene {
     return "DRAW";
   }
 
-  reasonText(reason) {
+  reasonText(reason, data = {}) {
     if (reason === "checkmate") return t("result.checkmate");
+    if (reason === "pushout") return t("tug.kingOut");
+    if (reason === "roadComplete") return t("road.complete");
+    if (reason === "roadDraw") return t("road.draw");
+    if (reason === "crownComplete") return t("crown.complete");
+    if (reason === "siegeComplete") return t("siege.complete");
+    if (reason === "siegeTimeout") {
+      return t("siege.timeResult", {
+        white: data?.castleHp?.w ?? 0,
+        black: data?.castleHp?.b ?? 0,
+      });
+    }
+    if (reason === "timeout") {
+      return t("tug.timeResult", {
+        white: data?.remainingPieces?.w ?? 0,
+        black: data?.remainingPieces?.b ?? 0,
+      });
+    }
     if (reason === "resign") return t("result.resign");
     if (reason === "draw") return t("result.draw");
     return t("result.end");

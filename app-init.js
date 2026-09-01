@@ -1,8 +1,74 @@
-if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
-}
+(() => {
+  if (window.self !== window.top
+    || !("serviceWorker" in navigator)
+    || (location.protocol !== "https:" && location.hostname !== "localhost")) return;
+
+  const shellVersion = "20260902-profile81";
+  const reloadKey = `kuma-sw-controller-${shellVersion}`;
+  let reloading = false;
+  let refreshPending = false;
+
+  const reloadFreshShell = (useSessionGuard = true) => {
+    if (reloading) return;
+    if (useSessionGuard) {
+      try {
+        if (window.sessionStorage.getItem(reloadKey) === "1") return;
+        window.sessionStorage.setItem(reloadKey, "1");
+      } catch (_error) {
+        // A single in-memory guard still prevents a reload loop without storage.
+      }
+    }
+    reloading = true;
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set("shell", shellVersion);
+    window.location.replace(nextUrl.href);
+  };
+
+  if (document.body?.dataset.kumaShell === "web"
+    && !document.querySelector(`link[href*="main-page.css?v=${shellVersion}"]`)) {
+    reloadFreshShell(false);
+    return;
+  }
+
+  const reloadWhenGameIsClosed = () => {
+    const gameOverlay = document.getElementById("game-overlay");
+    if (gameOverlay && !gameOverlay.hidden) {
+      refreshPending = true;
+      return;
+    }
+    refreshPending = false;
+    reloadFreshShell(true);
+  };
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    reloadWhenGameIsClosed();
+  });
+  window.addEventListener("kuma-game-closed", () => {
+    if (refreshPending) reloadWhenGameIsClosed();
+  });
+
+  (async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
+      await registration.update();
+    } catch (_error) {
+      // The game remains available online when service workers are unsupported or blocked.
+    }
+  })();
+})();
 
 (() => {
+  if (window.self !== window.top) {
+    try {
+      if (window.parent.KumaInstall) {
+        window.KumaInstall = window.parent.KumaInstall;
+        return;
+      }
+    } catch (error) {
+      // Cross-origin embedding falls back to the local install state below.
+    }
+  }
+
   let deferredPrompt = null;
   let verifiedInstallPending = false;
   const VERIFIED_INSTALL_KEY = "kumaPwaVerifiedInstallPending";
@@ -110,7 +176,8 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
   });
 
   const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches || navigator.standalone === true;
-  if (standalone && screen.orientation?.lock) {
+  const isGameShell = document.body?.dataset.kumaShell !== "web";
+  if (standalone && isGameShell && screen.orientation?.lock) {
     window.addEventListener("pointerup", () => {
       screen.orientation.lock("portrait-primary").catch(() => {});
     }, { once: true, capture: true });

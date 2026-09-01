@@ -2,167 +2,302 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#fff8ea" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#fcf6ea" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="KUMA CHESS" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta name="description" content="왕관을 쓴 동물 기물과 함께 즐기는 체스 퍼즐, AI 대전, 로컬 2인 대전 게임" />
+    <meta name="description" content="왕관을 쓴 동물 기물과 함께 즐기는 체스 퍼즐, AI 대전, 로컬 2인 대전과 왕국 미니게임" />
     <meta property="og:title" content="KUMA CHESS" />
-    <meta property="og:description" content="체스 퍼즐과 AI 대전으로 전술을 배우고, 한 기기에서 로컬 대전도 즐겨보세요." />
+    <meta property="og:description" content="체스와 왕국 미니게임, 수집과 기록이 이어지는 KUMA CHESS의 세계를 만나보세요." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://kumachess.com/" />
     <meta property="og:image" content="https://kumachess.com/assets/icons/icon-512.png" />
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://pagead2.googlesyndication.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://*.googlesyndication.com https://*.googleusercontent.com; connect-src 'self' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://fundingchoicesmessages.google.com; frame-src https://googleads.g.doubleclick.net https://*.googlesyndication.com https://fundingchoicesmessages.google.com; worker-src 'self'; manifest-src 'self'" />
+          content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://pagead2.googlesyndication.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://*.googlesyndication.com https://*.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://fundingchoicesmessages.google.com; frame-src 'self' https://kuma-chess.firebaseapp.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://fundingchoicesmessages.google.com; worker-src 'self'; manifest-src 'self'" />
     <title>KUMA CHESS</title>
     <link rel="canonical" href="https://kumachess.com/" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
-    <link rel="preload" href="./assets/fonts/PretendardVariable.ttf" as="font" type="font/ttf" crossorigin />
-    <link rel="preload" href="./assets/fonts/NotoSerifKR-Variable.ttf" as="font" type="font/ttf" crossorigin />
-    <script id="kuma-adsense-script" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7173992156420612" crossorigin="anonymous"></script>
-    <style>
-      @font-face {
-        font-family: "Pretendard";
-        src: url("./assets/fonts/PretendardVariable.ttf") format("truetype");
-        font-style: normal;
-        font-weight: 100 900;
-        font-display: swap;
-      }
-      @font-face {
-        font-family: "Noto Serif KR";
-        src: url("./assets/fonts/NotoSerifKR-Variable.ttf") format("truetype");
-        font-style: normal;
-        font-weight: 200 900;
-        font-display: swap;
-      }
-      html, body {
-        margin: 0; padding: 0;
-        width: 100%; height: 100%;
-        background: #EDDEC1;
-        overflow: hidden;
-        overscroll-behavior: none;
-        -webkit-tap-highlight-color: transparent;
-      }
-      body { position: fixed; inset: 0; isolation: isolate; }
-      :root {
-        --kuma-ad-height: 0px;
-        --kuma-vw: 100vw;
-        --kuma-vh: 100vh;
-        --kuma-vv-left: 0px;
-        --kuma-vv-top: 0px;
-      }
-      body.ad-visible { --kuma-ad-height: clamp(50px, 9dvh, 90px); }
-      #ambient-background {
-        position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
-        min-height: 100dvh;
-        min-height: 100lvh;
-        overflow: hidden;
-        pointer-events: none;
-        background: #EDDEC1;
-        z-index: 0;
-      }
-      #ambient-bottom {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        height: min(400px, 10.65vw);
-        background: url("./assets/kuma/ui/pattern_bottom_bg.png") center bottom / 100% 100% no-repeat;
-      }
-      #ambient-pattern {
-        position: absolute;
-        inset: -18vmax;
-        transform: rotate(-6deg);
-        transform-origin: center;
-      }
-      #ambient-pattern::before {
-        content: "";
-        position: absolute;
-        inset: -420px;
-        background: url("./assets/kuma/ui/pattern.png") 0 0 / 420px 420px repeat;
-        animation: kuma-pattern-drift 600s linear infinite;
-        will-change: transform;
-      }
-      @keyframes kuma-pattern-drift {
-        from { transform: translate3d(0, 0, 0); }
-        to { transform: translate3d(420px, 420px, 0); }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        #ambient-pattern::before { animation: none; will-change: auto; }
-      }
-      #ad-shell {
-        position: fixed;
-        left: calc(var(--kuma-vv-left) + env(safe-area-inset-left, 0px));
-        top: calc(var(--kuma-vv-top) + env(safe-area-inset-top, 0px));
-        width: calc(var(--kuma-vw) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
-        height: var(--kuma-ad-height);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        background: #fff8ea;
-        border-bottom: 1px solid rgba(189, 161, 127, 0.35);
-        z-index: 20;
-        overflow: hidden;
-      }
-      body.ad-visible #ad-shell { display: flex; }
-      #ad-shell .adsbygoogle { width: min(100%, 720px); height: 100%; }
-      #game-viewport {
-        position: fixed;
-        left: var(--kuma-vv-left);
-        top: var(--kuma-vv-top);
-        width: var(--kuma-vw);
-        height: var(--kuma-vh);
-        box-sizing: border-box;
-        padding-top: calc(env(safe-area-inset-top, 0px) + var(--kuma-ad-height));
-        padding-right: env(safe-area-inset-right, 0px);
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        padding-left: env(safe-area-inset-left, 0px);
-        overflow: hidden;
-        background: transparent;
-        z-index: 1;
-      }
-      #game-container {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        min-width: 0;
-        min-height: 0;
-        overflow: hidden;
-        background: transparent;
-      }
-      canvas {
-        display: block;
-        touch-action: none;
-        -webkit-user-select: none;
-        user-select: none;
-      }
-    </style>
+    <link rel="preload" href="./assets/kuma/web/main_img_B.png" as="image" fetchpriority="high" />
+    <link rel="preload" href="./assets/kuma/web/main_logo_B.png" as="image" fetchpriority="high" />
+    <link rel="stylesheet" href="./main-page.css?v=20260902-profile81" />
   </head>
-  <body>
-    <div id="ambient-background" aria-hidden="true">
-      <div id="ambient-bottom"></div>
-      <div id="ambient-pattern"></div>
-    </div>
-    <aside id="ad-shell" aria-label="광고" hidden></aside>
-    <main id="game-viewport">
-      <div id="game-container"></div>
+  <body data-kuma-shell="web">
+    <aside class="ad-rail ad-rail-left" data-ad-position="left" aria-label="왼쪽 광고" hidden></aside>
+    <aside class="ad-rail ad-rail-right" data-ad-position="right" aria-label="오른쪽 광고" hidden></aside>
+
+    <main id="main-content" class="landing-document">
+      <section class="hero" aria-label="쿠마체스 메인 메뉴">
+        <img class="hero-art" src="./assets/kuma/web/main_img_B.png" width="1080" height="1350" alt="쿠마체스 동물 왕국의 기물들" fetchpriority="high" />
+        <p class="hero-copyright">© 2026 koseulki. All Rights Reserved.</p>
+        <div class="hero-logo-layer">
+          <img class="hero-logo" src="./assets/kuma/web/main_logo_B.png" width="652" height="430" alt="KUMA CHESS" />
+          <img class="hero-logo-glow" src="./assets/kuma/web/main_logo_B.png" width="652" height="430" alt="" aria-hidden="true" />
+        </div>
+
+        <div class="coin-pill" role="status" aria-label="보유 코인">
+          <img class="coin-pill-bg" src="./assets/kuma/web/coin_bg.png" alt="" />
+          <img class="coin-pill-icon" src="./assets/kuma/web/coin_big.png" alt="" />
+          <strong id="coin-count">0</strong>
+        </div>
+
+        <div class="hero-actions-left" aria-label="미션과 순위">
+          <button id="daily-button" class="hero-action" type="button" aria-label="오늘의 미션">
+            <span id="daily-reward-effect" class="daily-reward-effect" hidden aria-hidden="true">
+              <i class="daily-reward-glow"></i>
+              <i class="daily-reward-ring"></i>
+              <span class="daily-reward-badge"><img src="./assets/kuma/ui/coin_small.png" alt="" /><b id="daily-reward-amount">+0</b></span>
+              <i class="daily-sparkle daily-sparkle-left"></i>
+              <i class="daily-sparkle daily-sparkle-right"></i>
+            </span>
+            <span class="action-icon"><img src="./assets/kuma/web/btn_daily_new.png" alt="" /></span>
+            <strong id="daily-count">0/3</strong>
+            <span id="daily-new" class="new-badge" hidden><img src="./assets/kuma/web/icon_new.png" alt="새 알림" /></span>
+          </button>
+          <button id="ranking-button" class="hero-action ranking-action" type="button" data-open-game data-launch="ranking" aria-label="체스 순위">
+            <span class="action-icon"><img src="./assets/kuma/ui/btn_leaderboard.png" alt="" /></span>
+            <strong>순위</strong>
+          </button>
+        </div>
+
+        <div class="hero-actions-right" aria-label="메인 기능">
+          <button class="hero-action" type="button" data-open-settings aria-label="설정">
+            <span class="action-icon"><img src="./assets/kuma/web/btn_seting.png" alt="" /></span>
+          </button>
+          <button class="hero-action" type="button" data-open-game data-launch="info" aria-label="게임 정보">
+            <span class="action-icon"><img src="./assets/kuma/ui/btn_my.png" alt="" /></span>
+          </button>
+          <button class="hero-action" type="button" data-open-game data-launch="medals" aria-label="메달 도감">
+            <span class="action-icon"><img src="./assets/kuma/web/btn_medal.png" alt="" /></span>
+            <span id="medal-new" class="new-badge" hidden><img src="./assets/kuma/web/icon_new.png" alt="새 메달" /></span>
+          </button>
+          <button id="install-button" class="hero-action install-action" type="button" aria-label="쿠마체스 설치" hidden>
+            <span class="action-icon"><img src="./assets/kuma/web/btn_homeadd.png" alt="" /></span>
+            <strong id="install-label">설치</strong>
+          </button>
+        </div>
+        <div class="hero-nameplate" aria-hidden="true">쿠마체스</div>
+      </section>
+
+      <section class="play-menu" aria-label="플레이 모드 선택">
+        <div class="primary-play-panel">
+          <img src="./assets/kuma/web/main_btn_group.png" width="1040" height="214" alt="" />
+          <button type="button" data-open-game data-launch="ai">
+            <img class="mode-icon mode-icon-ai" src="./assets/kuma/web/icon_ai.png" alt="" />
+            <span><strong>AI와 플레이</strong><small>AI와 실력을 겨뤄보세요.</small></span>
+          </button>
+          <button type="button" data-open-game data-launch="pvp">
+            <img class="mode-icon mode-icon-pvp" src="./assets/kuma/web/icon_pvp.png" alt="" />
+            <span><strong>마주보고 플레이</strong><small>로컬 2인 PVP 플레이</small></span>
+          </button>
+        </div>
+        <div class="secondary-play-grid">
+          <button class="secondary-play" type="button" data-open-game data-launch="puzzle">
+            <img class="secondary-play-bg" src="./assets/kuma/web/btn_main_puzzle.png" alt="" />
+            <span><strong>퍼즐 플레이</strong><small>체스퍼즐 짧은 전술문제</small></span>
+          </button>
+          <button class="secondary-play is-disabled" type="button" disabled aria-disabled="true">
+            <img class="secondary-play-bg" src="./assets/kuma/web/btn_main_online.png" alt="" />
+            <span><strong>온라인 플레이</strong><small>초대 2인 PVP 플레이</small></span>
+          </button>
+        </div>
+        <nav class="document-links" aria-label="문서 바로가기">
+          <a href="./privacy.html">개인정보처리방침</a><span>/</span><a href="#directory">게임소개 및 게임방법</a>
+        </nav>
+      </section>
+
+      <section id="minigames" class="page-section minigame-section">
+        <h2 class="ornate-heading">쿠마체스 미니게임</h2>
+        <div class="minigame-grid">
+          <button class="minigame-card" type="button" data-open-minigame data-launch="tug" data-title="왕국 힘겨루기">
+            <img src="./assets/kuma/web/image%20440.png" alt="왕국 힘겨루기" />
+            <span><strong>왕국 힘겨루기</strong><small>밀어내기 알까기 한판</small></span>
+          </button>
+          <button class="minigame-card" type="button" data-open-minigame data-launch="crown" data-title="왕관 쟁탈전">
+            <img src="./assets/kuma/web/image%20438.png" alt="왕관 쟁탈전" />
+            <span><strong>왕관 쟁탈전</strong><small>왕관을 차지하여 귀환하라</small></span>
+          </button>
+          <button class="minigame-card" type="button" data-open-minigame data-launch="road" data-title="왕국의 길">
+            <img src="./assets/kuma/web/image%20441.png" alt="왕국의 길" />
+            <span><strong>왕국의 길</strong><small>타일로 길 이어가기</small></span>
+          </button>
+          <button class="minigame-card" type="button" data-open-game data-launch="road-puzzle">
+            <img src="./assets/kuma/web/image%20437.png" alt="왕국의 길 퍼즐" />
+            <span><strong>왕국의 길 퍼즐</strong><small>길 찾기, 미로찾기</small></span>
+          </button>
+          <button class="minigame-card" type="button" data-open-minigame data-launch="siege" data-title="왕국 공성전">
+            <img src="./assets/kuma/web/image%20439.png" alt="왕국 공성전" />
+            <span><strong>왕국 공성전</strong><small>공성을 향한 치열한 전투</small></span>
+          </button>
+        </div>
+      </section>
+
+      <nav id="directory" class="page-section directory-section" aria-label="게임 소개 및 게임방법">
+        <h2 class="ornate-heading">게임 소개 및 게임방법</h2>
+        <div class="directory-grid">
+          <a href="#story"><img src="./assets/kuma/web/image%20462.png" alt="" /><span><strong>쿠마체스 이야기</strong><small>쿠마체스 소개 및 여정</small></span><b>›</b></a>
+          <a href="#guide"><img src="./assets/kuma/web/image%20458.png" alt="" /><span><strong>게임 방법</strong><small>체스 게임 방법과 룰 설명</small></span><b>›</b></a>
+          <a href="#minigames"><img src="./assets/kuma/web/image%20461.png" alt="" /><span><strong>미니게임 소개</strong><small>미니게임 소개와 게임 방법</small></span><b>›</b></a>
+          <a href="#modes"><img src="./assets/kuma/web/image%20459.png" alt="" /><span><strong>체스 모드 소개</strong><small>쿠마체스 다양한 모드 안내</small></span><b>›</b></a>
+          <a href="#collection"><img src="./assets/kuma/web/image%20463.png" alt="" /><span><strong>기물 소개</strong><small>쿠마체스만의 기물 디자인</small></span><b>›</b></a>
+          <a href="#rewards"><img src="./assets/kuma/web/image%20460.png" alt="" /><span><strong>업적과 보상</strong><small>도전하고 보상을 획득하세요</small></span><b>›</b></a>
+        </div>
+      </nav>
+
+      <section id="story" class="page-section reference-section story-section">
+        <img class="reference-art story-art-1" src="./assets/kuma/web/image%20471.png" alt="가족이 함께 즐기는 쿠마체스" loading="lazy" />
+        <div class="reference-copy story-copy-1">
+          <h2>KUMA CHESS 이야기</h2>
+          <p>왕관을 쓴 동물 기물과 함께 퍼즐, AI 대전, 한 기기에서 즐기는 로컬 2인대전을 플레이하세요.<br />KUMA CHESS는 체스를 좋아하는 초등학생 아들을 위해 만들기 시작한 게임입니다. 요즘은 각자 스마트폰 화면에 머무는 시간이 길어지고 사람과 사람이 직접 대화하기보다 온라인으로 소통하는 일이 자연스러워졌습니다. 그래서 한 기기를 사이에 두고 마주 앉아 체스를 즐기며, 수를 고민하고 이야기를 나누는 따뜻한 시간을 게임에 담고 싶었습니다.<br />혼자 즐기는 퍼즐과 AI 대전뿐 아니라 서로의 표정을 보며 함께할 수 있는 2인 플레이를 소중하게 생각합니다. KUMA CHESS가 가족과 친구가 잠시 화면 너머가 아닌 서로를 바라보며 대화하는 작은 계기가 되기를 바랍니다.</p>
+        </div>
+        <img class="reference-art story-art-2" src="./assets/kuma/web/image%20472.png" alt="쿠마체스 오리지널 음악 제작" loading="lazy" />
+        <div class="reference-copy story-copy-2">
+          <h3>KUMA CHESS의 음악</h3>
+          <p>게임에 흐르는 모든 배경음악은 KUMA CHESS를 위해 직접 기획하고 만든 오리지널 곡입니다. 체스를 두는 동안 편안하게 머물 수 있는 따뜻한 분위기와 동물 기물들이 살아가는 작은 세계를 음악으로 표현했습니다.</p>
+          <p class="track-list">Track 01. 창가의 작은 숲<br />Track 02. 쿠마의 체스<br />Track 03. 쿠마 체스</p>
+          <p>Music created by koseulki for KUMA CHESS.</p>
+        </div>
+        <img class="reference-art story-art-3" src="./assets/kuma/web/image%20473.png" alt="AI와 함께한 쿠마체스 제작 과정" loading="lazy" />
+        <div class="reference-copy story-copy-3">
+          <h3>AI와 함께한 제작 과정</h3>
+          <p>KUMA CHESS는 제작자의 아이디어와 디자인을 바탕으로, 생성형 AI를 아이디어 구체화, 이미지와 음악 제작, 코드 구현 및 검수의 보조 도구로 활용해 만들었습니다. AI가 제안한 결과를 그대로 사용하는 데 그치지 않고, 게임의 방향을 정하고 결과물을 선택·수정·완성하는 과정은 제작자가 직접 진행했습니다.</p>
+        </div>
+      </section>
+
+      <aside class="inline-ad" data-ad-position="inline-1" aria-label="광고" hidden></aside>
+
+      <section id="guide" class="page-section reference-section guide-section">
+        <div class="section-rule" aria-hidden="true"><img src="./assets/kuma/ui/img_partition.png" alt="" /></div>
+        <img class="reference-art guide-hero" src="./assets/kuma/web/image%20478.png" alt="체스 이동과 공격 방법" loading="lazy" />
+        <div class="reference-copy guide-intro">
+          <h2>게임 방법</h2>
+          <h3>체스의 목표</h3>
+          <p>체스는 백과 흑이 번갈아 한 번씩 기물을 움직이는 전략 게임입니다.<br />상대의 킹을 공격하면서 더 이상 피할 방법이 없는 상태, 즉 체크메이트를 만드는 것이 목표입니다.<br />상대 기물을 모두 잡을 필요는 없습니다. 킹을 잡는 대신 체크메이트가 완성되는 순간 게임이 끝납니다.</p>
+          <h3>기본 조작</h3>
+          <p>내 기물을 누르면 이동 가능한 칸이 표시됩니다.<br />원하는 칸을 누르거나 기물을 직접 드래그합니다.<br />폰이 마지막 줄에 도착하면 승급할 기물을 선택합니다.<br />게임 중 왼쪽 아래 버튼은 이전 수 무르기입니다.</p>
+        </div>
+        <img class="reference-art board-coordinate-image" src="./assets/kuma/web/image%20517.png" alt="체스판 좌표와 시작 배치" loading="lazy" />
+        <div class="reference-copy board-copy">
+          <h3>체스판과 게임 시작</h3>
+          <p>체스판은 8×8, 총 64칸으로 이루어져 있습니다. 백과 흑은 각각 16개의 기물로 시작합니다.</p>
+          <ul><li>킹 1개</li><li>퀸 1개</li><li>룩 2개</li><li>비숍 2개</li><li>나이트 2개</li><li>폰 8개</li></ul>
+          <p>게임은 항상 백이 먼저 시작하며, 이후 서로 번갈아 한 번씩 기물을 움직입니다.</p>
+          <h3>기물의 이동 방법</h3>
+        </div>
+        <article class="piece-rule king-rule"><img src="./assets/kuma/web/image%20527.png" alt="킹 이동" loading="lazy" /><div><h3>킹</h3><p>상하좌우와 대각선으로 한 칸씩 이동합니다.<br />상대 기물에게 공격받는 칸으로는 이동할 수 없습니다.</p></div></article>
+        <article class="piece-rule queen-rule"><img src="./assets/kuma/web/image%20526.png" alt="퀸 이동" loading="lazy" /><div><h3>퀸</h3><p>가로, 세로, 대각선 방향으로 원하는 만큼 이동할 수 있습니다.<br />체스에서 가장 넓은 범위를 움직일 수 있는 기물입니다.</p></div></article>
+        <article class="piece-rule rook-rule"><img src="./assets/kuma/web/image%20525.png" alt="룩 이동" loading="lazy" /><div><h3>룩</h3><p>가로와 세로 방향으로 원하는 만큼 이동합니다.</p></div></article>
+        <article class="piece-rule bishop-rule"><img src="./assets/kuma/web/image%20524.png" alt="비숍 이동" loading="lazy" /><div><h3>비숍</h3><p>대각선 방향으로 원하는 만큼 이동합니다.<br />처음 시작한 칸의 색과 같은 색의 칸만 이동하게 됩니다.</p></div></article>
+        <article class="piece-rule knight-rule"><div class="piece-image-pair"><img src="./assets/kuma/web/image%20523.png" alt="나이트 이동" loading="lazy" /><img src="./assets/kuma/web/image%20522.png" alt="나이트는 다른 기물을 뛰어넘을 수 있음" loading="lazy" /></div><div><h3>나이트</h3><p>두 칸 이동한 뒤 옆으로 한 칸 움직이는 L자 형태로 이동합니다.<br />다른 기물을 뛰어넘을 수 있는 유일한 기물입니다.</p></div></article>
+        <article class="piece-rule pawn-rule"><img src="./assets/kuma/web/image%20521.png" alt="폰 이동" loading="lazy" /><div><h3>폰</h3><p>기본적으로 앞쪽으로 한 칸 이동합니다. 처음 움직일 때는 두 칸을 이동할 수도 있습니다.<br />다른 기물을 잡을 때는 앞이 아니라 대각선 앞쪽 한 칸에 있는 상대 기물을 잡습니다. 폰은 뒤로 이동할 수 없습니다.</p></div></article>
+        <img class="reference-art capture-art" src="./assets/kuma/web/imgbox_01.png" alt="상대 기물을 잡는 방법" loading="lazy" />
+        <div class="reference-copy capture-copy"><h3>상대 기물을 잡는 방법</h3><p>내 기물이 이동할 수 있는 칸에 상대 기물이 있다면 그 칸으로 이동하면서 상대 기물을 잡을 수 있습니다.<br />잡힌 기물은 체스판에서 사라집니다. 단, 자신의 기물이 있는 칸으로는 이동할 수 없습니다.</p></div>
+        <img class="reference-art check-art" src="./assets/kuma/web/imgbox_02.png" alt="체크와 체크메이트" loading="lazy" />
+        <div class="reference-copy check-copy"><h3>체크와 체크메이트</h3><p>상대 기물이 다음 수에 킹을 잡을 수 있는 상태를 체크(Check)라고 합니다.<br />체크를 받은 플레이어는 반드시 다음 수에서 체크를 해결해야 합니다.<br />체크를 해결하는 방법은 세 가지입니다.</p><ul><li>킹을 안전한 칸으로 이동하기</li><li>공격하는 기물을 잡기</li><li>다른 기물로 공격 경로를 막기</li></ul><p>이 방법 중 어느 것도 사용할 수 없다면 체크메이트(Checkmate)가 되어 게임에서 패배합니다.</p></div>
+        <article class="special-rule castling-rule"><img src="./assets/kuma/web/image%20488.png" alt="캐슬링" loading="lazy" /><div><h3>캐슬링</h3><p>캐슬링은 킹과 룩을 한 번에 움직이는 특별한 수입니다.<br />킹을 안전하게 보호하면서 룩을 중앙 쪽으로 빠르게 이동시키는 데 사용합니다.<br />캐슬링을 하려면 다음 조건을 모두 만족해야 합니다.</p><ul><li>킹이 한 번도 움직이지 않았을 것</li><li>함께 움직이는 룩도 한 번도 움직이지 않았을 것</li><li>킹과 룩 사이에 다른 기물이 없을 것</li><li>현재 킹이 체크 상태가 아닐 것</li><li>킹이 지나가는 칸과 도착하는 칸이 상대에게 공격받고 있지 않을 것</li></ul><p>조건을 만족하면 킹이 룩 방향으로 두 칸 이동하고, 룩은 킹 바로 옆으로 이동합니다.</p></div></article>
+        <article class="special-rule enpassant-rule"><img src="./assets/kuma/web/image%20528.png" alt="앙파상" loading="lazy" /><div><h3>앙파상</h3><p>앙파상은 폰끼리 발생하는 특별한 잡기 규칙입니다.<br />상대 폰이 처음 움직이면서 두 칸을 전진해 내 폰 바로 옆에 도착했을 때, 마치 상대 폰이 한 칸만 이동한 것처럼 대각선으로 잡을 수 있습니다.<br />단, 앙파상은 상대 폰이 두 칸 이동한 바로 다음 턴에만 사용할 수 있습니다. 한 턴이 지나면 사용할 수 없습니다.</p></div></article>
+        <article class="special-rule promotion-rule"><img src="./assets/kuma/web/image%20529.png" alt="폰 승급" loading="lazy" /><div><h3>폰 승급</h3><p>폰이 상대 진영의 마지막 줄까지 도착하면 승급(Promotion)할 수 있습니다.<br />폰을 다음 기물 중 하나로 바꿀 수 있습니다.</p><ul><li>퀸</li><li>룩</li><li>비숍</li><li>나이트</li></ul><p>이미 같은 종류의 기물이 체스판에 남아 있어도 상관없습니다. 따라서 한 플레이어가 두 개 이상의 퀸을 가지는 것도 가능합니다.</p></div></article>
+        <article class="special-rule draw-rule"><img src="./assets/kuma/web/image%20531.png" alt="무승부 규칙" loading="lazy" /><div><h3>무승부가 되는 경우</h3><p>체크메이트가 아니어도 게임이 무승부로 끝날 수 있습니다.<br /><strong>스테일메이트</strong><br />자신의 차례에 움직일 수 있는 합법적인 수가 하나도 없지만 킹이 체크 상태가 아니라면 무승부입니다.<br /><strong>같은 위치가 세 번 반복</strong><br />동일한 게임 상황이 세 번 반복되면 무승부를 요청할 수 있습니다.<br /><strong>50수 규칙</strong><br />양쪽 모두 50수 동안 폰을 움직이지 않고 기물을 하나도 잡지 않았다면 무승부를 요청할 수 있습니다.<br /><strong>체크메이트가 불가능한 경우</strong><br />남은 기물만으로 어느 쪽도 체크메이트를 만들 수 없다면 무승부가 됩니다.<br />플레이어끼리 합의하여 무승부로 게임을 끝내는 것도 가능합니다.</p></div></article>
+        <img class="reference-art tip-art" src="./assets/kuma/web/imgbox_03.png" alt="체스 승리를 위한 작은 팁" loading="lazy" />
+        <div class="reference-copy tip-copy"><h3>승리하기 위한 작은 팁</h3><p>처음에는 기물을 많이 잡는 것보다 킹을 안전하게 지키고 여러 기물을 함께 활용하는 것이 중요합니다.<br />초반에는 폰과 나이트, 비숍을 움직여 기물을 전개하고 캐슬링으로 킹을 보호해 보세요.<br />상대의 수를 보기 전에 항상 한 번 생각해 보세요.<br />“내 킹은 안전한가?”<br />“상대는 무엇을 공격하고 있는가?”<br />이 두 가지만 확인해도 훨씬 안정적으로 체스를 즐길 수 있습니다.</p></div>
+      </section>
+
+      <aside class="inline-ad" data-ad-position="inline-2" aria-label="광고" hidden></aside>
+
+      <section id="modes" class="page-section reference-section modes-section">
+        <div class="section-rule" aria-hidden="true"><img src="./assets/kuma/ui/img_partition.png" alt="" /></div>
+        <h2>게임 모드 설명</h2>
+        <article class="mode-feature mode-puzzle"><img src="./assets/kuma/web/image%20474.png" alt="체스 퍼즐" loading="lazy" /><div><h3>퍼즐</h3><p>체크메이트, 포크, 핀, 캐슬링, 승급 등 실전 전술을 순서대로 배웁니다. 기물을 탭하거나 드래그해 이동하고, 힌트와 용어 설명 버튼으로 규칙을 확인할 수 있습니다.</p></div><button class="reference-hit-area" type="button" data-open-game data-launch="puzzle" aria-label="퍼즐 시작"></button></article>
+        <article class="mode-feature mode-ai"><img src="./assets/kuma/web/image%20475.png" alt="AI 대전" loading="lazy" /><div><h3>AI 대전</h3><p>쉬움, 보통, 어려움과 최상급 도전 난이도를 고릅니다. 승리 보상은 5, 15, 35, 100코인이며 도전 AI는 더 깊게 수를 탐색합니다.</p></div><button class="reference-hit-area" type="button" data-open-game data-launch="ai" aria-label="AI 대전 시작"></button></article>
+        <article class="mode-feature mode-pvp"><img src="./assets/kuma/web/image%20476.png" alt="마주보기 대전" loading="lazy" /><div><h3>PVP 대전</h3><p>한 기기를 마주 보고 사용하는 로컬 2인 모드입니다. 턴이 바뀌면 기물과 안내가 상대 방향으로 회전합니다.</p></div><button class="reference-hit-area" type="button" data-open-game data-launch="pvp" aria-label="마주보기 대전 시작"></button></article>
+        <article class="mode-feature mode-data"><img src="./assets/kuma/web/image%20479.png" alt="데이터 저장과 동기화" loading="lazy" /><div><h3>데이터 저장과 동기화</h3><p>게임은 브라우저에 먼저 저장되며, 프로필 설정과 검증 전 진행 요약은 익명 Firebase 계정에 백업됩니다. 서버가 집계한 주간·전체 체스 순위는 읽기 전용으로 표시됩니다. 현재는 다른 기기로 자동 이전하거나 삭제된 로컬 기록을 복원하지 않으며, 코인·보상·보유 기물은 아직 서버에서 검증하지 않습니다.</p></div></article>
+      </section>
+
+      <section id="collection" class="page-section reference-section collection-section">
+        <div class="section-rule" aria-hidden="true"><img src="./assets/kuma/ui/img_partition.png" alt="" /></div>
+        <img class="reference-art collection-hero" src="./assets/kuma/web/image%20529-1.png" alt="쿠마체스 코인과 기물 수집" loading="lazy" />
+        <div class="reference-copy collection-intro"><h3>코인과 기물</h3><p>접속 보상, 첫 퍼즐 클리어, AI 승리로 코인을 얻습니다. 백과 흑 기물은 각각 구입하며 일부 세트는 퀘스트를 완료해야 해금됩니다. 같은 보상은 반복 지급되지 않을 수 있습니다.</p><h2>기물 소개</h2></div>
+        <article class="collection-feature collection-1"><img src="./assets/kuma/web/image%20534.png" alt="다양한 동물 기물" loading="lazy" /><div><h3>1. 어떤 왕과 함께할까요?</h3><p>KUMA CHESS에는 곰, 토끼, 고양이, 여우, 늑대, 다람쥐 등 다양한 동물 기물이 준비되어 있습니다. 마음에 드는 동물을 골라 나만의 체스 세트를 만들고, 각기 다른 분위기의 왕국으로 대국을 즐겨보세요.</p></div></article>
+        <article class="collection-feature collection-2"><img src="./assets/kuma/web/image%20535.png" alt="백과 흑 두 진영의 동물 기물" loading="lazy" /><div><h3>2. 같은 동물, 서로 다른 두 왕국</h3><p>각 동물 기물은 백과 흑 두 진영으로 준비되어 있습니다. 같은 동물끼리 대결할 수도 있고, 서로 다른 동물 왕국을 선택해 자신만의 매치를 만들 수도 있습니다.</p></div></article>
+        <article class="collection-feature collection-3"><img src="./assets/kuma/web/image%20543.png" alt="기물 컬렉션" loading="lazy" /><div><h3>3. 기물을 모아보세요</h3><p>게임을 플레이하며 얻은 코인으로 새로운 동물 기물을 획득할 수 있습니다. 좋아하는 동물을 하나씩 모으고, 나만의 컬렉션을 완성해보세요.</p></div></article>
+        <article class="collection-feature collection-4"><img src="./assets/kuma/web/image%20536.png" alt="같은 이동 규칙을 공유하는 다양한 기물" loading="lazy" /><div><h3>4. 어떤 기물을 선택해도 같은 체스</h3><p>동물 기물은 외형을 바꾸는 컬렉션 요소입니다. 어떤 동물을 선택해도 이동 규칙이나 성능에는 차이가 없습니다. 좋아하는 모습으로 편하게 플레이하세요.</p></div></article>
+      </section>
+
+      <aside class="inline-ad" data-ad-position="inline-3" aria-label="광고" hidden></aside>
+
+      <section id="rewards" class="page-section reference-section rewards-section">
+        <div class="section-rule" aria-hidden="true"><img src="./assets/kuma/ui/img_partition.png" alt="" /></div>
+        <h2>업적과 보상</h2>
+        <article class="reward-feature reward-1"><img src="./assets/kuma/web/image%20537.png" alt="작은 도전들이 나만의 기록이 됩니다" loading="lazy" /><div><h3>1. 작은 도전들이 나만의 기록이 됩니다</h3><p>처음 체스를 시작한 순간부터 퍼즐을 해결하고, AI와 대결하고, 가족이나 친구와 마주 앉아 즐긴 시간까지. KUMA CHESS에서의 다양한 경험은 하나씩 기록으로 남습니다.</p></div></article>
+        <article class="reward-feature reward-2"><img src="./assets/kuma/web/image%20538.png" alt="다양한 방법으로 업적을 완성" loading="lazy" /><div><h3>2. 다양한 방법으로 업적을 완성해보세요</h3><p>승리만이 목표는 아닙니다. 첫 대국, 체크메이트, 퍼즐 해결, 승급, 캐슬링, AI 대전 등 게임을 즐기다 보면 자연스럽게 여러 업적을 달성할 수 있습니다.</p></div></article>
+        <article class="reward-feature reward-3"><img src="./assets/kuma/web/image%20539.png" alt="함께 즐긴 시간도 기록" loading="lazy" /><div><h3>3. 함께 즐긴 시간도 기록됩니다</h3><p>KUMA CHESS의 마주보기 모드는 한 기기에서 두 사람이 같은 체스판을 바라보며 즐기는 로컬 2인 대전입니다. 가족이나 친구와 마주 앉아 나눈 한 판도 특별한 기록이 됩니다.</p></div></article>
+        <article class="reward-feature reward-4"><img src="./assets/kuma/web/image%20540.png" alt="오늘의 작은 도전" loading="lazy" /><div><h3>4. 오늘의 작은 도전</h3><p>매일 새로운 미션을 완료하며 꾸준히 플레이해보세요. 세 가지 미션을 하나씩 해결하면 오늘의 보상을 받을 수 있습니다.</p></div><button class="reference-hit-area" type="button" data-open-daily aria-label="오늘의 미션 보기"></button></article>
+        <article class="reward-feature reward-5"><img src="./assets/kuma/web/image%20541.png" alt="메달과 보상" loading="lazy" /><div><h3>5. 메달과 보상을 모아보세요</h3><p>특별한 조건을 달성하면 메달과 보상을 획득할 수 있습니다. 성실한 기사, 왕국의 일, 백일의 수련처럼 플레이 방식과 꾸준함을 기념하는 기록을 하나씩 모아보세요.</p></div><button class="reference-hit-area" type="button" data-open-game data-launch="medals" aria-label="메달 도감 열기"></button></article>
+        <article class="reward-feature reward-6"><img src="./assets/kuma/web/image%20542.png" alt="승리보다 오래 남는 기록" loading="lazy" /><div><h3>6. 승리보다 오래 남는 기록</h3><p>몇 번 이겼는지뿐 아니라 어떤 기물과 함께했는지, 어떤 퍼즐을 풀었는지, 누구와 체스를 즐겼는지도 KUMA CHESS의 기록입니다. 하나씩 도전을 완료하며 나만의 왕국 이야기를 만들어보세요.</p></div></article>
+      </section>
+
+      <footer class="site-footer">
+        <img src="./assets/kuma/web/img_bottom.png" width="1080" height="360" alt="산과 숲으로 이어지는 쿠마체스 왕국" loading="lazy" />
+        <div class="footer-copy">
+          <strong>문의 및 연락처</strong>
+          <p>게임 관련 문의와 제안은<br />이메일 carksk@naver.com 또는<br />카카오톡 ID carksk2로 보내주세요.</p>
+          <p>© 2026 koseulki. All Rights Reserved.</p>
+        </div>
+      </footer>
     </main>
 
-    <!-- Phaser (local) -->
-    <script src="./phaser.js"></script>
+    <button id="scroll-cue" class="scroll-cue" type="button" aria-label="아래로 스크롤하여 더 보기">
+      <span>아래로 스크롤하여 더 보기</span>
+      <img class="scroll-cue-bg" src="./assets/kuma/web/bottom_scroll.png" alt="" width="1080" height="100" />
+      <img class="scroll-cue-ornament scroll-cue-ornament-left" src="./assets/kuma/web/bottom_scroll_left.png" alt="" width="206" height="32" />
+      <img class="scroll-cue-ornament scroll-cue-ornament-right" src="./assets/kuma/web/bottom_scroll_right.png" alt="" width="206" height="32" />
+    </button>
+    <button id="scroll-top" class="scroll-top" type="button" aria-label="맨 위로" hidden>
+      <img src="./assets/kuma/web/btn_upscroll.png" alt="" width="194" height="216" />
+      <span>맨 위로</span>
+    </button>
+
+    <div id="game-overlay" class="game-overlay" hidden>
+      <div id="game-loading" class="game-loading" role="status">
+        <span></span>
+        <strong>KUMA CHESS</strong>
+        <p id="game-loading-message">게임을 준비하고 있습니다.</p>
+        <button id="retry-game" type="button" hidden>다시 불러오기</button>
+      </div>
+      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260902-profile81"></iframe>
+    </div>
+
+    <dialog id="mode-dialog" class="web-dialog mode-dialog">
+      <div class="dialog-panel">
+        <h2 id="mode-dialog-title">미니게임</h2>
+        <p class="dialog-summary">플레이 방법을 선택하세요.</p>
+        <div class="mode-choice-grid">
+          <button type="button" data-minigame-mode="ai">
+            <img class="mode-card-art" src="./assets/kuma/web/image%20440.png" alt="" />
+            <span class="mode-card-icon"><img src="./assets/kuma/web/icon_ai.png" alt="" /></span>
+            <strong>AI 대전</strong>
+            <small>AI와 실력을 겨뤄보세요.</small>
+          </button>
+          <button type="button" data-minigame-mode="pvp">
+            <img class="mode-card-art" src="./assets/kuma/web/image%20440.png" alt="" />
+            <span class="mode-card-icon"><img src="./assets/kuma/web/icon_pvp.png" alt="" /></span>
+            <strong>마주보기 모드</strong>
+            <small>한 기기에서 함께 플레이</small>
+          </button>
+        </div>
+        <button class="mode-home" type="button" data-close-dialog>메인 화면</button>
+      </div>
+    </dialog>
+
     <script src="./ads-config.js"></script>
-    <!-- Main -->
-    <script type="module" src="./src/main.js?v=20260802-medal66"></script>
-    <script src="./app-init.js?v=20260802-medal66"></script>
+    <script src="./app-init.js?v=20260902-profile81"></script>
+    <script type="module" src="./firebase-client.js?v=20260902-profile81"></script>
+    <script type="module" src="./main-page.js?v=20260902-profile81"></script>
+    <script defer src="./main-page-fallback.js?v=20260902-profile81"></script>
   </body>
 </html>

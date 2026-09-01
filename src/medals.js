@@ -1,15 +1,17 @@
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260802-medal66";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260902-profile81";
 
 const STORAGE_KEY = "kumaChessMedalsV1";
 const BACKUP_STORAGE_KEY = "kumaChessMedalsBackupV1";
-const STATE_VERSION = 1;
+const STATE_VERSION = 2;
 const PROCESSED_ID_LIMIT = 200;
 const LANGUAGES = new Set(["ko", "en", "ja"]);
+const MINI_GAME_IDS = Object.freeze(["tug", "crown", "road", "road-puzzle", "siege"]);
 
 export const MEDAL_CATEGORIES = Object.freeze([
   Object.freeze({ id: "kingdom", name: Object.freeze({ ko: "왕국의 승리", en: "Kingdom Victories", ja: "王国の勝利" }) }),
   Object.freeze({ id: "challenge", name: Object.freeze({ ko: "위대한 도전", en: "Great Challenges", ja: "偉大な挑戦" }) }),
   Object.freeze({ id: "puzzle", name: Object.freeze({ ko: "퍼즐의 기록", en: "Puzzle Records", ja: "パズルの記録" }) }),
+  Object.freeze({ id: "honor", name: Object.freeze({ ko: "왕국의 명예", en: "Realm Honors", ja: "王国の名誉" }) }),
   Object.freeze({ id: "rank", name: Object.freeze({ ko: "명예의 등급", en: "Ranks of Honor", ja: "名誉のランク" }) }),
 ]);
 
@@ -125,8 +127,24 @@ const CHALLENGE_MEDALS = [
     { ko: "한 AI 대전에서 폰을 3회 승급하세요.", en: "Promote 3 pawns in one AI game.", ja: "1回のAI戦でポーンを3回昇格させましょう。" }),
   medal("online-challenger", "challenge", "도전장", 10,
     { ko: "도전장", en: "The Challenge", ja: "挑戦状" },
-    { ko: "온라인 대전을 10회 완료하세요. 현재 이용할 수 없습니다.", en: "Complete 10 online games. This mode is currently unavailable.", ja: "オンライン対戦を10回完了しましょう。現在は利用できません。" },
+    {
+      ko: "온라인 대전을 10회 완료하세요. 현재 이용할 수 없습니다.",
+      en: "Complete 10 online games. This mode is currently unavailable.",
+      ja: "オンライン対戦を10回完了しましょう。現在は利用できません。",
+    },
     { unavailable: true }),
+  medal("challenge-ai-victory", "honor", "AI도전난이도", 1,
+    { ko: "최후의 도전자", en: "The Final Challenger", ja: "最後の挑戦者" },
+    { ko: "도전 난이도 AI를 체크메이트하고 승리하세요.", en: "Checkmate and defeat the Challenge AI.", ja: "挑戦難易度のAIをチェックメイトして勝利しましょう。" },
+    { assetFile: "메달_AI도전난이도.png" }),
+  medal("stockfish-18-lite-victory", "honor", "Stockfish18Lite", 1,
+    { ko: "왕국 최강자", en: "Champion of the Realm", ja: "王国最強者" },
+    {
+      ko: "추후 추가될 Stockfish 18 Lite 최고 난이도에 승리하세요.",
+      en: "Defeat the upcoming Stockfish 18 Lite challenge.",
+      ja: "今後追加されるStockfish 18 Lite最高難易度に勝利しましょう。",
+    },
+    { assetFile: "메달_Stockfish18Lite.png", unavailable: true, countsTowardCollection: false }),
   medal("puzzle-replay-10", "challenge", "퍼즐공부", 10,
     { ko: "퍼즐 공부", en: "Puzzle Study", ja: "パズル復習" },
     { ko: "이미 클리어한 퍼즐을 10회 다시 완료하세요.", en: "Replay and complete cleared puzzles 10 times.", ja: "クリア済みパズルを10回もう一度完成しましょう。" }),
@@ -171,6 +189,125 @@ const CHALLENGE_MEDALS = [
     { assetFile: "메달_백일의수련.png", dailyMetric: "totalDays" }),
 ];
 
+const MINI_GAME_MEDALS = [
+  medal("king-power", "challenge", "왕의힘", 1,
+    { ko: "왕의 힘", en: "The King's Power", ja: "王の力" },
+    { ko: "한 게임에서 킹으로 상대 기물 5개를 잡으세요.", en: "Capture 5 pieces with your king in one game.", ja: "1局でキングを使って相手の駒を5個取りましょう。" },
+    { assetFile: "메달_왕의힘.png" }),
+  medal("minigame-explorer", "challenge", "미니게임경험자", MINI_GAME_IDS.length,
+    { ko: "미니게임 경험자", en: "Mini-Game Explorer", ja: "ミニゲーム体験者" },
+    { ko: "모든 미니게임을 한 번 이상 완료하세요.", en: "Complete every mini-game at least once.", ja: "すべてのミニゲームを1回以上完了しましょう。" },
+    { assetFile: "메달_미니게임경험자.png", minigameMeta: true }),
+  medal("minigame-enthusiast", "challenge", "미니게임마니아", 1,
+    { ko: "미니게임 마니아", en: "Mini-Game Enthusiast", ja: "ミニゲームマニア" },
+    { ko: "미니게임 경험자 메달과 모든 미니게임 도전 메달을 획득하세요.", en: "Earn the explorer medal and every mini-game challenge medal.", ja: "体験者メダルとすべてのミニゲーム挑戦メダルを獲得しましょう。" },
+    { assetFile: "메달_미니게임마니아.png", minigameMeta: true }),
+  medal("tug-underdog", "challenge", "힘겨루기최약체", 50,
+    { ko: "힘겨루기 최약체", en: "Push Battle Underdog", ja: "力比べ最弱" },
+    { ko: "왕국 힘겨루기 AI 대전에서 50회 패배하세요.", en: "Lose 50 Kingdom Push Battle matches against the AI.", ja: "王国押し合いのAI戦で50回敗北しましょう。" },
+    { assetFile: "메달_힘겨루기최약체.png", minigameId: "tug" }),
+  medal("tug-winner", "challenge", "힘겨루기우승자", 50,
+    { ko: "힘겨루기 우승자", en: "Push Battle Winner", ja: "力比べの勝者" },
+    { ko: "왕국 힘겨루기에서 50회 승리하세요.", en: "Win 50 Kingdom Push Battle matches.", ja: "王国押し合いで50回勝利しましょう。" },
+    { assetFile: "메달_힘겨루기우승자.png", minigameId: "tug" }),
+  medal("tug-champion", "challenge", "힘겨루기챔피언", 100,
+    { ko: "힘겨루기 챔피언", en: "Push Battle Champion", ja: "力比べチャンピオン" },
+    { ko: "왕국 힘겨루기에서 100회 승리하세요.", en: "Win 100 Kingdom Push Battle matches.", ja: "王国押し合いで100回勝利しましょう。" },
+    { assetFile: "메달_힘겨루기챔피언.png", minigameId: "tug" }),
+  medal("tug-technician", "challenge", "힘겨루기기술자", 1,
+    { ko: "힘겨루기 기술자", en: "Push Battle Technician", ja: "力比べの技巧派" },
+    { ko: "내 기물을 하나도 잃지 않고 왕국 힘겨루기에서 승리하세요.", en: "Win a Kingdom Push Battle without losing a piece.", ja: "自分の駒を1つも失わずに王国押し合いで勝利しましょう。" },
+    { assetFile: "메달_힘겨루기기술자.png", minigameId: "tug" }),
+  medal("crown-thief", "challenge", "왕관도둑", 30,
+    { ko: "왕관 도둑", en: "Crown Thief", ja: "王冠泥棒" },
+    { ko: "왕관 쟁탈전에서 상대가 든 왕관을 30회 빼앗으세요.", en: "Steal the carried crown 30 times in Crown Clash.", ja: "王冠争奪戦で相手が持つ王冠を30回奪いましょう。" },
+    { assetFile: "메달_왕관도둑.png", minigameId: "crown" }),
+  medal("crown-first", "challenge", "마이프레셔", 30,
+    { ko: "마이프레셔", en: "My Precious", ja: "マイ・プレシャス" },
+    { ko: "왕관 쟁탈전에서 중앙 왕관을 먼저 30회 차지하세요.", en: "Be the first to claim the center crown 30 times.", ja: "王冠争奪戦で中央の王冠を先に30回獲得しましょう。" },
+    { assetFile: "메달_마이프레셔.png", minigameId: "crown" }),
+  medal("crown-champion", "challenge", "왕관쟁탈챔피언", 50,
+    { ko: "왕관 쟁탈 챔피언", en: "Crown Clash Champion", ja: "王冠争奪チャンピオン" },
+    { ko: "왕관 쟁탈전에서 50회 승리하세요.", en: "Win 50 Crown Clash matches.", ja: "王冠争奪戦で50回勝利しましょう。" },
+    { assetFile: "메달_왕관쟁탈챔피언.png", minigameId: "crown" }),
+  medal("crown-lost", "challenge", "여기있습니다", 30,
+    { ko: "여기 있습니다", en: "Here It Is", ja: "ここにあります" },
+    { ko: "왕관 쟁탈전에서 들고 있던 왕관을 상대에게 30회 빼앗기세요.", en: "Have your carried crown stolen 30 times in Crown Clash.", ja: "王冠争奪戦で持っていた王冠を相手に30回奪われましょう。" },
+    { assetFile: "메달_여기있습니다.png", minigameId: "crown" }),
+  medal("road-lost", "challenge", "길치", 30,
+    { ko: "길치", en: "Lost Traveler", ja: "方向音痴" },
+    { ko: "왕국의 길 AI 대전에서 30회 패배하세요.", en: "Lose 30 Royal Road matches against the AI.", ja: "王国の道のAI戦で30回敗北しましょう。" },
+    { assetFile: "메달_길치.png", minigameId: "road" }),
+  medal("road-puzzle-wins", "challenge", "지도를가진자", 20,
+    { ko: "지도를 가진 자", en: "Bearer of the Map", ja: "地図を持つ者" },
+    { ko: "서로 다른 왕국의 길 퍼즐 20개를 완료하세요.", en: "Complete 20 unique Royal Road puzzles.", ja: "異なる王国の道パズルを20個クリアしましょう。" },
+    { assetFile: "메달_지도를가진자.png", minigameId: "road-puzzle" }),
+  medal("road-wins-30", "challenge", "지름길은여기요", 30,
+    { ko: "지름길은 여기요", en: "The Shortcut Is Here", ja: "近道はこちら" },
+    { ko: "왕국의 길에서 30회 승리하세요.", en: "Win 30 Royal Road matches.", ja: "王国の道で30回勝利しましょう。" },
+    { assetFile: "메달_지름길은여기요.png", minigameId: "road" }),
+  medal("road-wins-40", "challenge", "고속도로", 40,
+    { ko: "고속도로", en: "Royal Highway", ja: "王国ハイウェイ" },
+    { ko: "왕국의 길에서 40회 승리하세요.", en: "Win 40 Royal Road matches.", ja: "王国の道で40回勝利しましょう。" },
+    { assetFile: "메달_고속도로.png", minigameId: "road" }),
+  medal("road-wins-50", "challenge", "승리의길", 50,
+    { ko: "승리의 길", en: "Road to Victory", ja: "勝利への道" },
+    { ko: "왕국의 길에서 50회 승리하세요.", en: "Win 50 Royal Road matches.", ja: "王国の道で50回勝利しましょう。" },
+    { assetFile: "메달_승리의길.png", minigameId: "road" }),
+  medal("road-navigation", "challenge", "네비게이션", 1,
+    { ko: "네비게이션", en: "Royal Navigation", ja: "ナビゲーション" },
+    { ko: "왕국의 길 퍼즐 모든 스테이지에서 왕관 3개를 획득하세요.", en: "Earn 3 crowns on every Royal Road puzzle stage.", ja: "王国の道パズルの全ステージで王冠を3個獲得しましょう。" },
+    { assetFile: "메달_네비게이션.png", minigameId: "road-puzzle" }),
+  medal("siege-defender", "challenge", "수성전문가", 20,
+    { ko: "수성 전문가", en: "Castle Defense Expert", ja: "籠城の達人" },
+    { ko: "공성전에서 아군 진영에 침입한 적을 20회 처치하세요.", en: "Defeat 20 enemies that enter your defense zone in Kingdom Siege.", ja: "王国攻城戦で味方の防衛区域に侵入した敵を20回倒しましょう。" },
+    { assetFile: "메달_수성전문가.png", minigameId: "siege" }),
+  medal("siege-breaker", "challenge", "공성전문가", 50,
+    { ko: "공성 전문가", en: "Siege Expert", ja: "攻城の達人" },
+    { ko: "공성전에서 적의 성을 격파하여 50회 승리하세요.", en: "Win 50 Kingdom Siege matches by destroying the enemy castle.", ja: "王国攻城戦で敵の城を破壊して50回勝利しましょう。" },
+    { assetFile: "메달_공성전문가.png", minigameId: "siege" }),
+  medal("siege-one-class", "challenge", "집요한전쟁꾼", 30,
+    { ko: "집요한 전쟁꾼", en: "Relentless Warlord", ja: "執念の戦士" },
+    { ko: "한 종류의 병과만 직접 소환하여 공성전에서 30회 승리하세요.", en: "Win 30 siege matches after summoning only one unit class.", ja: "1種類の兵科だけを召喚して攻城戦で30回勝利しましょう。" },
+    { assetFile: "메달_집요한전쟁꾼.png", minigameId: "siege" }),
+  medal("siege-all-classes", "challenge", "함께싸우자", 10,
+    { ko: "함께 싸우자", en: "Fight Together", ja: "共に戦おう" },
+    { ko: "모든 병과를 직접 소환하여 공성전에서 10회 승리하세요.", en: "Win 10 siege matches after summoning every unit class.", ja: "すべての兵科を召喚して攻城戦で10回勝利しましょう。" },
+    { assetFile: "메달_함께싸우자.png", minigameId: "siege" }),
+  medal("portal-uses-10", "challenge", "포탈의맛", 10,
+    { ko: "포탈의 맛", en: "A Taste of Portals", ja: "ポータルの味" },
+    { ko: "미니게임에서 포탈을 10회 사용하세요.", en: "Use portals 10 times in mini-games.", ja: "ミニゲームでポータルを10回使いましょう。" },
+    { assetFile: "메달_포탈의맛.png", minigameId: "all" }),
+  medal("portal-uses-30", "challenge", "홍길동", 30,
+    { ko: "홍길동", en: "Royal Wanderer", ja: "神出鬼没" },
+    { ko: "미니게임에서 포탈을 30회 사용하세요.", en: "Use portals 30 times in mini-games.", ja: "ミニゲームでポータルを30回使いましょう。" },
+    { assetFile: "메달_홍길동.png", minigameId: "all" }),
+  medal("portal-uses-50", "challenge", "순간이동능력자", 50,
+    { ko: "순간이동 능력자", en: "Teleport Master", ja: "瞬間移動の達人" },
+    { ko: "미니게임에서 포탈을 50회 사용하세요.", en: "Use portals 50 times in mini-games.", ja: "ミニゲームでポータルを50回使いましょう。" },
+    { assetFile: "메달_순간이동능력자.png", minigameId: "all" }),
+  medal("item-uses-50", "challenge", "아이템전", 50,
+    { ko: "아이템전", en: "Item Battle", ja: "アイテム戦" },
+    { ko: "미니게임에서 아이템 상자 효과를 50회 사용하세요.", en: "Trigger 50 item-box effects in mini-games.", ja: "ミニゲームでアイテムボックス効果を50回発動しましょう。" },
+    { assetFile: "메달_아이템전.png", minigameId: "all" }),
+  medal("siege-points-1500", "challenge", "힘을모아", 1500,
+    { ko: "힘을 모아", en: "Gather Your Strength", ja: "力を合わせて" },
+    { ko: "한 공성전에서 왕관 포인트 1,500을 달성하세요.", en: "Reach 1,500 crown points in a single siege match.", ja: "1回の攻城戦で王冠ポイント1,500に到達しましょう。" },
+    { assetFile: "메달_힘을모아.png", minigameId: "siege" }),
+  medal("bgm-track", "challenge", "배경음악뭐지", 1,
+    { ko: "배경음악 뭐지?", en: "What Is This Music?", ja: "このBGMは何？" },
+    { ko: "메인 화면에서 배경음악 한 곡을 끝까지 들으세요.", en: "Listen to one full background track on the main screen.", ja: "メイン画面でBGMを1曲最後まで聴きましょう。" },
+    { assetFile: "메달_배경음악뭐지.png" }),
+  medal("bgm-idle-30", "challenge", "음악감상", 1,
+    { ko: "음악 감상", en: "Music Appreciation", ja: "音楽鑑賞" },
+    { ko: "조작 없이 배경음악을 30분 연속 감상하세요.", en: "Listen to background music for 30 uninterrupted minutes without input.", ja: "操作せずにBGMを30分間連続で聴きましょう。" },
+    { assetFile: "메달_음악감상.png" }),
+  medal("thorough-visitor", "challenge", "꼼꼼한사람", 1,
+    { ko: "꼼꼼한 사람", en: "Thorough Visitor", ja: "隅々まで見る人" },
+    { ko: "메인 화면의 하단 설명과 연락처까지 모두 스크롤하세요.", en: "Scroll through the full main page, including the guide and contact section.", ja: "説明とお問い合わせを含むメイン画面の最後までスクロールしましょう。" },
+    { assetFile: "메달_꼼꼼한사람.png" }),
+];
+
 const PUZZLE_MEDALS = [10, 25, 50, 75, 100].map((target, index) => medal(
   `puzzle-${target}`, "puzzle", `퍼즐_0${index + 1}`, target,
   { ko: `퍼즐 ${target}`, en: `Puzzle ${target}`, ja: `パズル ${target}` },
@@ -203,6 +340,7 @@ export const MEDALS = Object.freeze([
   ...KINGDOM_MEDALS,
   ...SPECIAL_KINGDOM_MEDALS,
   ...CHALLENGE_MEDALS,
+  ...MINI_GAME_MEDALS,
   ...PUZZLE_MEDALS,
   ...RANK_MEDALS,
 ]);
@@ -213,6 +351,10 @@ const BASE_MEDALS = MEDALS.filter((item) => item.category !== "rank"
   && !item.collector
   && !item.unavailable
   && item.countsTowardCollection !== false);
+const MINI_GAME_COMPLETION_MEDALS = MINI_GAME_MEDALS.filter((item) => (
+  item.id !== "minigame-enthusiast"
+  && !["king-power", "bgm-track", "bgm-idle-30", "thorough-visitor"].includes(item.id)
+));
 
 export function medalTextureKey(id) {
   return `kuma_medal_${String(id || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
@@ -229,6 +371,9 @@ function emptyState() {
     processedGameIds: [],
     processedHintSessionIds: [],
     processedPuzzleSessionIds: [],
+    processedMiniGameIds: [],
+    processedEventIds: [],
+    miniGamesPlayed: {},
     context: { coins: 0, ownedSkinCount: 0, totalSkinCount: 18 },
   };
 }
@@ -293,6 +438,14 @@ function normalizeState(source) {
   state.processedGameIds = boundedIds(input.processedGameIds ?? input.processedGames);
   state.processedHintSessionIds = boundedIds(input.processedHintSessionIds ?? input.processedHintIds);
   state.processedPuzzleSessionIds = boundedIds(input.processedPuzzleSessionIds ?? input.processedPuzzleIds);
+  state.processedMiniGameIds = boundedIds(input.processedMiniGameIds);
+  state.processedEventIds = boundedIds(input.processedEventIds);
+  const rawMiniGamesPlayed = input.miniGamesPlayed && typeof input.miniGamesPlayed === "object"
+    ? input.miniGamesPlayed
+    : {};
+  for (const id of MINI_GAME_IDS) {
+    if (rawMiniGamesPlayed[id]) state.miniGamesPlayed[id] = true;
+  }
   const context = input.context && typeof input.context === "object" ? input.context : input;
   state.context = {
     coins: count(context.coins),
@@ -324,11 +477,19 @@ function evaluate(state) {
     state.progress[item.id] = Math.max(count(state.progress[item.id]), count(state.skinWins[key]));
   }
   state.progress["coin-master"] = Math.max(count(state.progress["coin-master"]), state.context.coins);
+  state.progress["minigame-explorer"] = MINI_GAME_IDS.reduce(
+    (total, id) => total + Number(Boolean(state.miniGamesPlayed[id])),
+    0,
+  );
 
   for (const item of MEDALS) {
     if (item.category === "rank" || item.collector || item.unavailable) continue;
     if (count(state.progress[item.id]) >= item.target) unlock(state, item.id, newlyUnlocked, now);
   }
+
+  const hasEveryMiniGameMedal = MINI_GAME_COMPLETION_MEDALS.every((item) => state.unlockedAt[item.id]);
+  state.progress["minigame-enthusiast"] = hasEveryMiniGameMedal ? 1 : 0;
+  if (hasEveryMiniGameMedal) unlock(state, "minigame-enthusiast", newlyUnlocked, now);
 
   const unlockedBase = BASE_MEDALS.reduce((total, item) => total + Number(Boolean(state.unlockedAt[item.id])), 0);
   const basePercent = BASE_MEDALS.length ? Math.floor((unlockedBase / BASE_MEDALS.length) * 100) : 0;
@@ -524,6 +685,7 @@ function analyzeHistory(historyInput, playerColor, finalPiecesInput) {
   let captureRun = 0;
   let maxCaptureRun = 0;
   let knightCaptures = 0;
+  let kingCaptures = 0;
 
   history.forEach((move, index) => {
     const actor = moveColor(move);
@@ -543,6 +705,7 @@ function analyzeHistory(historyInput, playerColor, finalPiecesInput) {
         if (movingPiece === "q") queenCaptures += 1;
         if (wasInCheck(history, index)) checkCaptures += 1;
         if (movingPiece === "n") knightCaptures += 1;
+        if (movingPiece === "k") kingCaptures += 1;
       } else {
         captureRun = 0;
       }
@@ -583,6 +746,7 @@ function analyzeHistory(historyInput, playerColor, finalPiecesInput) {
     kingMoves,
     maxCaptureRun,
     knightCaptures,
+    kingCaptures,
     queenless: finalCounts[playerColor].q === 0,
     bareKings: allRemaining === 2 && finalCounts.w.k === 1 && finalCounts.b.k === 1,
     checkmate: Boolean(lastMove && /#/.test(String(lastMove.san || ""))),
@@ -620,6 +784,9 @@ export function recordCompletedGame(record = {}) {
     const winnerColor = winnerFromRecord(record, playerColor);
     const draw = isDrawRecord(record, winnerColor);
     const humanWon = mode === "ai" && winnerColor === playerColor;
+    const difficulty = ["easy", "normal", "hard", "challenge"].includes(record.difficulty)
+      ? record.difficulty
+      : "normal";
 
     if (winnerColor && (mode === "pvp" || humanWon)) recordSkinWin(state, record.skins, winnerColor);
     if (draw) addProgress(state, "draw-10");
@@ -642,8 +809,10 @@ export function recordCompletedGame(record = {}) {
     if (metrics.maxCaptureRun >= 5) addProgress(state, "capture-streak");
     if (metrics.promotions >= 3) addProgress(state, "triple-promotion");
     if (metrics.knightCaptures >= 14) addProgress(state, "knight-captures-14");
+    if (metrics.kingCaptures >= 5) addProgress(state, "king-power");
 
     if (humanWon) {
+      if (difficulty === "challenge") addProgress(state, "challenge-ai-victory");
       if (metrics.queenless) addProgress(state, "queenless-victory");
       if (!metrics.wasChecked && metrics.kingMoves === 0) addProgress(state, "perfect-defense");
       const duration = Number(record.durationMs);
@@ -698,6 +867,86 @@ export function recordDailyMissionDay({ currentStreak, totalCompletedDays } = {}
       count(state.progress["hundred-day-training"]),
       totalDays,
     );
+  });
+}
+
+function isTrackedMiniGameWin(mode, winnerColor, playerColor) {
+  if (!winnerColor) return false;
+  return mode === "pvp" || winnerColor === playerColor;
+}
+
+export function recordMiniGameCompletion(record = {}) {
+  const sessionId = normalizeId(record.sessionId ?? record.gameSessionId);
+  const gameId = normalizeId(record.gameId);
+  if (!sessionId || !MINI_GAME_IDS.includes(gameId)) {
+    return { newlyUnlocked: [], state: readMedalState() };
+  }
+
+  return update((state) => {
+    if (!rememberId(state.processedMiniGameIds, `${gameId}:${sessionId}`)) return;
+    state.miniGamesPlayed[gameId] = true;
+
+    const mode = ["pvp", "local", "face-to-face", "face_to_face"].includes(String(record.mode || "").toLowerCase())
+      ? "pvp"
+      : "ai";
+    const playerColor = colorId(record.playerColor, "w");
+    const winnerColor = colorId(record.winnerColor);
+    const won = isTrackedMiniGameWin(mode, winnerColor, playerColor);
+    const lost = mode === "ai" && Boolean(winnerColor) && winnerColor !== playerColor;
+    const stats = record.stats && typeof record.stats === "object" ? record.stats : {};
+    const portalUses = count(stats.portalUses);
+    const itemUses = count(stats.itemUses);
+
+    for (const id of ["portal-uses-10", "portal-uses-30", "portal-uses-50"]) {
+      addProgress(state, id, portalUses);
+    }
+    addProgress(state, "item-uses-50", itemUses);
+
+    if (gameId === "tug") {
+      if (won) {
+        addProgress(state, "tug-winner");
+        addProgress(state, "tug-champion");
+        if (stats.noPiecesLost === true) addProgress(state, "tug-technician");
+      }
+      if (lost) addProgress(state, "tug-underdog");
+    } else if (gameId === "crown") {
+      if (won) addProgress(state, "crown-champion");
+      addProgress(state, "crown-thief", count(stats.crownStolen));
+      addProgress(state, "crown-first", count(stats.crownFirst));
+      addProgress(state, "crown-lost", count(stats.crownLost));
+    } else if (gameId === "road") {
+      if (won) {
+        addProgress(state, "road-wins-30");
+        addProgress(state, "road-wins-40");
+        addProgress(state, "road-wins-50");
+      }
+      if (lost) addProgress(state, "road-lost");
+    } else if (gameId === "road-puzzle") {
+      if (stats.firstClear === true) addProgress(state, "road-puzzle-wins");
+      if (stats.allStars === true) state.progress["road-navigation"] = 1;
+    } else if (gameId === "siege") {
+      addProgress(state, "siege-defender", count(stats.defenseSaves));
+      if (won && stats.castleDestroyed === true) addProgress(state, "siege-breaker");
+      const summonedTypes = new Set(Array.isArray(stats.summonedTypes) ? stats.summonedTypes.map(normalizeId).filter(Boolean) : []);
+      if (won && summonedTypes.size === 1) addProgress(state, "siege-one-class");
+      if (won && summonedTypes.size >= 6) addProgress(state, "siege-all-classes");
+      state.progress["siege-points-1500"] = Math.max(
+        count(state.progress["siege-points-1500"]),
+        count(stats.maxCrownPoints),
+      );
+    }
+  });
+}
+
+export function recordAmbientMedalEvent({ eventId, type } = {}) {
+  const id = normalizeId(eventId);
+  const metric = normalizeId(type);
+  if (!id || !["bgm-track", "bgm-idle-30", "thorough-visitor"].includes(metric)) {
+    return { newlyUnlocked: [], state: readMedalState() };
+  }
+  return update((state) => {
+    if (!rememberId(state.processedEventIds, id)) return;
+    state.progress[metric] = Math.max(1, count(state.progress[metric]));
   });
 }
 

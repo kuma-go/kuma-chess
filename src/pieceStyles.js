@@ -1,3 +1,5 @@
+import { pieceTextureKey } from "./pieceAssets.js?v=20260902-profile81";
+
 export const SKINS = [
   { id: "classic", name: "CLASSIC" },
   { id: "bear", name: "BEAR" },
@@ -32,7 +34,7 @@ export function createPieceView(scene, x, y, size, skinId, color, type, facing =
   const iconMode = skinId === "icon";
   const key = iconMode
     ? `kuma_ui_icon_${ICON_TYPE[type]}_${color}`
-    : `kuma_piece_${skinId}_${color}_${type}_${facing}`;
+    : pieceTextureKey(skinId, color, type, facing);
 
   let piece;
   if (scene.textures.exists(key)) {

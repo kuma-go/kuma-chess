@@ -48,7 +48,19 @@ python3 -m http.server 8005
 
 Open `http://localhost:8005/`; `file://` is unsupported.
 
-Run before reporting completion:
+Choose QA in proportion to the change. The detailed matrix and target names are in `docs/QA_WORKFLOW.md`.
+
+- Small visual, spacing, copy, coordinate, or single-asset edits: run quick QA and inspect only the changed screen. Do not use a subagent by default.
+- Interaction, state, purchase, reward, persistence, or gameplay edits: run feature QA for the affected target and verify its success and failure/cancel paths.
+- Release candidates, broad shared helpers, storage schema, economy, reward, Firebase, or security edits: run full QA.
+
+```bash
+npm run qa:quick -- profile
+npm run qa:feature -- profile
+npm run qa:full
+```
+
+The full suite includes:
 
 ```bash
 find src -name '*.js' -print0 | xargs -0 -n1 node --check
@@ -60,13 +72,13 @@ node scripts/validate-daily-missions.mjs
 node scripts/security-check.mjs
 ```
 
-Before a requested public push, also run:
+Before a requested public push, run:
 
 ```bash
-node scripts/security-check.mjs --history
+npm run qa:release
 ```
 
-Use the in-app browser for visual QA at desktop and mobile portrait sizes. For board or motion work, inspect screenshots at representative game states rather than validating only the menu.
+Use the in-app browser for targeted visual QA. Check both desktop and mobile portrait when responsive layout may be affected. For board or motion work, inspect representative game states rather than validating only the menu.
 
 ## Change scope
 

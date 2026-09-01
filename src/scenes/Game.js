@@ -1,13 +1,14 @@
-import { Chess } from "../vendor-chess.js?v=20260802-medal66";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260802-medal66";
-import { t } from "../i18n.js?v=20260802-medal66";
-import { playFeedback } from "../feedback.js?v=20260802-medal66";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260802-medal66";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260802-medal66";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260802-medal66";
-import { recordCompletedGame } from "../medals.js?v=20260802-medal66";
-import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260802-medal66";
-import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260802-medal66";
+import { Chess } from "../vendor-chess.js?v=20260902-profile81";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260902-profile81";
+import { pieceTextureKey } from "../pieceAssets.js?v=20260902-profile81";
+import { t } from "../i18n.js?v=20260902-profile81";
+import { playFeedback } from "../feedback.js?v=20260902-profile81";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260902-profile81";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260902-profile81";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260902-profile81";
+import { recordCompletedGame } from "../medals.js?v=20260902-profile81";
+import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260902-profile81";
+import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260902-profile81";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -18,11 +19,13 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260802-medal66";
+} from "../ui/KumaUi.js?v=20260902-profile81";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
 const HARD_AI_LIMITS = Object.freeze({ rootMoves: 12, replyMoves: 12, nodes: 180, thinkMs: 48 });
+const CHALLENGE_AI_LIMITS = Object.freeze({ timeMs: 2200, maxDepth: 6, nodeLimit: 260000 });
+const CHALLENGE_AI_TIMEOUT_MS = 5000;
 
 export class Game extends Phaser.Scene {
   constructor() {
@@ -77,6 +80,9 @@ export class Game extends Phaser.Scene {
     this._aiBusy = false;
     this._aiTimer = null;
     this._aiToken = 0;
+    this._challengeSearch = null;
+    this._challengeRequestId = 0;
+    this._challengeSearchStats = null;
     this._gameOverTimers = [];
     this._modalOpen = false;
     this.gameSessionId = "";
@@ -213,7 +219,7 @@ export class Game extends Phaser.Scene {
           cancelText: t("common.cancel"),
           onConfirm: () => {
             this.cancelGameOverTimers();
-            this.scene.start("Start");
+            if (!window.KumaEmbeddedRuntime?.returnHome?.()) this.scene.start("Start");
           },
         });
       },
@@ -289,7 +295,7 @@ export class Game extends Phaser.Scene {
     const image = view._pieceImage;
 
     if (skin !== "icon" && image?.setTexture) {
-      const textureKey = `kuma_piece_${skin}_${view._color}_${view._type}_${facing}`;
+      const textureKey = pieceTextureKey(skin, view._color, view._type, facing);
       if (this.textures.exists(textureKey) && image.texture?.key !== textureKey) {
         image.setTexture(textureKey);
       }
@@ -470,13 +476,20 @@ export class Game extends Phaser.Scene {
       });
     };
 
-    drawRow(this.capturedBy.b, topBarY, {
+    const topCaptured = this.isAIMode()
+      ? this.capturedBy[this.getAIColor()]
+      : this.capturedBy.b;
+    const bottomCaptured = this.isAIMode()
+      ? this.capturedBy[this.playerColor]
+      : this.capturedBy.w;
+
+    drawRow(topCaptured, topBarY, {
       startX: faceToFace ? rightStartX : leftStartX,
       direction: faceToFace ? -1 : 1,
       perspectiveTurn: faceToFace ? "b" : this._perspectiveTurn,
       upsideDown: faceToFace,
     });
-    drawRow(this.capturedBy.w, bottomBarY, {
+    drawRow(bottomCaptured, bottomBarY, {
       startX: leftStartX,
       direction: 1,
       perspectiveTurn: faceToFace ? "w" : this._perspectiveTurn,
@@ -831,6 +844,7 @@ export class Game extends Phaser.Scene {
       history: payload.history,
       finalPieces: payload.finalPieces,
       durationMs: payload.durationMs,
+      difficulty: payload.difficulty,
     });
     const dailyResult = recordDailyGameCompletion({
       gameSessionId: payload.gameSessionId,
@@ -1247,6 +1261,8 @@ export class Game extends Phaser.Scene {
       this._aiTimer.remove(false);
       this._aiTimer = null;
     }
+    this._challengeSearch?.finish?.(null);
+    this._challengeSearch = null;
     this._aiToken += 1;
     this._aiBusy = false;
   }
@@ -1485,7 +1501,57 @@ export class Game extends Phaser.Scene {
         : this.pickBestAIMove(aiColor);
     }
     if (difficulty === "hard") return this.pickHardAIMove(aiColor);
+    if (difficulty === "challenge") return this.pickHardAIMove(aiColor);
     return this.pickBestAIMove(aiColor);
+  }
+
+  pickChallengeAIMove(aiColor) {
+    if (typeof Worker !== "function") return Promise.resolve(null);
+    const requestId = ++this._challengeRequestId;
+    const fen = this.game.fen();
+
+    return new Promise((resolve) => {
+      let worker = null;
+      let timeoutId = null;
+      let settled = false;
+      const search = {
+        finish: (move, stats = null) => {
+          if (settled) return;
+          settled = true;
+          if (timeoutId !== null) window.clearTimeout(timeoutId);
+          worker?.terminate?.();
+          if (this._challengeSearch === search) this._challengeSearch = null;
+          if (stats) this._challengeSearchStats = stats;
+          resolve(move || null);
+        },
+      };
+      this._challengeSearch = search;
+
+      try {
+        worker = new Worker(
+          new URL("../ai/challengeWorker.js?v=20260902-profile81", import.meta.url),
+          { type: "module", name: "kuma-challenge-ai" }
+        );
+      } catch (error) {
+        search.finish(null);
+        return;
+      }
+
+      worker.onmessage = (event) => {
+        const result = event.data || {};
+        if (result.requestId !== requestId) return;
+        search.finish(result.ok ? result.move : null, {
+          depth: Number(result.depth) || 0,
+          nodes: Number(result.nodes) || 0,
+          score: Number(result.score) || 0,
+          elapsedMs: Number(result.elapsedMs) || 0,
+          book: result.book === true,
+        });
+      };
+      worker.onerror = () => search.finish(null);
+      timeoutId = window.setTimeout(() => search.finish(null), CHALLENGE_AI_TIMEOUT_MS);
+      worker.postMessage({ requestId, fen, aiColor, limits: CHALLENGE_AI_LIMITS });
+    });
   }
 
 isViewFlipped() {
@@ -1511,8 +1577,14 @@ maybeAIMove(force = false) {
     this.clearHighlights();
 
     const difficulty = getAIDifficulty(this.aiDifficulty) || AI_DIFFICULTIES?.normal;
-    const thinkMs = difficulty?.id === "easy" ? 300 : difficulty?.id === "hard" ? 620 : 380;
-    this._aiTimer = this.time.delayedCall(thinkMs, () => {
+    const thinkMs = difficulty?.id === "easy"
+      ? 300
+      : difficulty?.id === "hard"
+        ? 620
+        : difficulty?.id === "challenge"
+          ? 260
+          : 380;
+    this._aiTimer = this.time.delayedCall(thinkMs, async () => {
       try {
         this._aiTimer = null;
         if (token !== this._aiToken) return;
@@ -1521,7 +1593,13 @@ maybeAIMove(force = false) {
         if (this.game.turn() !== aiColor) return;
         if (this.game.fen() !== fenAtSchedule) return;
 
-        const pick = this.pickAIMove(aiColor);
+        let pick = difficulty?.id === "challenge"
+          ? await this.pickChallengeAIMove(aiColor)
+          : this.pickAIMove(aiColor);
+        if (token !== this._aiToken) return;
+        if (!this.isAIMode() || this._promoLayer || this._modalOpen || this._ending) return;
+        if (this.game.isGameOver() || this.game.turn() !== aiColor || this.game.fen() !== fenAtSchedule) return;
+        if (!pick && difficulty?.id === "challenge") pick = this.pickHardAIMove(aiColor);
         if (!pick) {
           this._aiBusy = false;
           return;

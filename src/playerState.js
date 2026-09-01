@@ -4,8 +4,15 @@ import {
   readProfileState,
   stripProfileFields,
   writeProfileState,
-} from "./profileState.js?v=20260802-medal66";
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260802-medal66";
+} from "./profileState.js?v=20260902-profile81";
+import {
+  FREE_PROFILE_FRAME_IDS,
+  FREE_PROFILE_PORTRAIT_IDS,
+  PROFILE_FRAMES,
+  PROFILE_PORTRAITS,
+  getProfileCosmetic,
+} from "./profileCatalog.js?v=20260902-profile81";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260902-profile81";
 
 export const PLAYER_STATE_KEY = "kumaChessPlayerState";
 export const PUZZLE_PROGRESS_KEY = "kumaChessPuzzleClears";
@@ -27,6 +34,7 @@ export const AI_DIFFICULTIES = Object.freeze({
   easy: Object.freeze({ id: "easy", reward: 5 }),
   normal: Object.freeze({ id: "normal", reward: 15 }),
   hard: Object.freeze({ id: "hard", reward: 35 }),
+  challenge: Object.freeze({ id: "challenge", reward: 100 }),
 });
 
 export const DEFAULT_AI_DIFFICULTY = "normal";
@@ -59,6 +67,7 @@ export const GOLD_BEAR_PIECES = Object.freeze([
 export const HIDDEN_REWARD_COUPON_CLAIM = "coupon:hidden:forestCrown:v1";
 const HIDDEN_REWARD_COUPON_HASHES = Object.freeze([
   "c09f7853",
+  "aaf7e436",
 ]);
 
 const EMPTY_RESULT_STATS = Object.freeze({ wins: 0, losses: 0, draws: 0, played: 0 });
@@ -69,6 +78,7 @@ function createDefaultStats() {
       easy: { ...EMPTY_RESULT_STATS },
       normal: { ...EMPTY_RESULT_STATS },
       hard: { ...EMPTY_RESULT_STATS },
+      challenge: { ...EMPTY_RESULT_STATS },
     },
     pvp: { wWins: 0, bWins: 0, draws: 0, played: 0 },
   };
@@ -77,7 +87,10 @@ function createDefaultStats() {
 const DEFAULT_STATE = {
   coins: 100,
   unlockedSkinColors: ["classic:w", "classic:b"],
+  ownedProfilePortraits: [...FREE_PROFILE_PORTRAIT_IDS],
+  ownedProfileFrames: [...FREE_PROFILE_FRAME_IDS],
   specialPieces: [],
+  pendingPieceUnlockNotices: [],
   rewardClaims: [],
   lastDailyRewardDate: "",
   stats: createDefaultStats(),
@@ -87,7 +100,10 @@ function cloneDefaultState() {
   return {
     ...DEFAULT_STATE,
     unlockedSkinColors: [...DEFAULT_STATE.unlockedSkinColors],
+    ownedProfilePortraits: [...DEFAULT_STATE.ownedProfilePortraits],
+    ownedProfileFrames: [...DEFAULT_STATE.ownedProfileFrames],
     specialPieces: [...DEFAULT_STATE.specialPieces],
+    pendingPieceUnlockNotices: [],
     rewardClaims: [...DEFAULT_STATE.rewardClaims],
     stats: createDefaultStats(),
   };
@@ -105,14 +121,41 @@ function normalizeState(state) {
       ? next.unlockedSkinColors
       : DEFAULT_STATE.unlockedSkinColors
   ));
+  const validPortraits = new Set(PROFILE_PORTRAITS.map((item) => item.id));
+  const validFrames = new Set(PROFILE_FRAMES.map((item) => item.id));
+  next.ownedProfilePortraits = Array.from(new Set(
+    (Array.isArray(next.ownedProfilePortraits) ? next.ownedProfilePortraits : [])
+      .map((id) => id === "portrait-hourglass" ? "portrait-180" : id)
+      .filter((id) => validPortraits.has(id)),
+  ));
+  next.ownedProfileFrames = Array.from(new Set(
+    (Array.isArray(next.ownedProfileFrames) ? next.ownedProfileFrames : [])
+      .filter((id) => validFrames.has(id)),
+  ));
   next.rewardClaims = Array.from(new Set(
     Array.isArray(next.rewardClaims) ? next.rewardClaims : []
   ));
+  for (const claimId of next.rewardClaims) {
+    const match = /^profile-purchase:(portrait|frame):(.+):v1$/.exec(claimId);
+    if (!match) continue;
+    const [, type, rawId] = match;
+    const id = type === "portrait" && rawId === "portrait-hourglass" ? "portrait-180" : rawId;
+    const validIds = type === "frame" ? validFrames : validPortraits;
+    const ownership = type === "frame" ? next.ownedProfileFrames : next.ownedProfilePortraits;
+    if (validIds.has(id) && !ownership.includes(id)) ownership.push(id);
+  }
   next.specialPieces = Array.from(new Set(
     Array.isArray(next.specialPieces) ? next.specialPieces.map(normalizeSpecialPieceId).filter(Boolean) : []
   ));
+  next.pendingPieceUnlockNotices = normalizePieceUnlockNotices(next.pendingPieceUnlockNotices);
   for (const key of DEFAULT_STATE.unlockedSkinColors) {
     if (!next.unlockedSkinColors.includes(key)) next.unlockedSkinColors.unshift(key);
+  }
+  for (const id of FREE_PROFILE_PORTRAIT_IDS) {
+    if (!next.ownedProfilePortraits.includes(id)) next.ownedProfilePortraits.unshift(id);
+  }
+  for (const id of FREE_PROFILE_FRAME_IDS) {
+    if (!next.ownedProfileFrames.includes(id)) next.ownedProfileFrames.unshift(id);
   }
   const sourceStats = state?.stats || {};
   const defaults = createDefaultStats();
@@ -202,6 +245,28 @@ function specialPieceKey(skinId, type) {
   return `${skinId}:${type}`;
 }
 
+function normalizePieceUnlockNotices(values) {
+  const result = [];
+  const seen = new Set();
+  for (const item of Array.isArray(values) ? values : []) {
+    const skinId = SKIN_SHOP.some((skin) => skin.id === item?.skinId) ? item.skinId : "";
+    const color = item?.color === "b" ? "b" : "w";
+    const type = "pnbrqk".includes(item?.type) ? item.type : "k";
+    const id = String(item?.id || "").trim().slice(0, 120);
+    if (!id || !skinId || seen.has(id)) continue;
+    seen.add(id);
+    result.push({ id, skinId, color, type, set: item?.set === true });
+  }
+  return result.slice(-24);
+}
+
+function queuePieceUnlockNotice(state, notice) {
+  state.pendingPieceUnlockNotices = normalizePieceUnlockNotices([
+    ...(state.pendingPieceUnlockNotices || []),
+    notice,
+  ]);
+}
+
 function getDailyCompletedDays(state) {
   return safeCount(state?.dailyMissions?.totalCompletedDays);
 }
@@ -234,21 +299,43 @@ function syncSpecialSetUnlocks(state) {
     ownedPieces.has(specialPieceKey("goldBear", piece.id))
   ));
   if (hasAllGoldBearPieces) {
+    let unlockedSet = false;
     for (const color of ["w", "b"]) {
       const key = skinColorKey("goldBear", color);
       if (!state.unlockedSkinColors.includes(key)) {
         state.unlockedSkinColors.push(key);
         changed = true;
+        unlockedSet = true;
       }
+    }
+    if (unlockedSet) {
+      queuePieceUnlockNotice(state, {
+        id: "unlock-set:goldBear:v1",
+        skinId: "goldBear",
+        color: "w",
+        type: "k",
+        set: true,
+      });
     }
   }
   if (state.rewardClaims.includes(HIDDEN_REWARD_COUPON_CLAIM)) {
+    let unlockedSet = false;
     for (const color of ["w", "b"]) {
       const key = skinColorKey("brownBear", color);
       if (!state.unlockedSkinColors.includes(key)) {
         state.unlockedSkinColors.push(key);
         changed = true;
+        unlockedSet = true;
       }
+    }
+    if (unlockedSet) {
+      queuePieceUnlockNotice(state, {
+        id: "unlock-set:brownBear:v1",
+        skinId: "brownBear",
+        color: "b",
+        type: "k",
+        set: true,
+      });
     }
   }
   return changed;
@@ -261,6 +348,13 @@ function syncQuestUnlocks(state) {
     const key = skinColorKey(skinId, color);
     if (!state.unlockedSkinColors.includes(key) && questProgress(quest, state) >= quest.target) {
       state.unlockedSkinColors.push(key);
+      queuePieceUnlockNotice(state, {
+        id: `unlock-quest:${key}:v1`,
+        skinId,
+        color,
+        type: "k",
+        set: false,
+      });
       changed = true;
     }
   }
@@ -297,6 +391,9 @@ export function writePlayerState(state) {
   const combined = attachProfileFields(next, profile);
   try {
     window.dispatchEvent(new CustomEvent("kuma-state-changed", { detail: combined }));
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "kuma-player-state-changed" }, window.location.origin);
+    }
   } catch (_error) {
     // Non-browser validation runs do not need DOM events.
   }
@@ -309,6 +406,34 @@ export function updatePlayerState(mutator) {
   return writePlayerState(state);
 }
 
+export function consumePieceUnlockNotices() {
+  const state = readPlayerState();
+  const notices = normalizePieceUnlockNotices(state.pendingPieceUnlockNotices);
+  if (!notices.length) return [];
+  state.pendingPieceUnlockNotices = [];
+  writePlayerState(state);
+  return notices;
+}
+
+export function getPieceUnlockNotices() {
+  return normalizePieceUnlockNotices(readPlayerState().pendingPieceUnlockNotices);
+}
+
+export function acknowledgePieceUnlockNotices(noticeIds) {
+  const ids = new Set((Array.isArray(noticeIds) ? noticeIds : [noticeIds])
+    .map((id) => String(id || "").trim())
+    .filter(Boolean));
+  if (!ids.size) return getPieceUnlockNotices();
+  const state = readPlayerState();
+  const notices = normalizePieceUnlockNotices(state.pendingPieceUnlockNotices);
+  const remaining = notices.filter((notice) => !ids.has(notice.id));
+  if (remaining.length !== notices.length) {
+    state.pendingPieceUnlockNotices = remaining;
+    writePlayerState(state);
+  }
+  return remaining;
+}
+
 function localDateKey(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -316,14 +441,17 @@ function localDateKey(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
-export function claimDailyReward() {
-  const today = localDateKey();
+export function claimDailyReward(date = new Date()) {
+  const today = localDateKey(date);
+  const claimId = `daily-login:${today}`;
   const state = readPlayerState();
-  if (state.lastDailyRewardDate === today) {
+  if (state.rewardClaims.includes(claimId)
+    || (state.lastDailyRewardDate && today <= state.lastDailyRewardDate)) {
     return { claimed: false, amount: 0, coins: state.coins };
   }
 
   state.lastDailyRewardDate = today;
+  state.rewardClaims.push(claimId);
   state.coins += REWARDS.daily;
   const saved = writePlayerState(state);
   return { claimed: true, amount: REWARDS.daily, coins: saved.coins };
@@ -347,6 +475,80 @@ export function spendCoins(amount) {
   state.coins -= amount;
   const saved = writePlayerState(state);
   return { ok: true, coins: saved.coins };
+}
+
+function profileOwnershipKey(type) {
+  return type === "frame" ? "ownedProfileFrames" : "ownedProfilePortraits";
+}
+
+export function isProfileCosmeticOwned(type, id, state = readPlayerState()) {
+  const item = getProfileCosmetic(type, id);
+  if (!item) return false;
+  return (state[profileOwnershipKey(type)] || []).includes(item.id);
+}
+
+export function getProfileCosmeticCollection(state = readPlayerState()) {
+  const ownedPortraits = new Set(state.ownedProfilePortraits || []);
+  const ownedFrames = new Set(state.ownedProfileFrames || []);
+  return {
+    coins: state.coins,
+    portraits: PROFILE_PORTRAITS.map((item) => ({ ...item, owned: ownedPortraits.has(item.id) })),
+    frames: PROFILE_FRAMES.map((item) => ({ ...item, owned: ownedFrames.has(item.id) })),
+  };
+}
+
+export function purchaseProfileCosmetic(type, id) {
+  const item = getProfileCosmetic(type, id);
+  const state = readPlayerState();
+  if (!item) return { ok: false, reason: "unknown", coins: state.coins };
+  const key = profileOwnershipKey(type);
+  if (state[key].includes(item.id)) {
+    return { ok: true, alreadyOwned: true, coins: state.coins, item };
+  }
+  if (state.coins < item.cost) {
+    return { ok: false, reason: "coins", coins: state.coins, cost: item.cost, item };
+  }
+
+  state.coins -= item.cost;
+  state[key].push(item.id);
+  const claimId = `profile-purchase:${item.type}:${item.id}:v1`;
+  if (!state.rewardClaims.includes(claimId)) state.rewardClaims.push(claimId);
+  const saved = writePlayerState(state);
+  return { ok: true, alreadyOwned: false, coins: saved.coins, cost: item.cost, item };
+}
+
+export function purchaseProfileLoadout(portraitId, frameId) {
+  const state = readPlayerState();
+  const selections = [
+    { type: "portrait", item: getProfileCosmetic("portrait", portraitId) },
+    { type: "frame", item: getProfileCosmetic("frame", frameId) },
+  ];
+  if (selections.some(({ item }) => !item)) {
+    return { ok: false, reason: "unknown", coins: state.coins, cost: 0, items: [] };
+  }
+
+  const pending = selections.filter(({ type, item }) => (
+    !state[profileOwnershipKey(type)].includes(item.id)
+  ));
+  const cost = pending.reduce((total, { item }) => total + item.cost, 0);
+  if (state.coins < cost) {
+    return { ok: false, reason: "coins", coins: state.coins, cost, items: pending.map(({ item }) => item) };
+  }
+
+  state.coins -= cost;
+  for (const { type, item } of pending) {
+    state[profileOwnershipKey(type)].push(item.id);
+    const claimId = `profile-purchase:${item.type}:${item.id}:v1`;
+    if (!state.rewardClaims.includes(claimId)) state.rewardClaims.push(claimId);
+  }
+  const saved = writePlayerState(state);
+  return {
+    ok: true,
+    alreadyOwned: pending.length === 0,
+    coins: saved.coins,
+    cost,
+    items: pending.map(({ item }) => item),
+  };
 }
 
 export function getSkinInfo(skinId) {
@@ -500,6 +702,13 @@ export function unlockGoldBearPiece(pieceId) {
     return { ok: false, reason: "ad", coins: state.coins, piece };
   }
   state.specialPieces.push(key);
+  queuePieceUnlockNotice(state, {
+    id: `unlock-piece:goldBear:${piece.id}:v1`,
+    skinId: "goldBear",
+    color: "w",
+    type: piece.id,
+    set: false,
+  });
   const saved = writePlayerState(state);
   const goldProgress = getGoldBearProgress(saved);
   return {
@@ -519,6 +728,14 @@ export function grantSpecialPiece(pieceKey) {
     return { ok: true, alreadyUnlocked: true, coins: state.coins };
   }
   state.specialPieces.push(normalized);
+  const [, type] = normalized.split(":");
+  queuePieceUnlockNotice(state, {
+    id: `unlock-piece:${normalized}:v1`,
+    skinId: "goldBear",
+    color: "w",
+    type,
+    set: false,
+  });
   const saved = writePlayerState(state);
   return {
     ok: true,
@@ -554,6 +771,13 @@ export function redeemHiddenRewardCoupon(input) {
     const key = skinColorKey("brownBear", color);
     if (!state.unlockedSkinColors.includes(key)) state.unlockedSkinColors.push(key);
   }
+  queuePieceUnlockNotice(state, {
+    id: "unlock-set:brownBear:v1",
+    skinId: "brownBear",
+    color: "b",
+    type: "k",
+    set: true,
+  });
   const saved = writePlayerState(state);
   return { ok: true, alreadyUnlocked: false, coins: saved.coins };
 }

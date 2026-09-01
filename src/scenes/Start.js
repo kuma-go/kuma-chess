@@ -1,35 +1,46 @@
 import {
   claimDailyReward,
+  getPieceUnlockNotices,
   getCollectionSkinColorTotal,
   getOwnedCollectionSkinColorCount,
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260802-medal66";
-import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260802-medal66";
-import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260802-medal66";
-import { setTopAdVisible } from "../adManager.js?v=20260802-medal66";
-import { t } from "../i18n.js?v=20260802-medal66";
+} from "../playerState.js?v=20260902-profile81";
+import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260902-profile81";
+import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260902-profile81";
+import { setTopAdVisible } from "../adManager.js?v=20260902-profile81";
+import { t } from "../i18n.js?v=20260902-profile81";
 import {
   addCoinPill,
   addLargeTextButton,
+  addPanel,
   addSettingsButton,
   createModalBackdrop,
+  KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260802-medal66";
-import { playFeedback } from "../feedback.js?v=20260802-medal66";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260802-medal66";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260802-medal66";
-import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260802-medal66";
+} from "../ui/KumaUi.js?v=20260902-profile81";
+import { playFeedback } from "../feedback.js?v=20260902-profile81";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260902-profile81";
+import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260902-profile81";
+import { showLeaderboardPopup } from "../ui/LeaderboardPopup.js?v=20260902-profile81";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260902-profile81";
+import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260902-profile81";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-profile81";
 
 const BUTTONS = [
-  { y: 873, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
-  { y: 1001, labelKey: "start.ai", subKey: "start.aiSub", scene: "PieceSelectAI", mode: "ai" },
-  { y: 1129, labelKey: "start.pvp", subKey: "start.pvpSub", scene: "PieceSelect", mode: "pvp" },
+  { y: 704, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
+  { y: 764, labelKey: "start.ai", subKey: "start.aiSub", scene: "PieceSelectAI", mode: "ai" },
+  { y: 824, labelKey: "start.tug", subKey: "start.tugSub", action: "tug", fontSize: 23 },
+  { y: 884, labelKey: "start.road", subKey: "start.roadSub", action: "road", fontSize: 23 },
+  { y: 944, labelKey: "start.roadPuzzle", subKey: "start.roadPuzzleSub", scene: "RoyalRoadPuzzleSelect", fontSize: 23 },
+  { y: 1004, labelKey: "start.crown", subKey: "start.crownSub", action: "crown", fontSize: 23 },
+  { y: 1064, labelKey: "start.siege", subKey: "start.siegeSub", action: "siege", fontSize: 23 },
+  { y: 1124, labelKey: "start.pvp", subKey: "start.pvpSub", scene: "PieceSelect", mode: "pvp" },
 ];
 
 export class Start extends Phaser.Scene {
@@ -38,7 +49,11 @@ export class Start extends Phaser.Scene {
     this.coinGroup = null;
   }
 
-  create() {
+  create(data = {}) {
+    if (window.KumaEmbeddedRuntime?.isEmbedded) {
+      this.createEmbeddedHost(data);
+      return;
+    }
     const { width, height } = this.scale;
     const state = readPlayerState();
     this.sound.mute = !state.soundEnabled;
@@ -94,6 +109,7 @@ export class Start extends Phaser.Scene {
     addSettingsButton(this, () => showSettingsPanel(this));
     this.addPlayInfoButton();
     this.addDailyMissionButton();
+    this.addLeaderboardButton();
     this.addInstallButton();
     const consumeInstallReward = () => {
       if (!this.scene.isActive() || !window.KumaInstall?.consumeVerifiedInstall?.()) return;
@@ -113,19 +129,36 @@ export class Start extends Phaser.Scene {
 
     for (const item of BUTTONS) {
       addLargeTextButton(this, width / 2, item.y, t(item.labelKey), t(item.subKey), () => {
+        if (item.action === "tug") {
+          this.showTugModePanel();
+          return;
+        }
+        if (item.action === "road") {
+          this.showRoadModePanel();
+          return;
+        }
+        if (item.action === "crown") {
+          this.showCrownModePanel();
+          return;
+        }
+        if (item.action === "siege") {
+          this.showSiegeModePanel();
+          return;
+        }
+        this.registry.set("pieceSelectTargetScene", "Game");
         if (item.mode) this.registry.set("gameMode", item.mode);
         this.scene.start(item.scene);
       }, {
         width: 447,
-        height: 108,
-        fontSize: 43,
-        subFontSize: 16,
+        height: 54,
+        fontSize: item.fontSize ?? 27,
+        subFontSize: 12,
         titleFontFamily: KUMA_FONT_SERIF,
         titleFontStyle: "700",
         subFontStyle: "500",
         titleColor: "#342B1F",
-        titleOffsetY: -8,
-        subOffsetY: 23,
+        titleOffsetY: -5,
+        subOffsetY: 15,
         depth: 100,
       });
     }
@@ -143,13 +176,122 @@ export class Start extends Phaser.Scene {
       ownedSkinCount: getOwnedCollectionSkinColorCount(latestState),
       totalSkinCount: getCollectionSkinColorTotal(),
     });
+    const pieceUnlockNotices = getPieceUnlockNotices();
     this.addMedalButton();
+    const pieceNoticeDelay = reward.claimed ? 2850 : 650;
+    if (pieceUnlockNotices.length) {
+      this.time.delayedCall(pieceNoticeDelay, () => {
+        showPieceUnlockNoticeSequence(this, pieceUnlockNotices, { y: this.scale.height * 0.5 });
+      });
+    }
     if (medalSync.newlyUnlocked.length) {
-      this.time.delayedCall(reward.claimed ? 2850 : 650, async () => {
+      const medalDelay = pieceNoticeDelay
+        + (pieceUnlockNotices.length ? pieceUnlockSequenceDuration(pieceUnlockNotices) + 150 : 0);
+      this.time.delayedCall(medalDelay, async () => {
         const confirmedIds = await showMedalAwardSequence(this, medalSync.newlyUnlocked, { y: this.scale.height * 0.48 });
         if (confirmedIds.length) markMedalsSeen(confirmedIds);
       });
     }
+    this.consumeWebLaunch();
+  }
+
+  createEmbeddedHost(data = {}) {
+    const { width, height } = this.scale;
+    setTopAdVisible(false);
+    const launch = data.embeddedLaunch || "";
+    const usesWebBackdrop = ["info", "profile", "ranking", "settings", "daily"].includes(launch);
+    if (usesWebBackdrop) this.cameras.main.setBackgroundColor("rgba(0,0,0,0)");
+    else this.add.rectangle(0, 0, width, height, 0xfff8ea).setOrigin(0).setDepth(-20);
+
+    if (data.embeddedIdle || launch === "preload") return;
+    if (launch === "info") {
+      this.time.delayedCall(0, () => {
+        if (!this.scene.isActive()) return;
+        showPlayInfoPopup(this, {
+          externalBackdrop: true,
+          onClose: () => window.KumaEmbeddedRuntime?.returnHome(),
+        });
+      });
+      return;
+    }
+    if (launch === "profile") {
+      this.time.delayedCall(0, () => {
+        if (!this.scene.isActive()) return;
+        showProfileEditorPopup(this, {
+          externalBackdrop: true,
+          onClose: () => window.KumaEmbeddedRuntime?.returnHome(),
+        });
+      });
+      return;
+    }
+    if (launch === "ranking") {
+      this.time.delayedCall(0, () => {
+        if (!this.scene.isActive()) return;
+        showLeaderboardPopup(this, {
+          externalBackdrop: true,
+          onClose: () => window.KumaEmbeddedRuntime?.returnHome(),
+        });
+      });
+      return;
+    }
+    if (launch === "settings") {
+      this.time.delayedCall(0, () => {
+        if (!this.scene.isActive()) return;
+        showSettingsPanel(this, {
+          externalBackdrop: true,
+          onClose: () => window.KumaEmbeddedRuntime?.returnHome(),
+        });
+      });
+      return;
+    }
+    if (launch === "daily") {
+      this.time.delayedCall(0, () => {
+        if (!this.scene.isActive()) return;
+        showDailyMissionPopup(this, {
+          externalBackdrop: true,
+          onClose: () => window.KumaEmbeddedRuntime?.returnHome(),
+        });
+      });
+      return;
+    }
+
+    window.KumaEmbeddedRuntime?.returnHome();
+  }
+
+  consumeWebLaunch() {
+    const url = new URL(window.location.href);
+    const launch = url.searchParams.get("launch");
+    if (!launch) return;
+    url.searchParams.delete("launch");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+
+    this.time.delayedCall(180, () => {
+      if (!this.scene.isActive()) return;
+      if (launch === "tug") return this.showTugModePanel();
+      if (launch === "road") return this.showRoadModePanel();
+      if (launch === "crown") return this.showCrownModePanel();
+      if (launch === "siege") return this.showSiegeModePanel();
+      if (launch === "road-puzzle") return this.scene.start("RoyalRoadPuzzleSelect");
+      if (launch === "info") return showPlayInfoPopup(this);
+      if (launch === "profile") return showProfileEditorPopup(this);
+      if (launch === "ranking") return showLeaderboardPopup(this);
+      if (launch === "settings") return showSettingsPanel(this);
+      if (launch === "daily") {
+        return showDailyMissionPopup(this, {
+          onReward: () => this.refreshCoins(),
+          onClose: () => {
+            this.refreshCoins();
+            this.addDailyMissionButton();
+          },
+        });
+      }
+      if (launch === "puzzle") return this.scene.start("PuzzleSelect");
+      if (launch === "ai" || launch === "pvp") {
+        this.registry.set("pieceSelectTargetScene", "Game");
+        this.registry.set("gameMode", launch);
+        return this.scene.start(launch === "ai" ? "PieceSelectAI" : "PieceSelect");
+      }
+    });
   }
 
   refreshCoins() {
@@ -157,9 +299,114 @@ export class Start extends Phaser.Scene {
     this.coinGroup = addCoinPill(this, 34, 36);
   }
 
+  showTugModePanel() {
+    this.showMiniGameModePanel({
+      titleKey: "tug.modeTitle",
+      guideKey: "tug.modeGuide",
+      targetScene: "KingdomTug",
+      aiKey: "tug.aiMode",
+      pvpKey: "tug.pvpMode",
+    });
+  }
+
+  showRoadModePanel() {
+    this.showMiniGameModePanel({
+      titleKey: "road.modeTitle",
+      guideKey: "road.modeGuide",
+      targetScene: "RoyalRoad",
+      aiKey: "road.aiMode",
+      pvpKey: "road.pvpMode",
+    });
+  }
+
+  showCrownModePanel() {
+    this.showMiniGameModePanel({
+      titleKey: "crown.modeTitle",
+      guideKey: "crown.modeGuide",
+      targetScene: "CrownClash",
+      aiKey: "crown.aiMode",
+      pvpKey: "crown.pvpMode",
+    });
+  }
+
+  showSiegeModePanel() {
+    this.showMiniGameModePanel({
+      titleKey: "siege.modeTitle",
+      guideKey: "siege.modeGuide",
+      targetScene: "KingdomSiege",
+      aiKey: "siege.aiMode",
+      pvpKey: "siege.pvpMode",
+    });
+  }
+
+  showMiniGameModePanel({ titleKey, guideKey, targetScene, aiKey, pvpKey, soloKey = null, soloScene = null }) {
+    if (this.miniGameModeLayer) return;
+    const { width, height } = this.scale;
+    const backdrop = createModalBackdrop(this, 1700);
+    const layer = this.add.container(0, 0).setDepth(1710);
+    this.miniGameModeLayer = { layer, backdrop };
+    const panel = addPanel(this, width / 2, height / 2, 540, soloKey ? 570 : 470, 1711);
+    const title = this.add.text(width / 2, height / 2 - 136, t(titleKey), {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "34px",
+      color: KUMA_COLORS.ink,
+      fontStyle: "900",
+    }).setOrigin(0.5).setDepth(1712);
+    const guide = this.add.text(width / 2, height / 2 - 84, t(guideKey), {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "19px",
+      color: "#80644a",
+      fontStyle: "600",
+      align: "center",
+      wordWrap: { width: 430, useAdvancedWrap: true },
+    }).setOrigin(0.5).setDepth(1712);
+
+    const cleanup = () => {
+      this.miniGameModeLayer = null;
+      layer.destroy(true);
+      backdrop.cleanup();
+    };
+    const start = (mode) => {
+      cleanup();
+      this.registry.set("pieceSelectTargetScene", targetScene);
+      this.registry.set("gameMode", mode);
+      this.scene.start(mode === "ai" ? "PieceSelectAI" : "PieceSelect");
+    };
+    const solo = soloKey ? addLargeTextButton(this, width / 2, height / 2 - 4, t(soloKey), "", () => {
+      cleanup();
+      this.scene.start(soloScene);
+    }, { width: 360, height: 72, fontSize: 25, depth: 1714 }) : null;
+    const ai = addLargeTextButton(this, width / 2, height / 2 + (soloKey ? 78 : 2), t(aiKey), "", () => start("ai"), {
+      width: 360,
+      height: 78,
+      fontSize: 27,
+      depth: 1714,
+    });
+    const pvp = addLargeTextButton(this, width / 2, height / 2 + (soloKey ? 160 : 92), t(pvpKey), "", () => start("pvp"), {
+      width: 360,
+      height: 78,
+      fontSize: 27,
+      dark: true,
+      depth: 1714,
+    });
+    const cancel = addLargeTextButton(this, width / 2, height / 2 + (soloKey ? 242 : 182), t("common.cancel"), "", cleanup, {
+      width: 260,
+      height: 64,
+      fontSize: 23,
+      depth: 1714,
+    });
+    layer.add([
+      panel, title, guide,
+      ...(solo ? [solo.button, solo.title] : []),
+      ai.button, ai.title,
+      pvp.button, pvp.title,
+      cancel.button, cancel.title,
+    ]);
+  }
+
   addPlayInfoButton() {
     const x = this.scale.width - 67;
-    const button = this.add.image(x, 139, "kuma_ui_btn_rank")
+    const button = this.add.image(x, 139, "kuma_ui_btn_my")
       .setDisplaySize(67, 67)
       .setDepth(930);
     const hit = this.add.circle(x, 139, 36, 0xffffff, 0.001)
@@ -298,6 +545,26 @@ export class Start extends Phaser.Scene {
     }
     if (!snapshot.hasNotice) return;
     group.add(this.add.image(25, 24, "kuma_ui_icon_new").setDisplaySize(22, 29));
+  }
+
+  addLeaderboardButton() {
+    const x = 67;
+    const y = 250;
+    const group = this.add.container(x, y).setDepth(930);
+    const button = this.add.image(0, 0, "kuma_ui_btn_leaderboard").setDisplaySize(67, 69);
+    const label = this.add.text(0, 48, t("start.ranking"), {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "18px",
+      color: "#674725",
+      fontStyle: "800",
+    }).setOrigin(0.5);
+    const hit = this.add.circle(0, 0, 38, 0xffffff, 0.001)
+      .setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => {
+      playFeedback("ui");
+      showLeaderboardPopup(this);
+    });
+    group.add([button, label, hit]);
   }
 
   addInstallButton() {

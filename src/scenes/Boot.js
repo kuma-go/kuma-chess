@@ -1,4 +1,4 @@
-import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260802-medal66";
+import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260902-profile81";
 
 export class Boot extends Phaser.Scene {
   constructor() {
@@ -28,12 +28,23 @@ export class Boot extends Phaser.Scene {
     const uiFiles = [
       "main_logo_B", "main_img", "main_bottom_bg",
       "coin_bg", "coin_nomal", "coin_small", "lock", "lock_bg",
+      "icon_lock", "img_key", "img_flag", "result_crown", "result_crown_slot",
       "btn_start_normal", "btn_start_hover", "btn_start_click",
       "btn_seting", "btn_rank", "btn_medal", "btn_daily", "btn_install", "btn_home", "btn_back", "btn_hint",
+      "btn_rankborad", "btn_leaderboard", "btn_my", "btn_rank_tab_on", "btn_rank_tab_off",
+      "pop_3p_top", "pop_3p_center", "pop_3p_bottom",
+      "popup_3Patch_top", "popup_3Patch_center", "popup_3Patch_bottom",
+      "icon_rank_num_01", "icon_rank_num_02", "icon_rank_num_03", "icon_cup",
       "btn_radio_on", "btn_radio_off", "btn_sound_on", "btn_sound_off",
       "btn_vibration_on", "btn_vibration_off", "btn_c_normal",
       "btn_pop_w_normal", "btn_pop_b_normal",
-      "ingame_top", "chess_board_center",
+      "btn_arrow_up", "btn_arrow_left", "btn_arrow_right", "img_castle", "img_item_box", "icon_king_crown", "img_potal",
+      "siege_fx_pawn", "siege_fx_knight", "siege_fx_bishop", "siege_fx_rook", "siege_fx_queen", "siege_fx_king",
+      "tile_cross", "tile_crossroad", "tile_down_up", "tile_down_up_speed",
+      "tile_down_left", "tile_down_right", "tile_left_up", "tile_right_up",
+      "tile_t_up", "tile_t_down", "tile_t_left", "tile_t_right", "tile_left_end", "tile_right_end",
+      "tile_bomb", "tile_spike", "tile_trap",
+      "ingame_top", "chess_board_center", "chess_board_center_top_shot", "chess_board_center_bottom_shot",
       "chess_board_cube_black", "chess_board_cube_white",
       "chess_board_left", "chess_board_right", "popup", "popup_long",
       "icon_Pawn_w", "icon_Pawn_b", "icon_Knight_w", "icon_Knight_b",
@@ -41,9 +52,19 @@ export class Boot extends Phaser.Scene {
       "icon_Queen_w", "icon_Queen_b", "icon_King_w", "icon_King_b",
     ];
     for (const name of uiFiles) {
-      const version = name === "btn_install" ? "?v=20260802-medal66" : "";
+      const version = name === "btn_install" ? "?v=20260902-profile81" : "";
       this.load.image(`kuma_ui_${name}`, `${uiRoot}${name}.png${version}`);
     }
+    this.load.image("kuma_ui_btn_tab_on", `${uiRoot}btn_rank_tab_on.png`);
+    this.load.image("kuma_ui_btn_tab_off", `${uiRoot}btn_rank_tab_off.png`);
+    this.load.spritesheet("kuma_ui_ani_dice", `${uiRoot}ani_dice.png`, {
+      frameWidth: 384,
+      frameHeight: 512,
+    });
+    this.load.spritesheet("kuma_ui_ani_dice_black", `${uiRoot}ani_dice_black.png`, {
+      frameWidth: 384,
+      frameHeight: 512,
+    });
     this.load.image("kuma_ui_book_bg", `${uiRoot}book_bg.webp`);
     this.load.image("kuma_ui_daily_popup", `${uiRoot}daily_popup.png`);
     this.load.image("kuma_ui_icon_new", `${uiRoot}icon_new.svg`);
@@ -59,14 +80,49 @@ export class Boot extends Phaser.Scene {
     const start = () => {
       if (!this.scene.isActive()) return;
       this.loadingUi?.forEach((item) => item.destroy());
-      const demoMode = new URLSearchParams(window.location.search).get("demo");
-      this.scene.start(demoMode === "ad" ? "Demo" : "Start");
+      const params = new URLSearchParams(window.location.search);
+      const demoMode = params.get("demo");
+      const launch = params.get("launch");
+      const launchMode = ["ai", "pvp"].includes(params.get("mode")) ? params.get("mode") : "";
+      const miniGameScenes = {
+        tug: "KingdomTug",
+        road: "RoyalRoad",
+        crown: "CrownClash",
+        siege: "KingdomSiege",
+      };
+      const localPuzzleStage = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+        ? Number(params.get("roadPuzzleStage"))
+        : 0;
+      if (localPuzzleStage > 0) {
+        this.scene.start("RoyalRoadPuzzle", { stageIndex: localPuzzleStage - 1 });
+      } else if (launch === "ai" || launch === "pvp") {
+        this.registry.set("pieceSelectTargetScene", "Game");
+        this.registry.set("gameMode", launch);
+        this.scene.start(launch === "ai" ? "PieceSelectAI" : "PieceSelect");
+      } else if (launch === "puzzle") {
+        this.scene.start("PuzzleSelect");
+      } else if (launch === "road-puzzle") {
+        this.scene.start("RoyalRoadPuzzleSelect");
+      } else if (launch === "medals") {
+        this.scene.start("MedalCatalog");
+      } else if (miniGameScenes[launch] && launchMode) {
+        this.registry.set("pieceSelectTargetScene", miniGameScenes[launch]);
+        this.registry.set("gameMode", launchMode);
+        this.scene.start(launchMode === "ai" ? "PieceSelectAI" : "PieceSelect");
+      } else {
+        const embeddedLaunch = window.parent !== window ? (launch || "preload") : "";
+        this.scene.start(demoMode === "ad" ? "Demo" : "Start", embeddedLaunch
+          ? { embeddedLaunch, embeddedIdle: embeddedLaunch === "preload" }
+          : undefined);
+      }
     };
     if (document.fonts?.load) {
-      Promise.all([
+      const fontReady = Promise.allSettled([
         document.fonts.load('700 16px "Pretendard"'),
         document.fonts.load('700 16px "Noto Serif KR"'),
-      ]).then(start).catch(start);
+      ]);
+      const fontTimeout = new Promise((resolve) => window.setTimeout(resolve, 1800));
+      Promise.race([fontReady, fontTimeout]).then(start).catch(start);
     } else {
       start();
     }

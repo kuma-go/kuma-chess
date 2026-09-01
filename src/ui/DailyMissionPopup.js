@@ -1,16 +1,16 @@
 import {
   getDailyMissionSnapshot,
   markDailyMissionsSeen,
-} from "../dailyMissions.js?v=20260802-medal66";
-import { readPlayerState } from "../playerState.js?v=20260802-medal66";
+} from "../dailyMissions.js?v=20260902-profile81";
+import { readPlayerState } from "../playerState.js?v=20260902-profile81";
 import {
   addMiniCoin,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260802-medal66";
-import { playFeedback } from "../feedback.js?v=20260802-medal66";
+} from "./KumaUi.js?v=20260902-profile81";
+import { playFeedback } from "../feedback.js?v=20260902-profile81";
 
 const COPY = Object.freeze({
   ko: {
@@ -42,7 +42,9 @@ export function showDailyMissionPopup(scene, options = {}) {
   const language = readPlayerState().language || "ko";
   const copy = COPY[language] || COPY.ko;
   const snapshot = markDailyMissionsSeen();
-  const backdrop = createModalBackdrop(scene, 9700);
+  const backdrop = createModalBackdrop(scene, 9700, options.externalBackdrop
+    ? { capture: false, dimAlpha: 0.001 }
+    : undefined);
   const layer = scene.add.container(0, 0).setDepth(9710);
   let rewardTimer = null;
   let rewardLine = null;
@@ -135,6 +137,7 @@ export function showDailyMissionPopup(scene, options = {}) {
 
   const cleanup = (notify = false) => {
     if (!scene.dailyMissionPopup) return;
+    scene.input.off("pointerdown", close);
     layer.destroy(true);
     backdrop.cleanup();
     rewardTimer?.remove(false);
@@ -148,7 +151,7 @@ export function showDailyMissionPopup(scene, options = {}) {
     cleanup(true);
   };
   const onShutdown = () => cleanup(false);
-  backdrop.dim.on("pointerdown", close);
+  scene.input.once("pointerdown", close);
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
 
   scene.dailyMissionPopup = {

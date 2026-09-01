@@ -1,17 +1,18 @@
 export const PIECE_SKINS = ["classic", "rabbit", "bear", "cat", "wolf", "sheep", "eagle", "owl", "capybara", "brownBear", "goldBear"];
 export const PIECE_TYPES = ["p", "n", "b", "r", "q", "k"];
 export const PIECE_FACINGS = ["front", "back"];
+export const PIECE_ASSET_VERSION = "20260827-brown-black-1";
 
 const ROOT = "assets/kuma/pieces/";
 
 export function pieceTextureKey(skin, color, type, facing) {
-  return `kuma_piece_${skin}_${color}_${type}_${facing}`;
+  return `kuma_piece_v41_${skin}_${color}_${type}_${facing}`;
 }
 
 function queuePiece(scene, skin, color, type, facing) {
   const key = pieceTextureKey(skin, color, type, facing);
   if (scene.textures.exists(key)) return false;
-  scene.load.image(key, `${ROOT}${skin}_${color}_${type}_${facing}.png`);
+  scene.load.image(key, `${ROOT}${skin}_${color}_${type}_${facing}.png?v=${PIECE_ASSET_VERSION}`);
   return true;
 }
 
@@ -47,6 +48,28 @@ export function ensurePieceSetsLoaded(scene, selections) {
         if (queuePiece(scene, skin, color, type, facing)) queued += 1;
       }
     }
+  }
+
+  if (queued === 0) return Promise.resolve();
+  return new Promise((resolve) => {
+    scene.load.once("complete", resolve);
+    scene.load.start();
+  });
+}
+
+export function ensurePieceAssetsLoaded(scene, selections) {
+  let queued = 0;
+  const unique = new Map();
+  for (const selection of Array.isArray(selections) ? selections : []) {
+    const color = selection?.color === "b" ? "b" : "w";
+    const skin = PIECE_SKINS.includes(selection?.skin) ? selection.skin : "classic";
+    const type = PIECE_TYPES.includes(selection?.type) ? selection.type : "k";
+    const facing = PIECE_FACINGS.includes(selection?.facing) ? selection.facing : "front";
+    unique.set(`${skin}:${color}:${type}:${facing}`, { skin, color, type, facing });
+  }
+
+  for (const selection of unique.values()) {
+    if (queuePiece(scene, selection.skin, selection.color, selection.type, selection.facing)) queued += 1;
   }
 
   if (queued === 0) return Promise.resolve();

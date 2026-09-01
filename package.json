@@ -1,0 +1,21 @@
+{
+  "name": "kuma-chess",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:firebase": "node scripts/build-firebase.mjs",
+    "qa:quick": "node scripts/qa.mjs quick",
+    "qa:feature": "node scripts/qa.mjs feature",
+    "qa:full": "node scripts/qa.mjs full",
+    "qa:release": "node scripts/qa.mjs full --history",
+    "validate:firebase": "node scripts/validate-firebase.mjs",
+    "validate:profiles": "node scripts/validate-profile-assets.mjs"
+  },
+  "dependencies": {
+    "firebase": "^12.2.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
+}

@@ -4,18 +4,23 @@ import {
   getMedalEntries,
   markMedalsSeen,
   medalTextureKey,
-} from "../medals.js?v=20260802-medal66";
-import { readPlayerState } from "../playerState.js?v=20260802-medal66";
-import { t } from "../i18n.js?v=20260802-medal66";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260802-medal66";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260802-medal66";
+  syncContextMedals,
+} from "../medals.js?v=20260902-profile81";
+import {
+  getCollectionSkinColorTotal,
+  getOwnedCollectionSkinColorCount,
+  readPlayerState,
+} from "../playerState.js?v=20260902-profile81";
+import { t } from "../i18n.js?v=20260902-profile81";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260902-profile81";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260902-profile81";
 import {
   addLargeTextButton,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260802-medal66";
+} from "../ui/KumaUi.js?v=20260902-profile81";
 
 const UI_ROOT = "assets/kuma/ui/";
 const UI_ASSETS = Object.freeze([
@@ -201,7 +206,7 @@ export class MedalCatalog extends Phaser.Scene {
 
   preload() {
     const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor("rgba(0,0,0,0)");
+    this.cameras.main.setBackgroundColor(KUMA_COLORS.pale);
     this.failedTextureKeys = new Set();
     this.loadingUi = this.add.container(0, 0).setDepth(2000);
 
@@ -239,6 +244,16 @@ export class MedalCatalog extends Phaser.Scene {
     this.load.off("progress", this.onLoadProgress);
     this.load.off("loaderror", this.onLoadError);
 
+    const isEmbeddedMedalPopup = window.KumaEmbeddedRuntime?.isEmbedded
+      && window.KumaEmbeddedRuntime?.getLaunch?.() === "medals";
+    if (isEmbeddedMedalPopup) this.cameras.main.setBackgroundColor("rgba(0,0,0,0)");
+
+    const playerState = readPlayerState();
+    syncContextMedals({
+      coins: playerState.coins,
+      ownedSkinCount: getOwnedCollectionSkinColorCount(playerState),
+      totalSkinCount: getCollectionSkinColorTotal(),
+    });
     this.language = this.getLanguage();
     this.copy = COPY[this.language];
     this.categories = asArray(MEDAL_CATEGORIES);
@@ -764,7 +779,7 @@ export class MedalCatalog extends Phaser.Scene {
       parent.refreshMedalButton?.();
       return;
     }
-    this.scene.start("Start");
+    if (!window.KumaEmbeddedRuntime?.returnHome?.()) this.scene.start("Start");
   }
 
   shutdown() {

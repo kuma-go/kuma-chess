@@ -1,0 +1,201 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function validAccountType(value) {
+      return (
+        request.auth.token.firebase.sign_in_provider == 'anonymous'
+        && value == 'anonymous'
+      ) || (
+        request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && value == 'registered'
+      );
+    }
+
+    function validCount(value) {
+      return value is int && value >= 0 && value <= 1000000;
+    }
+
+    function validResultStats(value) {
+      return value is map
+        && value.keys().hasAll(['wins', 'losses', 'draws', 'played'])
+        && value.keys().hasOnly(['wins', 'losses', 'draws', 'played'])
+        && validCount(value.wins)
+        && validCount(value.losses)
+        && validCount(value.draws)
+        && validCount(value.played);
+    }
+
+    match /users/{uid} {
+      allow read: if owns(uid);
+      allow create: if owns(uid)
+        && request.resource.data.keys().hasAll([
+          'uid', 'schemaVersion', 'accountType', 'createdAt', 'lastSeenAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'uid', 'schemaVersion', 'accountType', 'createdAt', 'lastSeenAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.schemaVersion == 1
+        && validAccountType(request.resource.data.accountType)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.lastSeenAt == request.time;
+      allow update: if owns(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'schemaVersion', 'accountType', 'lastSeenAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.schemaVersion == 1
+        && validAccountType(request.resource.data.accountType)
+        && request.resource.data.lastSeenAt == request.time;
+      allow delete: if false;
+
+      match /sync/profile {
+        allow read: if owns(uid);
+        allow create, update: if owns(uid)
+          && request.resource.data.keys().hasAll([
+            'schemaVersion', 'displayName', 'avatar', 'language',
+            'soundEnabled', 'bgmVolume', 'vibrationEnabled', 'updatedAt'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'schemaVersion', 'displayName', 'avatar', 'language',
+            'soundEnabled', 'bgmVolume', 'vibrationEnabled', 'updatedAt'
+          ])
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() >= 2
+          && request.resource.data.displayName.size() <= 16
+          && exists(/databases/$(database)/documents/nicknameClaims/$(request.resource.data.displayName))
+          && get(/databases/$(database)/documents/nicknameClaims/$(request.resource.data.displayName)).data.ownerUid == uid
+          && request.resource.data.avatar is map
+          && (
+            (
+              request.resource.data.avatar.keys().hasAll(['skinId', 'color'])
+              && request.resource.data.avatar.keys().hasOnly(['skinId', 'color'])
+            )
+            ||
+            (
+              request.resource.data.avatar.keys().hasAll([
+                'portraitId', 'frameId', 'skinId', 'color'
+              ])
+              && request.resource.data.avatar.keys().hasOnly([
+                'portraitId', 'frameId', 'skinId', 'color'
+              ])
+              && request.resource.data.avatar.portraitId is string
+              && request.resource.data.avatar.portraitId.size() <= 40
+              && request.resource.data.avatar.frameId is string
+              && request.resource.data.avatar.frameId.size() <= 40
+            )
+          )
+          && request.resource.data.avatar.skinId is string
+          && request.resource.data.avatar.skinId.size() <= 40
+          && request.resource.data.avatar.color in ['w', 'b']
+          && request.resource.data.language in ['ko', 'en', 'ja']
+          && request.resource.data.soundEnabled is bool
+          && request.resource.data.bgmVolume is number
+          && request.resource.data.bgmVolume >= 0
+          && request.resource.data.bgmVolume <= 1
+          && request.resource.data.vibrationEnabled is bool
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if false;
+      }
+
+      match /sync/progress {
+        allow read: if owns(uid);
+        allow create, update: if owns(uid)
+          && request.resource.data.keys().hasAll([
+            'schemaVersion', 'source', 'aiStats', 'pvpStats',
+            'completedPuzzleIds', 'unlockedMedalIds', 'miniGamesPlayed', 'updatedAt'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'schemaVersion', 'source', 'aiStats', 'pvpStats',
+            'completedPuzzleIds', 'unlockedMedalIds', 'miniGamesPlayed', 'updatedAt'
+          ])
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.source == 'local-unverified'
+          && request.resource.data.aiStats is map
+          && request.resource.data.aiStats.keys().hasAll(['easy', 'normal', 'hard', 'challenge'])
+          && request.resource.data.aiStats.keys().hasOnly(['easy', 'normal', 'hard', 'challenge'])
+          && validResultStats(request.resource.data.aiStats.easy)
+          && validResultStats(request.resource.data.aiStats.normal)
+          && validResultStats(request.resource.data.aiStats.hard)
+          && validResultStats(request.resource.data.aiStats.challenge)
+          && request.resource.data.pvpStats is map
+          && request.resource.data.pvpStats.keys().hasAll(['wWins', 'bWins', 'draws', 'played'])
+          && request.resource.data.pvpStats.keys().hasOnly(['wWins', 'bWins', 'draws', 'played'])
+          && validCount(request.resource.data.pvpStats.wWins)
+          && validCount(request.resource.data.pvpStats.bWins)
+          && validCount(request.resource.data.pvpStats.draws)
+          && validCount(request.resource.data.pvpStats.played)
+          && request.resource.data.completedPuzzleIds is list
+          && request.resource.data.completedPuzzleIds.size() <= 100
+          && request.resource.data.unlockedMedalIds is list
+          && request.resource.data.unlockedMedalIds.size() <= 100
+          && request.resource.data.miniGamesPlayed is list
+          && request.resource.data.miniGamesPlayed.hasOnly([
+            'tug', 'crown', 'road', 'road-puzzle', 'siege'
+          ])
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if false;
+      }
+
+      match /{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /wallets/{uid} {
+      allow read: if owns(uid);
+      allow write: if false;
+    }
+
+    match /nicknameClaims/{displayName} {
+      allow get: if signedIn() && (
+        !exists(/databases/$(database)/documents/nicknameClaims/$(displayName))
+        || resource.data.ownerUid == request.auth.uid
+      );
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasAll([
+          'ownerUid', 'displayName', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'ownerUid', 'displayName', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.displayName == displayName
+        && displayName.size() >= 2
+        && displayName.size() <= 16
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Server writers must use an opaque public entry ID, never an auth UID.
+    match /leaderboards/{season}/entries/{entryId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /rewardClaims/{claimId} {
+      allow read, write: if false;
+    }
+
+    match /gameEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

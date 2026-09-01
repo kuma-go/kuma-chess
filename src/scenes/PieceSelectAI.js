@@ -1,8 +1,9 @@
-import { createPieceView } from "../pieceStyles.js?v=20260802-medal66";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260802-medal66";
+import { createPieceView } from "../pieceStyles.js?v=20260902-profile81";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260902-profile81";
 import {
   AI_DIFFICULTIES,
   DEFAULT_AI_DIFFICULTY,
+  getPieceUnlockNotices,
   getGoldBearProgress,
   getSkinUnlockState,
   isSkinUnlocked,
@@ -10,8 +11,8 @@ import {
   SKIN_SHOP,
   unlockGoldBearPiece,
   unlockSkin,
-} from "../playerState.js?v=20260802-medal66";
-import { skinName, t } from "../i18n.js?v=20260802-medal66";
+} from "../playerState.js?v=20260902-profile81";
+import { skinName, t } from "../i18n.js?v=20260902-profile81";
 import {
   addBackButton,
   addCoinPill,
@@ -29,7 +30,8 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260802-medal66";
+} from "../ui/KumaUi.js?v=20260902-profile81";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-profile81";
 
 const SHOP = SKIN_SHOP;
 const COMPACT_SHOP = SHOP.length > 9;
@@ -48,6 +50,7 @@ const DIFFICULTY_COPY = {
     easy: { audience: "초보자", name: "쉬움" },
     normal: { audience: "일반인", name: "보통" },
     hard: { audience: "고수", name: "어려움" },
+    challenge: { audience: "최상급자", name: "도전", detail: "최고 난이도" },
   },
   en: {
     title: "AI DIFFICULTY",
@@ -58,6 +61,7 @@ const DIFFICULTY_COPY = {
     easy: { audience: "BEGINNER", name: "EASY" },
     normal: { audience: "PLAYER", name: "NORMAL" },
     hard: { audience: "EXPERT", name: "HARD" },
+    challenge: { audience: "MASTER", name: "CHALLENGE", detail: "ULTIMATE AI" },
   },
   ja: {
     title: "AI難易度選択",
@@ -68,6 +72,7 @@ const DIFFICULTY_COPY = {
     easy: { audience: "初心者", name: "かんたん" },
     normal: { audience: "一般", name: "ふつう" },
     hard: { audience: "上級者", name: "むずかしい" },
+    challenge: { audience: "最上級者", name: "挑戦", detail: "最高難易度" },
   },
 };
 
@@ -98,22 +103,35 @@ export class PieceSelectAI extends Phaser.Scene {
     addScreenBg(this, "bg_select");
     this.refreshCoins();
     addSettingsButton(this, () => showSettingsPanel(this));
-    addPageTitle(this, t("select.aiTitle"), t("select.aiSubtitle"), 68);
+    this.targetScene = this.registry.get("pieceSelectTargetScene") || "Game";
+    const isTug = this.targetScene === "KingdomTug";
+    const isRoad = this.targetScene === "RoyalRoad";
+    const isCrown = this.targetScene === "CrownClash";
+    const isSiege = this.targetScene === "KingdomSiege";
+    const titleKey = isTug ? "tug.aiTitle" : isRoad ? "road.aiTitle" : isCrown ? "crown.aiTitle" : isSiege ? "siege.aiTitle" : "select.aiTitle";
+    const subtitleKey = isTug ? "tug.aiSubtitle" : isRoad ? "road.aiSubtitle" : isCrown ? "crown.aiSubtitle" : isSiege ? "siege.aiSubtitle" : "select.aiSubtitle";
+    addPageTitle(this, t(titleKey), t(subtitleKey), 68);
 
     const savedSkin = this.registry.get("pieceSkin") || { w: "classic", b: "classic" };
     this.playerColor = this.registry.get("playerColor") || "w";
     this.playerSkin = savedSkin[this.playerColor] || "classic";
     if (!this.isUnlocked(this.playerSkin, this.playerColor)) this.playerSkin = "classic";
     const savedDifficulty = this.registry.get("aiDifficulty");
-    this.aiDifficulty = AI_DIFFICULTIES[savedDifficulty] ? savedDifficulty : DEFAULT_AI_DIFFICULTY;
+    const allowsChallenge = this.targetScene === "Game";
+    this.aiDifficulty = AI_DIFFICULTIES[savedDifficulty] && (allowsChallenge || savedDifficulty !== "challenge")
+      ? savedDifficulty
+      : DEFAULT_AI_DIFFICULTY;
     this.registry.set("aiDifficulty", this.aiDifficulty);
     this.listLayer = null;
     this.message = null;
     this.renderList();
     this.registerScrollInput();
 
-    addBackButton(this, () => this.scene.start("Start"), 67, height - 68);
-    addLargeTextButton(this, width / 2, 1129, t("select.startAI"), "", () => this.showDifficultyModal(savedSkin), {
+    addBackButton(this, () => {
+      if (!window.KumaEmbeddedRuntime?.returnHome?.()) this.scene.start("Start");
+    }, 67, height - 68);
+    const startKey = isTug ? "tug.startAI" : isRoad ? "road.startAI" : isCrown ? "crown.startAI" : isSiege ? "siege.startAI" : "select.startAI";
+    addLargeTextButton(this, width / 2, 1129, t(startKey), "", () => this.showDifficultyModal(savedSkin), {
       width: 447,
       height: 108,
       fontSize: 43,
@@ -152,7 +170,7 @@ export class PieceSelectAI extends Phaser.Scene {
       this.registry.set("aiDifficulty", this.aiDifficulty);
       this.registry.set("playerColor", this.playerColor);
       this.registry.set("pieceSkin", skins);
-      this.scene.start("Game");
+      this.scene.start(this.targetScene || "Game");
     } catch (error) {
       if (this.scene.isActive()) {
         showRewardLine(this, t("select.loadFailed"), {
@@ -395,7 +413,9 @@ export class PieceSelectAI extends Phaser.Scene {
         const keepScroll = this.scrollY;
         this.renderList();
         this.setScroll(keepScroll);
-        showRewardLine(this, result.setUnlocked
+        const notices = getPieceUnlockNotices();
+        if (notices.length) showPieceUnlockNoticeSequence(this, notices);
+        else showRewardLine(this, result.setUnlocked
           ? t("select.goldBearSetUnlocked")
           : t("select.goldBearPieceDone", { piece: piece.nameKo }), {
           showCoin: false,
@@ -496,28 +516,40 @@ export class PieceSelectAI extends Phaser.Scene {
     const language = readPlayerState().language;
     const copy = DIFFICULTY_COPY[language] || DIFFICULTY_COPY.ko;
     const px = width / 2;
-    const py = height / 2 + 4;
-    const panelW = Math.min(527, width * 0.82);
-    const panelH = 660;
+    const allowsChallenge = this.targetScene === "Game";
+    const panelW = Math.min(610, width - 48);
+    const panelH = allowsChallenge ? panelW * (990 / 790) : panelW * (670 / 770);
+    const py = height / 2;
+    const showCoinReward = this.targetScene !== "KingdomSiege";
     let selectedDifficulty = this.aiDifficulty;
     const backdrop = createModalBackdrop(this, 9990);
     const layer = this.add.container(0, 0).setDepth(10000);
     this.difficultyModalLayer = layer;
 
-    const panel = addPanel(this, px, py, panelW, panelH, 10001);
-    const title = this.add.text(px, py - 201, copy.title, {
+    const panelKey = allowsChallenge ? "kuma_ui_popup_long" : "kuma_ui_popup";
+    const panel = this.add.image(px, py, panelKey)
+      .setDisplaySize(panelW, panelH)
+      .setDepth(10001);
+    const panelTop = py - panelH / 2;
+    const titleY = panelTop + (allowsChallenge ? 91 : 62);
+    const dividerY = panelTop + (allowsChallenge ? 133 : 98);
+    const guideY = panelTop + (allowsChallenge ? 172 : 131);
+    const cardY = panelTop + (allowsChallenge ? 315 : 254);
+    const challengeY = panelTop + 506;
+    const actionY = panelTop + (allowsChallenge ? 666 : 452);
+    const title = this.add.text(px, titleY, copy.title, {
       fontFamily: KUMA_FONT_SANS,
-      fontSize: "28px",
+      fontSize: language === "en" ? "30px" : "32px",
       color: KUMA_COLORS.ink,
       fontStyle: "900",
     }).setOrigin(0.5).setDepth(10002);
-    const divider = this.add.rectangle(px, py - 175, panelW * 0.72, 2, 0xc69d72)
+    const divider = this.add.rectangle(px, dividerY, panelW * 0.76, 3, 0xc69d72)
       .setDepth(10002);
-    const guide = this.add.text(px, py - 112, copy.guide, {
+    const guide = this.add.text(px, guideY, copy.guide, {
       fontFamily: KUMA_FONT_SANS,
-      fontSize: language === "en" ? "21px" : "23px",
-      color: KUMA_COLORS.ink,
-      fontStyle: "500",
+      fontSize: language === "en" ? "20px" : "22px",
+      color: "#916020",
+      fontStyle: "700",
       align: "center",
     }).setOrigin(0.5).setDepth(10002);
     const cards = this.add.container(0, 0).setDepth(10003);
@@ -526,16 +558,22 @@ export class PieceSelectAI extends Phaser.Scene {
     const renderCards = () => {
       cards.removeAll(true);
       ["easy", "normal", "hard"].forEach((id, index) => {
-        const x = [px - 127, px, px + 127][index];
-        const y = py + 45;
+        const x = [px - 181, px, px + 181][index];
+        const y = cardY;
         const selected = id === selectedDifficulty;
+        const cardW = 164;
+        const cardH = allowsChallenge ? 218 : 224;
         const box = this.add.graphics();
-        box.fillStyle(selected ? 0xfff0c0 : 0xfff8e9, selected ? 0.62 : 0.42);
-        box.fillRoundedRect(x - 60, y - 110, 120, 220, 7);
-        box.lineStyle(2, selected ? 0xd2a55f : 0xc49f78, 1);
-        box.strokeRoundedRect(x - 60, y - 110, 120, 220, 7);
+        box.fillStyle(selected ? 0xffefbd : 0xfff8e9, selected ? 0.76 : 0.58);
+        box.fillRoundedRect(x - cardW / 2, y - cardH / 2, cardW, cardH, 10);
+        box.lineStyle(selected ? 4 : 2, selected ? 0xd5a548 : 0xc9a47c, 1);
+        box.strokeRoundedRect(x - cardW / 2, y - cardH / 2, cardW, cardH, 10);
+        if (selected) {
+          box.fillStyle(0x0099b8, 1);
+          box.fillRoundedRect(x - 33, y - cardH / 2 - 2, 66, 6, 3);
+        }
         box.setInteractive(
-          new Phaser.Geom.Rectangle(x - 60, y - 110, 120, 220),
+          new Phaser.Geom.Rectangle(x - cardW / 2, y - cardH / 2, cardW, cardH),
           Phaser.Geom.Rectangle.Contains
         );
         box.input.cursor = "pointer";
@@ -543,33 +581,93 @@ export class PieceSelectAI extends Phaser.Scene {
           selectedDifficulty = id;
           renderCards();
         });
-        const audience = this.add.text(x, y - 85, copy[id].audience, {
+        const audience = this.add.text(x, y - 78, copy[id].audience, {
           fontFamily: KUMA_FONT_SANS,
-          fontSize: language === "en" ? "14px" : "16px",
+          fontSize: language === "en" ? "13px" : "15px",
           color: selected ? KUMA_COLORS.teal : "#846f59",
-          fontStyle: "500",
+          fontStyle: "700",
         }).setOrigin(0.5);
-        const name = this.add.text(x, y - 2, copy[id].name, {
+        const name = this.add.text(x, y - 18, copy[id].name, {
           fontFamily: KUMA_FONT_SANS,
-          fontSize: language === "en" ? "23px" : "25px",
+          fontSize: language === "en" ? "23px" : "28px",
           color: selected ? KUMA_COLORS.teal : KUMA_COLORS.ink,
           fontStyle: "900",
         }).setOrigin(0.5);
-        const reward = this.add.text(x, y + 72, copy.reward, {
+        cards.add([box, audience, name]);
+        if (showCoinReward) {
+          const reward = this.add.text(x, y + 40, copy.reward, {
+            fontFamily: KUMA_FONT_SANS,
+            fontSize: language === "en" ? "11px" : "13px",
+            color: "#846f59",
+            fontStyle: "700",
+          }).setOrigin(0.5);
+          const coin = this.add.image(x - 17, y + 70, "kuma_ui_coin_small").setDisplaySize(20, 20);
+          const amount = this.add.text(x - 2, y + 70, `+${AI_DIFFICULTIES[id].reward}`, {
+            fontFamily: KUMA_FONT_SANS,
+            fontSize: "18px",
+            color: KUMA_COLORS.ink,
+            fontStyle: "800",
+          }).setOrigin(0, 0.5);
+          cards.add([reward, coin, amount]);
+        }
+      });
+
+      if (allowsChallenge) {
+        const id = "challenge";
+        const x = px;
+        const y = challengeY;
+        const selected = id === selectedDifficulty;
+        const cardW = 526;
+        const cardH = 104;
+        const box = this.add.graphics();
+        if (selected) {
+          box.fillStyle(0xe8b956, 0.22);
+          box.fillRoundedRect(x - cardW / 2 - 5, y - cardH / 2 - 5, cardW + 10, cardH + 10, 11);
+        }
+        box.fillStyle(0x3a2b20, 0.96);
+        box.fillRoundedRect(x - cardW / 2, y - cardH / 2, cardW, cardH, 9);
+        box.lineStyle(selected ? 4 : 2, selected ? 0xf0c666 : 0xb58342, 1);
+        box.strokeRoundedRect(x - cardW / 2, y - cardH / 2, cardW, cardH, 9);
+        box.setInteractive(
+          new Phaser.Geom.Rectangle(x - cardW / 2 - 5, y - cardH / 2 - 5, cardW + 10, cardH + 10),
+          Phaser.Geom.Rectangle.Contains
+        );
+        box.input.cursor = "pointer";
+        box.on("pointerdown", () => {
+          selectedDifficulty = id;
+          renderCards();
+        });
+        const audience = this.add.text(x - 180, y - 18, copy[id].audience, {
           fontFamily: KUMA_FONT_SANS,
-          fontSize: language === "en" ? "12px" : "14px",
-          color: "#846f59",
-          fontStyle: "500",
+          fontSize: language === "en" ? "13px" : "15px",
+          color: "#e1b76d",
+          fontStyle: "700",
         }).setOrigin(0.5);
-        const coin = this.add.image(x - 15, y + 94, "kuma_ui_coin_small").setDisplaySize(18, 18);
-        const amount = this.add.text(x - 2, y + 94, `+${AI_DIFFICULTIES[id].reward}`, {
+        const name = this.add.text(x - 180, y + 19, copy[id].name, {
           fontFamily: KUMA_FONT_SANS,
-          fontSize: "17px",
-          color: KUMA_COLORS.ink,
+          fontSize: language === "en" ? "22px" : "28px",
+          color: "#fff6da",
+          fontStyle: "900",
+        }).setOrigin(0.5);
+        const separator = this.add.rectangle(x - 77, y, 2, 62, 0xb58342).setOrigin(0.5);
+        const detail = this.add.text(x - 47, y - 18, copy[id].detail, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: language === "en" ? "14px" : "17px",
+          color: "#fff6da",
           fontStyle: "700",
         }).setOrigin(0, 0.5);
-        cards.add([box, audience, name, reward, coin, amount]);
-      });
+        cards.add([box, audience, name, separator, detail]);
+        if (showCoinReward) {
+          const coin = this.add.image(x - 37, y + 22, "kuma_ui_coin_small").setDisplaySize(20, 20);
+          const amount = this.add.text(x - 22, y + 22, `+${AI_DIFFICULTIES[id].reward}`, {
+            fontFamily: KUMA_FONT_SANS,
+            fontSize: "18px",
+            color: "#f0c666",
+            fontStyle: "800",
+          }).setOrigin(0, 0.5);
+          cards.add([coin, amount]);
+        }
+      }
     };
 
     const close = () => {
@@ -577,21 +675,21 @@ export class PieceSelectAI extends Phaser.Scene {
       layer.destroy();
       this.difficultyModalLayer = null;
     };
-    const cancel = addLargeTextButton(this, px - 106, py + 239, copy.cancel, "", close, {
-      width: 187,
-      height: 81,
-      fontSize: 24,
+    const cancel = addLargeTextButton(this, px - 116, actionY, copy.cancel, "", close, {
+      width: 214,
+      height: 88,
+      fontSize: language === "en" ? 23 : 26,
       depth: 10004,
     });
-    const start = addLargeTextButton(this, px + 103, py + 239, copy.start, "", () => {
+    const start = addLargeTextButton(this, px + 116, actionY, copy.start, "", () => {
       this.aiDifficulty = selectedDifficulty;
       this.registry.set("aiDifficulty", selectedDifficulty);
       close();
       this.startGame(savedSkin);
     }, {
-      width: 195,
-      height: 81,
-      fontSize: 24,
+      width: 218,
+      height: 88,
+      fontSize: language === "en" ? 23 : 26,
       dark: true,
       depth: 10004,
     });
