@@ -1,5 +1,5 @@
-const CACHE_NAME = "kuma-chess-20260902-mobile88";
-const MODULE_VERSION = "20260902-mobile88";
+const CACHE_NAME = "kuma-chess-20260902-online92";
+const MODULE_VERSION = "20260902-online92";
 const APP_MODULE_PATHS = [
   "./src/ai/challengeEngine.js",
   "./src/ai/challengeWorker.js",
@@ -10,6 +10,8 @@ const APP_MODULE_PATHS = [
   "./src/main.js",
   "./src/medals.js",
   "./src/menuBgm.js",
+  "./src/onlineRoom.js",
+  "./src/onlineSession.js",
   "./src/pieceAssets.js",
   "./src/pieceStyles.js",
   "./src/playerState.js",
@@ -34,6 +36,7 @@ const APP_MODULE_PATHS = [
   "./src/scenes/Game.js",
   "./src/scenes/KingdomTug.js",
   "./src/scenes/MedalCatalog.js",
+  "./src/scenes/OnlineGame.js",
   "./src/scenes/PieceSelect.js",
   "./src/scenes/PieceSelectAI.js",
   "./src/scenes/Puzzle.js",
@@ -96,6 +99,10 @@ const CORE_FILES = [
   "./assets/kuma/ui/daily_popup.png",
   "./assets/kuma/ui/popup_long.png",
   "./assets/kuma/ui/btn_pop_b_normal.png",
+  "./assets/kuma/ui/btn_pop_w_normal.png",
+  "./assets/kuma/ui/img_card_pvp.png",
+  "./assets/kuma/ui/icon_pvp_add.png",
+  "./assets/kuma/ui/icon_pvp_entry.png",
   "./assets/kuma/ui/coin_small.png",
   "./assets/kuma/ui/btn_rankborad.png",
   "./assets/kuma/ui/btn_leaderboard.png",

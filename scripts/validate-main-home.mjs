@@ -34,7 +34,7 @@ function pngSize(file) {
   return [buffer.readUInt32BE(16), buffer.readUInt32BE(20)];
 }
 
-const gameActions = ["daily-button", 'data-launch="info"', 'data-launch="medals"', 'data-launch="ai"', 'data-launch="pvp"', 'data-launch="puzzle"', 'data-launch="road-puzzle"'];
+const gameActions = ["daily-button", 'data-launch="info"', 'data-launch="medals"', 'data-launch="ai"', 'data-launch="pvp"', "data-open-online", 'data-launch="puzzle"', 'data-launch="road-puzzle"'];
 for (const marker of gameActions) assert(html.includes(marker), `Missing game action for ${marker}`);
 
 assert(html.includes("assets/kuma/web/icon_ai.png"), "AI icon is not connected");
@@ -47,7 +47,7 @@ assert(main.includes('modeDialog.querySelectorAll(".mode-card-art")') && main.in
 assert(html.includes('class="mode-home"') && !html.includes('id="mode-dialog" class="web-dialog mode-dialog">\n      <div class="dialog-panel">\n        <button'), "Mode dialog must use the in-art main button without a close icon");
 assert(!html.includes("mode-piece"), "Legacy piece icons remain in the play selector");
 assert(html.includes("scroll-cue-ornament-left") && html.includes("scroll-cue-ornament-right"), "Scroll cue ornaments are missing");
-assert(html.includes('class="secondary-play is-disabled" type="button" disabled'), "Online play is not visibly disabled");
+assert(html.includes('class="secondary-play" type="button" data-open-online'), "Online play action is not enabled");
 assert(html.includes('class="hero-art" src="./assets/kuma/web/main_img_B.png"'), "Main image does not use main_img_B");
 assert(html.includes('data-src="./play.html?v='), "Game shell URL is not cache-busted");
 assert(play.includes("game-bootstrap.js?v="), "Game frame error bootstrap is missing");

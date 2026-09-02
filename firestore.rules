@@ -34,6 +34,50 @@ service cloud.firestore {
         && validCount(value.played);
     }
 
+    function onlineRoomFields() {
+      return [
+        'schemaVersion', 'code', 'hostUid', 'hostName', 'guestUid', 'guestName',
+        'whiteUid', 'blackUid', 'status', 'fen', 'moves', 'turnUid', 'result',
+        'reason', 'revision', 'createdAt', 'updatedAt', 'lastMoveAt'
+      ];
+    }
+
+    function validOnlineRoom(room, code) {
+      return room.keys().hasAll(onlineRoomFields())
+        && room.keys().hasOnly(onlineRoomFields())
+        && room.schemaVersion == 1
+        && room.code == code
+        && code.size() == 6
+        && room.hostUid is string
+        && room.hostUid.size() > 0
+        && room.hostUid.size() <= 128
+        && room.guestUid is string
+        && room.guestUid.size() <= 128
+        && room.hostName is string
+        && room.hostName.size() >= 1
+        && room.hostName.size() <= 16
+        && room.guestName is string
+        && room.guestName.size() <= 16
+        && room.whiteUid is string
+        && room.whiteUid.size() <= 128
+        && room.blackUid is string
+        && room.blackUid.size() <= 128
+        && room.status in ['waiting', 'active', 'finished', 'cancelled']
+        && room.fen is string
+        && room.fen.size() >= 20
+        && room.fen.size() <= 120
+        && room.moves is list
+        && room.moves.size() <= 512
+        && room.turnUid is string
+        && room.result in ['', 'w_win', 'b_win', 'draw']
+        && room.reason in ['', 'checkmate', 'draw', 'resign', 'cancelled']
+        && validCount(room.revision);
+    }
+
+    function isOnlinePlayer(room) {
+      return signedIn() && request.auth.uid in [room.whiteUid, room.blackUid];
+    }
+
     match /users/{uid} {
       allow read: if owns(uid);
       allow create: if owns(uid)
@@ -184,6 +228,119 @@ service cloud.firestore {
     match /leaderboards/{season}/entries/{entryId} {
       allow read: if signedIn();
       allow write: if false;
+    }
+
+    match /onlineRooms/{code} {
+      // Room codes are capabilities: authenticated users may fetch an exact code,
+      // but room discovery and collection queries are never allowed.
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && validOnlineRoom(request.resource.data, code)
+        && request.resource.data.hostUid == request.auth.uid
+        && request.resource.data.whiteUid == request.auth.uid
+        && request.resource.data.guestUid == ''
+        && request.resource.data.guestName == ''
+        && request.resource.data.blackUid == ''
+        && request.resource.data.status == 'waiting'
+        && request.resource.data.moves.size() == 0
+        && request.resource.data.turnUid == request.auth.uid
+        && request.resource.data.result == ''
+        && request.resource.data.reason == ''
+        && request.resource.data.revision == 0
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastMoveAt == request.time;
+      allow update: if validOnlineRoom(request.resource.data, code)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.hostUid == resource.data.hostUid
+        && request.resource.data.hostName == resource.data.hostName
+        && request.resource.data.whiteUid == resource.data.whiteUid
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastMoveAt == request.time
+        && (
+          (
+            resource.data.status == 'waiting'
+            && resource.data.guestUid == ''
+            && signedIn()
+            && request.auth.uid != resource.data.hostUid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'guestUid', 'guestName', 'blackUid', 'status', 'updatedAt', 'lastMoveAt'
+            ])
+            && request.resource.data.guestUid == request.auth.uid
+            && request.resource.data.blackUid == request.auth.uid
+            && request.resource.data.guestName.size() >= 1
+            && request.resource.data.status == 'active'
+            && request.resource.data.turnUid == resource.data.turnUid
+            && request.resource.data.revision == resource.data.revision
+          )
+          ||
+          (
+            resource.data.status == 'active'
+            && isOnlinePlayer(resource.data)
+            && request.auth.uid == resource.data.turnUid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'fen', 'moves', 'turnUid', 'status', 'result', 'reason',
+              'revision', 'updatedAt', 'lastMoveAt'
+            ])
+            && request.resource.data.guestUid == resource.data.guestUid
+            && request.resource.data.guestName == resource.data.guestName
+            && request.resource.data.blackUid == resource.data.blackUid
+            && request.resource.data.moves.size() == resource.data.moves.size() + 1
+            && request.resource.data.revision == resource.data.revision + 1
+            && (
+              (
+                request.resource.data.status == 'active'
+                && request.resource.data.result == ''
+                && request.resource.data.reason == ''
+                && request.resource.data.turnUid in [resource.data.whiteUid, resource.data.blackUid]
+                && request.resource.data.turnUid != resource.data.turnUid
+              )
+              ||
+              (
+                request.resource.data.status == 'finished'
+                && request.resource.data.result in ['w_win', 'b_win', 'draw']
+                && request.resource.data.reason in ['checkmate', 'draw']
+                && request.resource.data.turnUid == ''
+              )
+            )
+          )
+          ||
+          (
+            resource.data.status == 'active'
+            && isOnlinePlayer(resource.data)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'result', 'reason', 'turnUid', 'revision',
+              'updatedAt', 'lastMoveAt'
+            ])
+            && request.resource.data.guestUid == resource.data.guestUid
+            && request.resource.data.guestName == resource.data.guestName
+            && request.resource.data.blackUid == resource.data.blackUid
+            && request.resource.data.moves == resource.data.moves
+            && request.resource.data.fen == resource.data.fen
+            && request.resource.data.status == 'finished'
+            && request.resource.data.result == (
+              request.auth.uid == resource.data.whiteUid ? 'b_win' : 'w_win'
+            )
+            && request.resource.data.reason == 'resign'
+            && request.resource.data.turnUid == ''
+            && request.resource.data.revision == resource.data.revision + 1
+          )
+          ||
+          (
+            resource.data.status == 'waiting'
+            && signedIn()
+            && request.auth.uid == resource.data.hostUid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'reason', 'turnUid', 'revision', 'updatedAt', 'lastMoveAt'
+            ])
+            && request.resource.data.status == 'cancelled'
+            && request.resource.data.reason == 'cancelled'
+            && request.resource.data.turnUid == ''
+            && request.resource.data.revision == resource.data.revision + 1
+          )
+        );
+      allow delete: if false;
     }
 
     match /rewardClaims/{claimId} {

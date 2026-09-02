@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
     <link rel="preload" href="./assets/kuma/web/main_img_B.png" as="image" fetchpriority="high" />
     <link rel="preload" href="./assets/kuma/web/main_logo_B.png" as="image" fetchpriority="high" />
-    <link rel="stylesheet" href="./main-page.css?v=20260902-mobile88" />
+    <link rel="stylesheet" href="./main-page.css?v=20260902-online92" />
   </head>
   <body data-kuma-shell="web">
     <aside class="ad-rail ad-rail-left" data-ad-position="left" aria-label="왼쪽 광고" hidden></aside>
@@ -101,7 +101,7 @@
             <img class="secondary-play-bg" src="./assets/kuma/web/btn_main_puzzle.png" alt="" />
             <span><strong>퍼즐 플레이</strong><small>체스퍼즐 짧은 전술문제</small></span>
           </button>
-          <button class="secondary-play is-disabled" type="button" disabled aria-disabled="true">
+          <button class="secondary-play" type="button" data-open-online>
             <img class="secondary-play-bg" src="./assets/kuma/web/btn_main_online.png" alt="" />
             <span><strong>온라인 플레이</strong><small>초대 2인 PVP 플레이</small></span>
           </button>
@@ -278,7 +278,7 @@
         <p id="game-loading-message">게임을 준비하고 있습니다.</p>
         <button id="retry-game" type="button" hidden>다시 불러오기</button>
       </div>
-      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260902-mobile88"></iframe>
+      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260902-online92"></iframe>
     </div>
 
     <dialog id="mode-dialog" class="web-dialog mode-dialog">
@@ -303,10 +303,60 @@
       </div>
     </dialog>
 
+    <dialog id="online-dialog" class="web-dialog online-dialog">
+      <div class="dialog-panel">
+        <section data-online-view="entry">
+          <h2 data-online-title>온라인 플레이</h2>
+          <p class="dialog-summary" data-online-summary>초대 코드를 공유해 친구와 대국하세요.</p>
+          <div class="mode-choice-grid online-choice-grid">
+            <button type="button" data-online-create>
+              <img class="online-card-art" src="./assets/kuma/ui/img_card_pvp.png" alt="" />
+              <span class="online-card-icon"><img src="./assets/kuma/ui/icon_pvp_add.png" alt="" /></span>
+              <strong>초대방 만들기</strong>
+              <small>새 코드를 만들어 친구에게 공유합니다.</small>
+            </button>
+            <button type="button" data-online-code-open>
+              <img class="online-card-art" src="./assets/kuma/ui/img_card_pvp.png" alt="" />
+              <span class="online-card-icon"><img src="./assets/kuma/ui/icon_pvp_entry.png" alt="" /></span>
+              <strong>초대 코드 입력</strong>
+              <small>친구에게 받은 코드로 참가합니다.</small>
+            </button>
+          </div>
+          <p class="online-note" data-online-note>비랭크 대전 · 코인 및 순위 보상 없음</p>
+          <p class="online-status online-entry-status" data-online-entry-status role="status" aria-live="polite"></p>
+          <button class="mode-home" type="button" data-online-close>메인 화면</button>
+        </section>
+
+        <section data-online-view="code" hidden>
+          <h2 data-online-code-title>초대 코드 입력</h2>
+          <p class="dialog-summary" data-online-code-guide>친구에게 받은 6자리 코드를 입력하세요.</p>
+          <form class="online-code-form">
+            <input id="online-code-input" type="text" maxlength="6" inputmode="text" autocomplete="one-time-code" aria-label="초대 코드 입력" />
+            <p class="online-status" data-online-code-status role="status" aria-live="polite"></p>
+            <div class="online-dialog-actions">
+              <button class="online-resource-button is-light" type="button" data-online-back><span>취소</span></button>
+              <button class="online-resource-button is-dark" type="submit" data-online-enter><span>입장</span></button>
+            </div>
+          </form>
+        </section>
+
+        <section data-online-view="waiting" hidden>
+          <h2 data-online-waiting-title>상대방을 기다리고 있습니다</h2>
+          <p class="dialog-summary" data-online-room-label>초대 코드</p>
+          <strong class="online-room-code" data-online-room-code></strong>
+          <p class="online-status" data-online-waiting-status role="status" aria-live="polite"></p>
+          <div class="online-dialog-actions is-stacked">
+            <button class="online-resource-button is-light" type="button" data-online-copy><span>코드 복사</span></button>
+            <button class="online-resource-button is-dark" type="button" data-online-cancel-room><span>방 닫기</span></button>
+          </div>
+        </section>
+      </div>
+    </dialog>
+
     <script src="./ads-config.js"></script>
-    <script src="./app-init.js?v=20260902-mobile88"></script>
-    <script type="module" src="./firebase-client.js?v=20260902-mobile88"></script>
-    <script type="module" src="./main-page.js?v=20260902-mobile88"></script>
-    <script defer src="./main-page-fallback.js?v=20260902-mobile88"></script>
+    <script src="./app-init.js?v=20260902-online92"></script>
+    <script type="module" src="./firebase-client.js?v=20260902-online92"></script>
+    <script type="module" src="./main-page.js?v=20260902-online92"></script>
+    <script defer src="./main-page-fallback.js?v=20260902-online92"></script>
   </body>
 </html>

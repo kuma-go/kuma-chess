@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260902-mobile88";
+import { readPlayerState } from "./playerState.js?v=20260902-online92";
 
 const TEXT = {
   ko: {
@@ -43,7 +43,7 @@ const TEXT = {
     "game.move": "이동", "game.conceptOff": "컨셉 끄기", "game.undoUnavailable": "무를 수 없습니다.",
     "game.captured": "처치한 기물 :", "game.turn": "{side} 차례 입니다.{check}", "game.check": " - 체크!",
     "promotion.title": "승급할 체스말 선택", "promotion.subtitle": "폰을 승급할 체스말을 선택하세요.",
-    "result.aiWin": "AI 대전 승리", "result.aiEnd": "AI 대전 종료", "result.retry": "다시 하기",
+    "result.aiWin": "AI 대전 승리", "result.aiEnd": "AI 대전 종료", "result.retry": "다시 하기", "result.onlineMenu": "온라인 메뉴",
     "result.main": "메인 화면", "result.checkmate": "체크메이트", "result.resign": "기권",
     "result.draw": "무승부", "result.end": "게임 종료",
     "tug.title": "왕국 힘겨루기", "tug.help": "내 기물을 뒤로 끌었다 놓아 상대 킹을 판 밖으로 밀어내세요.",
@@ -157,7 +157,7 @@ const TEXT = {
     "game.move": "Move", "game.conceptOff": "Concept Off", "game.undoUnavailable": "No move to undo.",
     "game.captured": "Captured:", "game.turn": "{side} to move.{check}", "game.check": " Check!",
     "promotion.title": "Choose Promotion", "promotion.subtitle": "Choose the piece for this pawn.",
-    "result.aiWin": "AI match won", "result.aiEnd": "AI match ended", "result.retry": "Play Again",
+    "result.aiWin": "AI match won", "result.aiEnd": "AI match ended", "result.retry": "Play Again", "result.onlineMenu": "Online Menu",
     "result.main": "Main Menu", "result.checkmate": "Checkmate", "result.resign": "Resigned",
     "result.draw": "Draw", "result.end": "Game Over",
     "tug.title": "Kingdom Push Battle", "tug.help": "Pull one of your pieces back, release, and push the enemy king off the board.",
@@ -271,7 +271,7 @@ const TEXT = {
     "game.move": "移動", "game.conceptOff": "コンセプトOFF", "game.undoUnavailable": "戻せる手がありません。",
     "game.captured": "取った駒：", "game.turn": "{side}の番です。{check}", "game.check": " チェック！",
     "promotion.title": "昇格する駒を選択", "promotion.subtitle": "ポーンを昇格させる駒を選んでください。",
-    "result.aiWin": "AI対戦 勝利", "result.aiEnd": "AI対戦 終了", "result.retry": "もう一度",
+    "result.aiWin": "AI対戦 勝利", "result.aiEnd": "AI対戦 終了", "result.retry": "もう一度", "result.onlineMenu": "オンラインメニュー",
     "result.main": "メイン画面", "result.checkmate": "チェックメイト", "result.resign": "投了",
     "result.draw": "引き分け", "result.end": "ゲーム終了",
     "tug.title": "王国押し合い", "tug.help": "自分の駒を後ろに引いて離し、相手のキングを盤外へ押し出しましょう。",

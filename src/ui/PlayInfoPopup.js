@@ -4,10 +4,10 @@ import {
   getPlayStats,
   getSkinUnlockState,
   readPlayerState,
-} from "../playerState.js?v=20260902-mobile88";
-import { readProfileState } from "../profileState.js?v=20260902-mobile88";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260902-mobile88";
-import { getMedalSummary } from "../medals.js?v=20260902-mobile88";
+} from "../playerState.js?v=20260902-online92";
+import { readProfileState } from "../profileState.js?v=20260902-online92";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260902-online92";
+import { getMedalSummary } from "../medals.js?v=20260902-online92";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -15,10 +15,10 @@ import {
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260902-mobile88";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260902-mobile88";
-import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260902-mobile88";
-import { showLeaderboardPopup } from "./LeaderboardPopup.js?v=20260902-mobile88";
+} from "./KumaUi.js?v=20260902-online92";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260902-online92";
+import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260902-online92";
+import { showLeaderboardPopup } from "./LeaderboardPopup.js?v=20260902-online92";
 
 const COPY = {
   ko: {

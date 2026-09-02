@@ -1425,6 +1425,328 @@ html[lang="ja"] #mode-dialog .mode-choice-grid small { font-size: 2.45cqi; }
 html[lang="en"] #mode-dialog .mode-home { font-size: 4.2cqi; }
 html[lang="ja"] #mode-dialog .mode-home { font-size: 4.5cqi; }
 
+#online-dialog { width: min(600px, calc(var(--content-width) - 24px), calc(100vw - 24px)); }
+#online-dialog [data-online-view][hidden] { display: none; }
+#online-dialog[data-online-view-state="entry"] {
+  width: min(700px, calc(var(--content-width) - 20px), calc(100vw - 20px));
+  max-height: calc(100dvh - 16px);
+}
+#online-dialog[data-online-view-state="entry"] .dialog-panel {
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: 790 / 990;
+  padding: 0;
+  overflow: hidden;
+  container-type: inline-size;
+  background-image: url("./assets/kuma/ui/popup_long.png");
+}
+#online-dialog[data-online-view-state="entry"] .dialog-panel::after {
+  position: absolute;
+  top: 18.49%;
+  left: 14.43%;
+  width: 71.27%;
+  height: 4px;
+  border-radius: 999px;
+  background: #c49f78;
+  content: "";
+}
+#online-dialog[data-online-view-state="entry"] [data-online-title] {
+  position: absolute;
+  z-index: 2;
+  top: 13.1%;
+  right: 8%;
+  left: 8%;
+  margin: 0;
+  color: #34291d;
+  font-size: 5.6cqi;
+  line-height: 1.2;
+  text-align: center;
+}
+#online-dialog[data-online-view-state="entry"] [data-online-summary] {
+  position: absolute;
+  z-index: 2;
+  top: 20.1%;
+  right: 7%;
+  left: 7%;
+  min-height: 0;
+  margin: 0;
+  color: #916020;
+  font-size: 3.45cqi;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+#online-dialog[data-online-view-state="entry"] .online-note {
+  position: absolute;
+  z-index: 2;
+  top: 23.45%;
+  right: 7%;
+  left: 7%;
+  margin: 0;
+  color: #916020;
+  font-size: 2.75cqi;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+#online-dialog[data-online-view-state="entry"] .online-choice-grid {
+  position: absolute;
+  z-index: 2;
+  top: 25.758%;
+  right: 6.076%;
+  left: 6.076%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2.017%;
+  height: 51.515%;
+  margin: 0;
+}
+#online-dialog[data-online-view-state="entry"] .online-choice-grid button {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  color: #5b3004;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  outline: none;
+}
+#online-dialog[data-online-view-state="entry"] .online-choice-grid button:is(:hover, :focus-visible) {
+  filter: brightness(1.04);
+}
+#online-dialog .online-card-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+#online-dialog .online-card-icon {
+  position: absolute;
+  z-index: 2;
+  top: 64.2%;
+  left: 50%;
+  display: grid;
+  width: 25.9%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  place-items: center;
+  box-sizing: border-box;
+  border: 4px solid #d9a968;
+  border-radius: 50%;
+  background: #fbf1db;
+}
+#online-dialog .online-card-icon img { display: block; width: 47%; height: 54%; object-fit: contain; }
+#online-dialog [data-online-code-open] .online-card-icon img { width: 53%; }
+#online-dialog[data-online-view-state="entry"] .online-choice-grid strong {
+  position: absolute;
+  z-index: 2;
+  top: 75.2%;
+  right: 4%;
+  left: 4%;
+  display: block;
+  overflow: hidden;
+  font-size: 4.5cqi;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+#online-dialog[data-online-view-state="entry"] .online-choice-grid small {
+  position: absolute;
+  z-index: 2;
+  top: 83.4%;
+  right: 6%;
+  left: 6%;
+  display: block;
+  margin: 0;
+  font-size: 2.75cqi;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: center;
+}
+#online-dialog[data-online-view-state="entry"] .online-entry-status {
+  position: absolute;
+  z-index: 3;
+  top: 77.8%;
+  right: 8%;
+  left: 8%;
+  min-height: 0;
+  margin: 0;
+  font-size: 2.4cqi;
+}
+#online-dialog[data-online-view-state="entry"] .online-entry-status:empty { display: none; }
+#online-dialog[data-online-view-state="entry"] .mode-home {
+  position: absolute;
+  z-index: 3;
+  top: 80%;
+  left: 31.52%;
+  width: 36.96%;
+  height: 12.32%;
+  min-height: 0;
+  margin: 0;
+  padding: 0 4%;
+  border: 0;
+  border-radius: 0;
+  color: #f9f6cc;
+  background: url("./assets/kuma/ui/btn_pop_b_normal.png") center / 100% 100% no-repeat;
+  font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+  font-size: 5cqi;
+  font-weight: 800;
+  line-height: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+#online-dialog:not([data-online-view-state="entry"]) .dialog-panel {
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  max-height: none;
+  padding: 17cqi 8% 14cqi;
+  overflow: hidden;
+  container-type: inline-size;
+  background: url("./assets/kuma/ui/pop_3p_center.png") center / 100% 100% no-repeat;
+}
+#online-dialog:not([data-online-view-state="entry"]) .dialog-panel::before,
+#online-dialog:not([data-online-view-state="entry"]) .dialog-panel::after {
+  position: absolute;
+  z-index: 0;
+  right: 0;
+  left: 0;
+  width: 100%;
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  content: "";
+}
+#online-dialog:not([data-online-view-state="entry"]) .dialog-panel::before {
+  top: 0;
+  height: 25.602cqi;
+  background-image: url("./assets/kuma/ui/pop_3p_top.png");
+}
+#online-dialog:not([data-online-view-state="entry"]) .dialog-panel::after {
+  bottom: 0;
+  height: 20.152cqi;
+  background-image: url("./assets/kuma/ui/pop_3p_bottom.png");
+}
+#online-dialog:not([data-online-view-state="entry"]) [data-online-view] {
+  position: relative;
+  z-index: 2;
+}
+#online-dialog:not([data-online-view-state="entry"]) h2 {
+  margin: 0;
+  color: #34291d;
+  font-size: clamp(25px, 5.6cqi, 34px);
+  line-height: 1.25;
+  text-align: center;
+}
+#online-dialog:not([data-online-view-state="entry"]) h2::after {
+  display: block;
+  width: 84%;
+  height: 3px;
+  margin: 14px auto 13px;
+  border-radius: 999px;
+  background: #c49f78;
+  content: "";
+}
+#online-dialog:not([data-online-view-state="entry"]) .dialog-summary {
+  min-height: 0;
+  margin: 0;
+  color: #846648;
+  font-size: clamp(14px, 3.1cqi, 18px);
+  line-height: 1.35;
+  text-align: center;
+}
+#online-dialog .online-code-form { margin-top: 22px; }
+#online-dialog #online-code-input {
+  width: 100%;
+  height: clamp(58px, 15cqi, 76px);
+  box-sizing: border-box;
+  padding: 8px 18px;
+  border: 4px solid #079fbd;
+  border-radius: 7px;
+  color: #34291d;
+  background: #fffaf0;
+  font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+  font-size: clamp(27px, 6cqi, 40px);
+  font-weight: 900;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: uppercase;
+  outline: none;
+}
+#online-dialog:not([data-online-view-state="entry"]) .online-status {
+  min-height: 24px;
+  margin: 10px 0 0;
+  color: #bd4d43;
+  text-align: center;
+  font-size: clamp(12px, 2.65cqi, 15px);
+  font-weight: 700;
+  line-height: 1.35;
+}
+#online-dialog .online-entry-status { min-height: 18px; margin-top: 3px; font-size: 13px; }
+#online-dialog:not([data-online-view-state="entry"]) .online-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3%;
+  height: clamp(72px, 18.2cqi, 100px);
+  margin: 20px 0 0;
+}
+#online-dialog .online-resource-button {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  padding: 12px 18px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  color: #3f2c18;
+  background: url("./assets/kuma/ui/btn_pop_w_normal.png") center / 100% 100% no-repeat;
+  box-shadow: none;
+  cursor: pointer;
+  font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+  font-size: clamp(19px, 4.8cqi, 27px);
+  font-weight: 800;
+  outline: none;
+}
+#online-dialog .online-resource-button.is-dark {
+  color: #f9f6cc;
+  background-image: url("./assets/kuma/ui/btn_pop_b_normal.png");
+}
+#online-dialog :is(.online-resource-button, .mode-home):is(:hover, :focus-visible) { filter: brightness(1.08); }
+#online-dialog .online-resource-button:disabled {
+  cursor: default;
+  filter: grayscale(.2);
+  opacity: .55;
+}
+#online-dialog:not([data-online-view-state="entry"]) .online-room-code {
+  display: block;
+  margin: 22px 0 0;
+  color: #079fbd;
+  font-size: clamp(42px, 10cqi, 62px);
+  line-height: 1;
+  text-align: center;
+}
+#online-dialog:not([data-online-view-state="entry"]) .online-dialog-actions.is-stacked {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#online-dialog[data-online-busy="true"] [data-online-create],
+#online-dialog[data-online-busy="true"] [data-online-enter] {
+  pointer-events: none;
+  filter: grayscale(.2);
+  opacity: .55;
+}
+
 @media (max-width: 560px) {
   .dialog-panel { padding: 52px 36px 34px; }
   #settings-dialog .dialog-panel { padding: 62px 40px 34px; }
@@ -1438,6 +1760,7 @@ html[lang="ja"] #mode-dialog .mode-home { font-size: 4.5cqi; }
   #daily-dialog .daily-coin { font-size: 13px; }
   #daily-dialog .daily-coin img { width: 17px; height: 17px; }
   .dialog-close { top: 28px; right: 25px; }
+  #online-dialog .online-resource-button { padding: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -15,6 +15,7 @@ import {
   getDocs,
   getFirestore,
   limit,
+  onSnapshot,
   orderBy,
   query,
   runTransaction,
@@ -22,6 +23,12 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { FIREBASE_CONFIG } from "./firebaseConfig.js";
+import {
+  createOnlineRoomCode,
+  normalizeOnlineMove,
+  normalizeOnlineRoomCode,
+  ONLINE_INITIAL_FEN,
+} from "./onlineRoom.js";
 
 const CLOUD_SCHEMA_VERSION = 1;
 const PROFILE_STATE_KEY = "kumaChessProfileState";
@@ -33,6 +40,7 @@ const SYNC_DELAY_MS = 900;
 const RESULT_KEYS = Object.freeze(["wins", "losses", "draws", "played"]);
 const AI_DIFFICULTIES = Object.freeze(["easy", "normal", "hard", "challenge"]);
 const MINI_GAME_IDS = Object.freeze(["tug", "crown", "road", "road-puzzle", "siege"]);
+const ONLINE_ROOM_COLLECTION = "onlineRooms";
 
 let auth = null;
 let database = null;
@@ -241,6 +249,200 @@ async function ensureAnonymousUser() {
   return signInPromise;
 }
 
+async function requireActiveUser() {
+  if (activeUser) return activeUser;
+  const credential = await ensureAnonymousUser();
+  activeUser = credential?.user || auth?.currentUser || null;
+  if (!activeUser) throw Object.assign(new Error("authentication-required"), { code: "authentication-required" });
+  return activeUser;
+}
+
+function onlineDisplayName() {
+  return boundedText(profileSnapshot().displayName || "Player", 16) || "Player";
+}
+
+function onlineRoomSnapshot(snapshot) {
+  if (!snapshot?.exists?.()) return null;
+  const data = snapshot.data() || {};
+  const timestamp = (value) => value?.toMillis?.() ?? 0;
+  return Object.freeze({
+    code: normalizeOnlineRoomCode(snapshot.id),
+    hostUid: boundedText(data.hostUid, 128),
+    guestUid: boundedText(data.guestUid, 128),
+    hostName: boundedText(data.hostName || "Player", 16) || "Player",
+    guestName: boundedText(data.guestName || "", 16),
+    whiteUid: boundedText(data.whiteUid, 128),
+    blackUid: boundedText(data.blackUid, 128),
+    status: boundedText(data.status, 16),
+    fen: boundedText(data.fen, 120),
+    moves: Object.freeze((Array.isArray(data.moves) ? data.moves : []).map(normalizeOnlineMove).filter(Boolean)),
+    turnUid: boundedText(data.turnUid, 128),
+    result: boundedText(data.result, 16),
+    reason: boundedText(data.reason, 20),
+    revision: boundedCount(data.revision),
+    createdAtMs: timestamp(data.createdAt),
+    updatedAtMs: timestamp(data.updatedAt),
+    lastMoveAtMs: timestamp(data.lastMoveAt),
+  });
+}
+
+async function createOnlineRoom() {
+  const user = await requireActiveUser();
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const code = createOnlineRoomCode();
+    const roomRef = doc(database, ONLINE_ROOM_COLLECTION, code);
+    try {
+      await runTransaction(database, async (transaction) => {
+        if ((await transaction.get(roomRef)).exists()) {
+          throw Object.assign(new Error("room-code-collision"), { code: "room-code-collision" });
+        }
+        transaction.set(roomRef, {
+          schemaVersion: 1,
+          code,
+          hostUid: user.uid,
+          hostName: onlineDisplayName(),
+          guestUid: "",
+          guestName: "",
+          whiteUid: user.uid,
+          blackUid: "",
+          status: "waiting",
+          fen: ONLINE_INITIAL_FEN,
+          moves: [],
+          turnUid: user.uid,
+          result: "",
+          reason: "",
+          revision: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          lastMoveAt: serverTimestamp(),
+        });
+      });
+      return Object.freeze({ ok: true, code, color: "w", uid: user.uid });
+    } catch (error) {
+      if (error?.code === "room-code-collision") continue;
+      throw error;
+    }
+  }
+  return Object.freeze({ ok: false, reason: "code-generation-failed" });
+}
+
+async function joinOnlineRoom(value) {
+  const user = await requireActiveUser();
+  const code = normalizeOnlineRoomCode(value);
+  if (code.length !== 6) return Object.freeze({ ok: false, reason: "invalid-code" });
+  const roomRef = doc(database, ONLINE_ROOM_COLLECTION, code);
+  try {
+    await runTransaction(database, async (transaction) => {
+      const snapshot = await transaction.get(roomRef);
+      if (!snapshot.exists()) throw Object.assign(new Error("room-not-found"), { code: "room-not-found" });
+      const room = snapshot.data() || {};
+      if (room.hostUid === user.uid) throw Object.assign(new Error("same-player"), { code: "same-player" });
+      if (room.status !== "waiting" || room.guestUid) {
+        throw Object.assign(new Error("room-unavailable"), { code: "room-unavailable" });
+      }
+      transaction.update(roomRef, {
+        guestUid: user.uid,
+        guestName: onlineDisplayName(),
+        blackUid: user.uid,
+        status: "active",
+        updatedAt: serverTimestamp(),
+        lastMoveAt: serverTimestamp(),
+      });
+    });
+    return Object.freeze({ ok: true, code, color: "b", uid: user.uid });
+  } catch (error) {
+    return Object.freeze({ ok: false, reason: error?.code || "join-failed" });
+  }
+}
+
+function watchOnlineRoom(value, onChange, onError) {
+  const code = normalizeOnlineRoomCode(value);
+  if (!database || code.length !== 6) return () => {};
+  return onSnapshot(
+    doc(database, ONLINE_ROOM_COLLECTION, code),
+    (snapshot) => onChange?.(onlineRoomSnapshot(snapshot)),
+    (error) => onError?.(error?.code || "watch-failed"),
+  );
+}
+
+async function submitOnlineMove(value, request = {}) {
+  const user = await requireActiveUser();
+  const code = normalizeOnlineRoomCode(value);
+  const move = normalizeOnlineMove(request.move);
+  const fen = boundedText(request.fen, 120);
+  const expectedRevision = boundedCount(request.expectedRevision);
+  if (code.length !== 6 || !move || !fen) return Object.freeze({ ok: false, reason: "invalid-move" });
+  const roomRef = doc(database, ONLINE_ROOM_COLLECTION, code);
+  try {
+    await runTransaction(database, async (transaction) => {
+      const snapshot = await transaction.get(roomRef);
+      if (!snapshot.exists()) throw Object.assign(new Error("room-not-found"), { code: "room-not-found" });
+      const room = snapshot.data() || {};
+      if (room.status !== "active") throw Object.assign(new Error("room-finished"), { code: "room-finished" });
+      if (room.turnUid !== user.uid) throw Object.assign(new Error("not-your-turn"), { code: "not-your-turn" });
+      if (Number(room.revision) !== expectedRevision) {
+        throw Object.assign(new Error("stale-position"), { code: "stale-position" });
+      }
+      const participant = [room.whiteUid, room.blackUid].includes(user.uid);
+      if (!participant) throw Object.assign(new Error("not-a-player"), { code: "not-a-player" });
+      const finished = request.status === "finished";
+      const nextTurnUid = room.turnUid === room.whiteUid ? room.blackUid : room.whiteUid;
+      transaction.update(roomRef, {
+        fen,
+        moves: [...(Array.isArray(room.moves) ? room.moves : []), move],
+        turnUid: finished ? "" : nextTurnUid,
+        status: finished ? "finished" : "active",
+        result: finished ? boundedText(request.result, 16) : "",
+        reason: finished ? boundedText(request.reason, 20) : "",
+        revision: expectedRevision + 1,
+        updatedAt: serverTimestamp(),
+        lastMoveAt: serverTimestamp(),
+      });
+    });
+    return Object.freeze({ ok: true, revision: expectedRevision + 1 });
+  } catch (error) {
+    return Object.freeze({ ok: false, reason: error?.code || "move-failed" });
+  }
+}
+
+async function leaveOnlineRoom(value) {
+  const user = await requireActiveUser();
+  const code = normalizeOnlineRoomCode(value);
+  if (code.length !== 6) return Object.freeze({ ok: false, reason: "invalid-code" });
+  const roomRef = doc(database, ONLINE_ROOM_COLLECTION, code);
+  try {
+    await runTransaction(database, async (transaction) => {
+      const snapshot = await transaction.get(roomRef);
+      if (!snapshot.exists()) return;
+      const room = snapshot.data() || {};
+      if (room.status === "waiting" && room.hostUid === user.uid) {
+        transaction.update(roomRef, {
+          status: "cancelled",
+          turnUid: "",
+          reason: "cancelled",
+          revision: boundedCount(room.revision) + 1,
+          updatedAt: serverTimestamp(),
+          lastMoveAt: serverTimestamp(),
+        });
+        return;
+      }
+      if (room.status !== "active" || ![room.whiteUid, room.blackUid].includes(user.uid)) return;
+      transaction.update(roomRef, {
+        status: "finished",
+        result: user.uid === room.whiteUid ? "b_win" : "w_win",
+        reason: "resign",
+        turnUid: "",
+        revision: boundedCount(room.revision) + 1,
+        updatedAt: serverTimestamp(),
+        lastMoveAt: serverTimestamp(),
+      });
+    });
+    return Object.freeze({ ok: true });
+  } catch (error) {
+    return Object.freeze({ ok: false, reason: error?.code || "leave-failed" });
+  }
+}
+
 async function nicknameClaimsSupported() {
   const probeId = `__probe_${activeUser.uid}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   try {
@@ -403,6 +605,11 @@ window.KumaCloud = Object.freeze({
   syncNow: () => scheduleSync(0),
   getLeaderboard: (period) => fetchLeaderboard(period),
   reserveNickname: (nextValue, previousValue) => reserveNickname(nextValue, previousValue),
+  createOnlineRoom: () => createOnlineRoom(),
+  joinOnlineRoom: (code) => joinOnlineRoom(code),
+  watchOnlineRoom: (code, onChange, onError) => watchOnlineRoom(code, onChange, onError),
+  submitOnlineMove: (code, request) => submitOnlineMove(code, request),
+  leaveOnlineRoom: (code) => leaveOnlineRoom(code),
 });
 
 void initializeCloud();

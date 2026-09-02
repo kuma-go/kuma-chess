@@ -1,10 +1,10 @@
-import { createPieceView } from "../pieceStyles.js?v=20260902-mobile88";
-import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260902-mobile88";
-import { t } from "../i18n.js?v=20260902-mobile88";
-import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260902-mobile88";
-import { markMedalsSeen } from "../medals.js?v=20260902-mobile88";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260902-mobile88";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-mobile88";
+import { createPieceView } from "../pieceStyles.js?v=20260902-online92";
+import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260902-online92";
+import { t } from "../i18n.js?v=20260902-online92";
+import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260902-online92";
+import { markMedalsSeen } from "../medals.js?v=20260902-online92";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260902-online92";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-online92";
 
 const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35, challenge: 100 });
 const DIFFICULTY_LABELS = Object.freeze({
@@ -97,32 +97,16 @@ export class Result extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(40);
     }
 
-    if (reward.awarded) {
-      this.time.delayedCall(650, () => {
-        showRewardLine(this, t("reward.ai", { amount: reward.amount }), {
-          y: height * 0.53,
-          hold: 2300,
-        });
-      });
-    }
     const pieceUnlockNotices = getPieceUnlockNotices();
-    const pieceNoticeDelay = reward.awarded ? 3100 : 700;
-    if (pieceUnlockNotices.length) {
-      this.time.delayedCall(pieceNoticeDelay, () => {
-        showPieceUnlockNoticeSequence(this, pieceUnlockNotices, { y: height * 0.5 });
-      });
-    }
-    if (this.dataIn?.newlyUnlocked?.length) {
-      const medalDelay = pieceNoticeDelay
-        + (pieceUnlockNotices.length ? pieceUnlockSequenceDuration(pieceUnlockNotices) + 150 : 0);
-      this.time.delayedCall(medalDelay, async () => {
-        const confirmedIds = await showMedalAwardSequence(this, this.dataIn.newlyUnlocked, { y: height * 0.47 });
-        if (confirmedIds.length) markMedalsSeen(confirmedIds);
-      });
-    }
+    const newlyUnlockedMedals = Array.from(new Set(this.dataIn?.newlyUnlocked || []));
 
     const yBtn = height - 165;
-    addLargeTextButton(this, width / 2 - 165, yBtn, t("result.retry"), "", () => {
+    const isOnline = this.dataIn?.mode === "online";
+    const retryAction = addLargeTextButton(this, width / 2 - 165, yBtn, t(isOnline ? "result.onlineMenu" : "result.retry"), "", () => {
+      if (isOnline) {
+        if (!window.KumaEmbeddedRuntime?.returnHome?.()) this.scene.start("Start");
+        return;
+      }
       if (this.dataIn?.mode) this.registry.set("gameMode", this.dataIn.mode);
       if (this.dataIn?.playerColor) this.registry.set("playerColor", this.dataIn.playerColor);
       if (this.dataIn?.difficulty) this.registry.set("aiDifficulty", this.dataIn.difficulty);
@@ -131,9 +115,46 @@ export class Result extends Phaser.Scene {
       this.scene.start(sourceScene);
     }, { width: 300, height: 82, fontSize: 25, depth: 80 });
 
-    addLargeTextButton(this, width / 2 + 165, yBtn, t("result.main"), "", () => {
+    const mainAction = addLargeTextButton(this, width / 2 + 165, yBtn, t("result.main"), "", () => {
       if (!window.KumaEmbeddedRuntime?.returnHome?.()) this.scene.start("Start");
     }, { width: 300, height: 82, fontSize: 25, dark: true, depth: 80 });
+
+    const setActionsEnabled = (enabled) => {
+      [retryAction, mainAction].forEach((action) => {
+        action.button.setEnabled(enabled);
+        action.title.setAlpha(enabled ? 1 : 0.55);
+      });
+    };
+    const showSecondaryNotices = () => {
+      if (!this.scene.isActive()) return;
+      if (reward.awarded) {
+        showRewardLine(this, t("reward.ai", { amount: reward.amount }), {
+          y: height * 0.53,
+          hold: 2300,
+        });
+      }
+      if (pieceUnlockNotices.length) {
+        const delay = reward.awarded ? 2450 : 150;
+        this.time.delayedCall(delay, () => {
+          showPieceUnlockNoticeSequence(this, pieceUnlockNotices, { y: height * 0.5 });
+        });
+      }
+    };
+
+    if (newlyUnlockedMedals.length) {
+      // A medal is the primary result reward. Keep navigation disabled until the
+      // player has seen it so a fast retry cannot cancel the scheduled sequence.
+      setActionsEnabled(false);
+      this.time.delayedCall(500, async () => {
+        const confirmedIds = await showMedalAwardSequence(this, newlyUnlockedMedals, { y: height * 0.47 });
+        if (confirmedIds.length) markMedalsSeen(confirmedIds);
+        if (!this.scene.isActive()) return;
+        setActionsEnabled(true);
+        showSecondaryNotices();
+      });
+    } else {
+      this.time.delayedCall(650, showSecondaryNotices);
+    }
   }
 
   refreshLanguage() {

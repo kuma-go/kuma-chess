@@ -46,6 +46,6 @@ npm run qa:release
 
 ## 대상 이름
 
-`ai`, `core`, `crown`, `daily`, `firebase`, `main`, `medals`, `pieces`, `profile`, `puzzle`, `road`, `siege`를 사용할 수 있다.
+`ai`, `core`, `crown`, `daily`, `firebase`, `main`, `medals`, `online`, `pieces`, `profile`, `puzzle`, `road`, `siege`를 사용할 수 있다.
 
 실패하지 않은 명령의 상세 출력은 보고하지 않는다. 실패한 검사와 실제로 확인한 화면만 요약해 토큰과 검토 시간을 줄인다.

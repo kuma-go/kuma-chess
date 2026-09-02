@@ -1,4 +1,4 @@
-import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260902-mobile88";
+import { queueInitialPieceAssets } from "../pieceAssets.js?v=20260902-online92";
 
 export class Boot extends Phaser.Scene {
   constructor() {
@@ -52,7 +52,7 @@ export class Boot extends Phaser.Scene {
       "icon_Queen_w", "icon_Queen_b", "icon_King_w", "icon_King_b",
     ];
     for (const name of uiFiles) {
-      const version = name === "btn_install" ? "?v=20260902-mobile88" : "";
+      const version = name === "btn_install" ? "?v=20260902-online92" : "";
       this.load.image(`kuma_ui_${name}`, `${uiRoot}${name}.png${version}`);
     }
     this.load.image("kuma_ui_btn_tab_on", `${uiRoot}btn_rank_tab_on.png`);
@@ -93,7 +93,33 @@ export class Boot extends Phaser.Scene {
       const localPuzzleStage = ["localhost", "127.0.0.1"].includes(window.location.hostname)
         ? Number(params.get("roadPuzzleStage"))
         : 0;
-      if (localPuzzleStage > 0) {
+      const localOnlineDemo = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+        ? params.get("onlineDemo")
+        : "";
+      if (["white", "black"].includes(localOnlineDemo)) {
+        const demoColor = localOnlineDemo === "black" ? "b" : "w";
+        this.scene.start("OnlineGame", {
+          demo: true,
+          code: "DEMO23",
+          playerColor: demoColor,
+          room: {
+            code: "DEMO23",
+            hostUid: "demo-white",
+            guestUid: "demo-black",
+            hostName: "White Player",
+            guestName: "Black Player",
+            whiteUid: "demo-white",
+            blackUid: "demo-black",
+            status: "active",
+            fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            moves: [],
+            turnUid: "demo-white",
+            result: "",
+            reason: "",
+            revision: 0,
+          },
+        });
+      } else if (localPuzzleStage > 0) {
         this.scene.start("RoyalRoadPuzzle", { stageIndex: localPuzzleStage - 1 });
       } else if (launch === "ai" || launch === "pvp") {
         this.registry.set("pieceSelectTargetScene", "Game");

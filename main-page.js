@@ -3,20 +3,22 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260902-mobile88";
+} from "./src/playerState.js?v=20260902-online92";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260902-mobile88";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260902-mobile88";
-import { readProfileState } from "./src/profileState.js?v=20260902-mobile88";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260902-mobile88";
+} from "./src/dailyMissions.js?v=20260902-online92";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260902-online92";
+import { readProfileState } from "./src/profileState.js?v=20260902-online92";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260902-online92";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260902-mobile88";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260902-mobile88";
+} from "./src/menuBgm.js?v=20260902-online92";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260902-online92";
+import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260902-online92";
+import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260902-online92";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -26,10 +28,12 @@ const gameLoading = document.getElementById("game-loading");
 const gameLoadingMessage = document.getElementById("game-loading-message");
 const retryGame = document.getElementById("retry-game");
 const modeDialog = document.getElementById("mode-dialog");
+const onlineDialog = document.getElementById("online-dialog");
+const onlineCodeInput = document.getElementById("online-code-input");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "ranking", "medals"]);
-const ASSET_RETRY_VERSION = "20260902-mobile88";
+const ASSET_RETRY_VERSION = "20260902-online92";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 
@@ -90,6 +94,29 @@ const WEB_COPY = Object.freeze({
     modeAi: ["AI 대전", "AI와 실력을 겨뤄보세요."],
     modePvp: ["마주보기 모드", "한 기기에서 함께 플레이"],
     modeHome: "메인 화면",
+    onlineDialog: Object.freeze({
+      title: "온라인 플레이",
+      summary: "초대 코드를 공유해 친구와 대국하세요.",
+      create: ["초대방 만들기", "새 코드를 만들어 친구에게 공유합니다."],
+      join: ["초대 코드 입력", "친구에게 받은 코드로 참가합니다."],
+      note: "비랭크 대전 · 코인 및 순위 보상 없음",
+      inputTitle: "초대 코드 입력",
+      inputGuide: "친구에게 받은 6자리 코드를 입력하세요.",
+      enter: "입장",
+      cancel: "취소",
+      waiting: "상대방을 기다리고 있습니다",
+      roomCode: "초대 코드",
+      copy: "코드 복사",
+      copied: "초대 코드를 복사했습니다.",
+      closeRoom: "방 닫기",
+      connecting: "온라인 서비스에 연결 중입니다.",
+      offline: "온라인 서비스에 연결할 수 없습니다.",
+      notFound: "초대방을 찾을 수 없습니다.",
+      unavailable: "이미 시작했거나 종료된 방입니다.",
+      samePlayer: "같은 기기에서는 이 방에 참가할 수 없습니다.",
+      invalid: "6자리 초대 코드를 확인해주세요.",
+      failed: "방에 연결하지 못했습니다. 다시 시도해주세요.",
+    }),
   }),
   en: Object.freeze({
     lang: "en",
@@ -147,6 +174,29 @@ const WEB_COPY = Object.freeze({
     modeAi: ["VS AI", "Test your skills against the AI."],
     modePvp: ["Face-to-Face", "Play together on one device"],
     modeHome: "Main Menu",
+    onlineDialog: Object.freeze({
+      title: "Online Play",
+      summary: "Share an invite code and play a friend.",
+      create: ["Create Invite Room", "Make a new code to share with a friend."],
+      join: ["Enter Invite Code", "Join with a code from your friend."],
+      note: "Unranked · No coin or ranking rewards",
+      inputTitle: "Enter Invite Code",
+      inputGuide: "Enter the 6-character code from your friend.",
+      enter: "Join",
+      cancel: "Cancel",
+      waiting: "Waiting for another player",
+      roomCode: "Invite Code",
+      copy: "Copy Code",
+      copied: "Invite code copied.",
+      closeRoom: "Close Room",
+      connecting: "Connecting to online services.",
+      offline: "Online services are unavailable.",
+      notFound: "Invite room not found.",
+      unavailable: "This room has started or ended.",
+      samePlayer: "This device cannot join its own room.",
+      invalid: "Check the 6-character invite code.",
+      failed: "Could not connect to the room. Try again.",
+    }),
   }),
   ja: Object.freeze({
     lang: "ja",
@@ -204,6 +254,29 @@ const WEB_COPY = Object.freeze({
     modeAi: ["AI対戦", "AIと腕を競いましょう。"],
     modePvp: ["対面モード", "1台の端末で一緒にプレイ"],
     modeHome: "メイン画面",
+    onlineDialog: Object.freeze({
+      title: "オンライン対戦",
+      summary: "招待コードを共有して友だちと対局します。",
+      create: ["招待ルーム作成", "新しいコードを友だちに共有します。"],
+      join: ["招待コード入力", "友だちからのコードで参加します。"],
+      note: "ランク外 · コイン・ランキング報酬なし",
+      inputTitle: "招待コード入力",
+      inputGuide: "友だちから受け取った6文字を入力してください。",
+      enter: "入場",
+      cancel: "キャンセル",
+      waiting: "相手を待っています",
+      roomCode: "招待コード",
+      copy: "コードをコピー",
+      copied: "招待コードをコピーしました。",
+      closeRoom: "ルームを閉じる",
+      connecting: "オンラインサービスに接続中です。",
+      offline: "オンラインサービスに接続できません。",
+      notFound: "招待ルームが見つかりません。",
+      unavailable: "開始済み、または終了したルームです。",
+      samePlayer: "同じ端末から自分のルームには参加できません。",
+      invalid: "6文字の招待コードを確認してください。",
+      failed: "ルームに接続できませんでした。もう一度お試しください。",
+    }),
   }),
 });
 
@@ -218,6 +291,11 @@ let requestedGame = null;
 let renderingHomeState = false;
 let pendingMinigameLaunch = "";
 let activeWebLanguage = "ko";
+let onlineBusy = false;
+let onlineRoomCode = "";
+let onlinePlayerColor = "w";
+let onlineUnsubscribe = null;
+let onlineTrigger = null;
 
 const MINIGAME_MODE_CARD_ART = Object.freeze({
   tug: "./assets/kuma/web/image%20440.png",
@@ -306,6 +384,23 @@ function renderHomeLanguage(language) {
   setText("#mode-dialog .mode-home", copy.modeHome);
   document.querySelector("#mode-dialog .mode-home")?.setAttribute("aria-label", copy.modeHome);
   if (!pendingMinigameLaunch) setText("#mode-dialog-title", copy.modeDefault);
+
+  const online = copy.onlineDialog;
+  setText("#online-dialog [data-online-title]", online.title);
+  setText("#online-dialog [data-online-summary]", online.summary);
+  setPair("#online-dialog [data-online-create]", online.create);
+  setPair("#online-dialog [data-online-code-open]", online.join);
+  setText("#online-dialog [data-online-note]", online.note);
+  setText("#online-dialog [data-online-close]", copy.modeHome);
+  setText("#online-dialog [data-online-code-title]", online.inputTitle);
+  setText("#online-dialog [data-online-code-guide]", online.inputGuide);
+  setText("#online-dialog [data-online-back] span", online.cancel);
+  setText("#online-dialog [data-online-enter] span", online.enter);
+  setText("#online-dialog [data-online-waiting-title]", online.waiting);
+  setText("#online-dialog [data-online-room-label]", online.roomCode);
+  setText("#online-dialog [data-online-copy] span", online.copy);
+  setText("#online-dialog [data-online-cancel-room] span", online.closeRoom);
+  onlineCodeInput?.setAttribute("aria-label", online.inputTitle);
   applyMainPageContentLanguage(activeWebLanguage);
 }
 
@@ -576,6 +671,7 @@ function dispatchRequestedGame() {
     launch: requestedGame.launch,
     mode: requestedGame.mode,
     hostSession: requestedGame.hostSession,
+    payload: requestedGame.payload,
   }, window.location.origin);
   window.clearTimeout(gameReadyTimer);
   gameReadyTimer = window.setTimeout(showGameLoadError, 12000);
@@ -589,13 +685,14 @@ function loadPendingGame() {
   gameReadyTimer = window.setTimeout(showGameLoadError, 12000);
 }
 
-function openGameLaunch(launch, trigger, mode = "") {
+function openGameLaunch(launch, trigger, mode = "", payload = null) {
   lastGameTrigger = trigger || document.activeElement;
   if (!gameOverlay || !gameFrame) return;
   requestedGame = {
     launch,
     mode,
     hostSession: String(++gameSession),
+    payload,
   };
   gameOverlay.classList.toggle("is-popup", POPUP_GAME_LAUNCHES.has(launch));
   gameOverlay.classList.toggle("is-content", !POPUP_GAME_LAUNCHES.has(launch));
@@ -636,6 +733,232 @@ function chooseMinigameMode(event) {
   const mode = event.currentTarget.dataset.minigameMode;
   closeDialog(modeDialog);
   if (launch && ["ai", "pvp"].includes(mode)) openGameLaunch(launch, trigger, mode);
+}
+
+function onlineErrorMessage(reason) {
+  const copy = currentWebCopy().onlineDialog;
+  if (reason === "room-not-found") return copy.notFound;
+  if (reason === "room-unavailable") return copy.unavailable;
+  if (reason === "same-player") return copy.samePlayer;
+  if (reason === "invalid-code") return copy.invalid;
+  if (["permission-denied", "unavailable", "offline", "watch-failed"].includes(reason)) return copy.offline;
+  return copy.failed;
+}
+
+function setOnlineStatus(selector, message = "") {
+  const element = onlineDialog?.querySelector(selector);
+  if (element) element.textContent = message;
+}
+
+function setOnlineView(view) {
+  if (onlineDialog) onlineDialog.dataset.onlineViewState = view;
+  onlineDialog?.querySelectorAll("[data-online-view]").forEach((section) => {
+    section.hidden = section.dataset.onlineView !== view;
+  });
+}
+
+function setOnlineBusy(value) {
+  onlineBusy = Boolean(value);
+  if (onlineDialog) onlineDialog.dataset.onlineBusy = String(onlineBusy);
+  onlineDialog?.querySelectorAll("button, input").forEach((control) => {
+    control.disabled = onlineBusy && !control.matches("[data-online-close]");
+  });
+}
+
+function stopOnlineWatch() {
+  onlineUnsubscribe?.();
+  onlineUnsubscribe = null;
+}
+
+function launchOnlineMatch(room) {
+  if (!room || room.status !== "active") return;
+  stopOnlineWatch();
+  const payload = {
+    room,
+    code: onlineRoomCode || room.code,
+    playerColor: onlinePlayerColor,
+  };
+  closeDialog(onlineDialog);
+  openGameLaunch("online-game", onlineTrigger, "", payload);
+}
+
+function watchOnlineRoom(code, color) {
+  stopOnlineWatch();
+  onlineRoomCode = normalizeOnlineRoomCode(code);
+  onlinePlayerColor = color === "b" ? "b" : "w";
+  const cloud = window.KumaCloud;
+  if (!cloud?.watchOnlineRoom || onlineRoomCode.length !== 6) {
+    setOnlineBusy(false);
+    setOnlineStatus("[data-online-waiting-status]", currentWebCopy().onlineDialog.offline);
+    return;
+  }
+  onlineUnsubscribe = cloud.watchOnlineRoom(
+    onlineRoomCode,
+    (room) => {
+      if (!room) {
+        clearOnlineSession(onlineRoomCode);
+        stopOnlineWatch();
+        setOnlineBusy(false);
+        setOnlineView("entry");
+        setOnlineStatus("[data-online-entry-status]", currentWebCopy().onlineDialog.notFound);
+        return;
+      }
+      if (room.status === "active") {
+        launchOnlineMatch(room);
+        return;
+      }
+      if (room.status !== "waiting") {
+        clearOnlineSession(onlineRoomCode);
+        stopOnlineWatch();
+        setOnlineBusy(false);
+        setOnlineView("entry");
+        setOnlineStatus("[data-online-entry-status]", currentWebCopy().onlineDialog.unavailable);
+        return;
+      }
+      setOnlineBusy(false);
+      setOnlineView("waiting");
+      setOnlineStatus("[data-online-waiting-status]", "");
+    },
+    (reason) => {
+      setOnlineBusy(false);
+      setOnlineStatus("[data-online-waiting-status]", onlineErrorMessage(reason));
+    },
+  );
+}
+
+function openOnlineDialog(event) {
+  event?.preventDefault?.();
+  onlineTrigger = event?.currentTarget || document.activeElement;
+  setOnlineBusy(false);
+  setOnlineStatus("[data-online-entry-status]", "");
+  setOnlineStatus("[data-online-code-status]", "");
+  setOnlineStatus("[data-online-waiting-status]", "");
+  const session = readOnlineSession();
+  if (session) {
+    onlineRoomCode = session.code;
+    onlinePlayerColor = session.color;
+    setOnlineView("waiting");
+    const codeLabel = onlineDialog?.querySelector("[data-online-room-code]");
+    if (codeLabel) codeLabel.textContent = session.code;
+    setOnlineBusy(true);
+  } else {
+    onlineRoomCode = "";
+    onlinePlayerColor = "w";
+    setOnlineView("entry");
+  }
+  openDialog(onlineDialog, onlineTrigger);
+  if (session) watchOnlineRoom(session.code, session.color);
+}
+
+function closeOnlineDialog() {
+  stopOnlineWatch();
+  closeDialog(onlineDialog);
+}
+
+async function createOnlineRoom() {
+  if (onlineBusy) return;
+  const cloud = window.KumaCloud;
+  if (!cloud?.createOnlineRoom) {
+    setOnlineStatus("[data-online-entry-status]", currentWebCopy().onlineDialog.offline);
+    return;
+  }
+  setOnlineBusy(true);
+  setOnlineStatus("[data-online-entry-status]", currentWebCopy().onlineDialog.connecting);
+  try {
+    const result = await cloud.createOnlineRoom();
+    if (!result?.ok) {
+      setOnlineBusy(false);
+      setOnlineStatus("[data-online-entry-status]", onlineErrorMessage(result?.reason));
+      return;
+    }
+    onlineRoomCode = result.code;
+    onlinePlayerColor = result.color;
+    saveOnlineSession(result.code, result.color);
+    const codeLabel = onlineDialog?.querySelector("[data-online-room-code]");
+    if (codeLabel) codeLabel.textContent = result.code;
+    setOnlineView("waiting");
+    setOnlineStatus("[data-online-waiting-status]", currentWebCopy().onlineDialog.connecting);
+    watchOnlineRoom(result.code, result.color);
+  } catch (_error) {
+    setOnlineBusy(false);
+    setOnlineStatus("[data-online-entry-status]", currentWebCopy().onlineDialog.offline);
+  }
+}
+
+function showOnlineCodeEntry() {
+  if (onlineBusy) return;
+  setOnlineView("code");
+  setOnlineStatus("[data-online-code-status]", "");
+  if (onlineCodeInput) onlineCodeInput.value = "";
+  window.setTimeout(() => onlineCodeInput?.focus(), 0);
+}
+
+function showOnlineEntry() {
+  if (onlineBusy) return;
+  setOnlineStatus("[data-online-code-status]", "");
+  setOnlineView("entry");
+}
+
+async function joinOnlineRoom(event) {
+  event?.preventDefault?.();
+  if (onlineBusy) return;
+  const code = normalizeOnlineRoomCode(onlineCodeInput?.value);
+  if (onlineCodeInput) onlineCodeInput.value = code;
+  if (code.length !== 6) {
+    setOnlineStatus("[data-online-code-status]", currentWebCopy().onlineDialog.invalid);
+    return;
+  }
+  const cloud = window.KumaCloud;
+  if (!cloud?.joinOnlineRoom) {
+    setOnlineStatus("[data-online-code-status]", currentWebCopy().onlineDialog.offline);
+    return;
+  }
+  setOnlineBusy(true);
+  setOnlineStatus("[data-online-code-status]", currentWebCopy().onlineDialog.connecting);
+  try {
+    const result = await cloud.joinOnlineRoom(code);
+    if (!result?.ok) {
+      setOnlineBusy(false);
+      setOnlineStatus("[data-online-code-status]", onlineErrorMessage(result?.reason));
+      return;
+    }
+    onlineRoomCode = result.code;
+    onlinePlayerColor = result.color;
+    saveOnlineSession(result.code, result.color);
+    const codeLabel = onlineDialog?.querySelector("[data-online-room-code]");
+    if (codeLabel) codeLabel.textContent = result.code;
+    setOnlineView("waiting");
+    watchOnlineRoom(result.code, result.color);
+  } catch (_error) {
+    setOnlineBusy(false);
+    setOnlineStatus("[data-online-code-status]", currentWebCopy().onlineDialog.offline);
+  }
+}
+
+async function copyOnlineCode() {
+  try {
+    await navigator.clipboard.writeText(onlineRoomCode);
+    setOnlineStatus("[data-online-waiting-status]", currentWebCopy().onlineDialog.copied);
+  } catch (_error) {
+    setOnlineStatus("[data-online-waiting-status]", onlineRoomCode);
+  }
+}
+
+async function cancelOnlineRoom() {
+  if (onlineBusy || !onlineRoomCode) return;
+  const code = onlineRoomCode;
+  stopOnlineWatch();
+  setOnlineBusy(true);
+  setOnlineStatus("[data-online-waiting-status]", currentWebCopy().onlineDialog.connecting);
+  try {
+    await window.KumaCloud?.leaveOnlineRoom?.(code);
+  } finally {
+    clearOnlineSession(code);
+    onlineRoomCode = "";
+    setOnlineBusy(false);
+    setOnlineStatus("[data-online-entry-status]", "");
+    setOnlineView("entry");
+  }
 }
 
 function hideGame(options = {}) {
@@ -729,13 +1052,29 @@ function bindEvents() {
   document.querySelectorAll("[data-open-game]").forEach((button) => button.addEventListener("click", openGame));
   document.querySelectorAll("[data-open-minigame]").forEach((button) => button.addEventListener("click", openMinigameMode));
   document.querySelectorAll("[data-minigame-mode]").forEach((button) => button.addEventListener("click", chooseMinigameMode));
+  document.querySelectorAll("[data-open-online]").forEach((button) => button.addEventListener("click", openOnlineDialog));
+  onlineDialog?.querySelector("[data-online-create]")?.addEventListener("click", () => void createOnlineRoom());
+  onlineDialog?.querySelector("[data-online-code-open]")?.addEventListener("click", showOnlineCodeEntry);
+  onlineDialog?.querySelector("[data-online-back]")?.addEventListener("click", showOnlineEntry);
+  onlineDialog?.querySelector("[data-online-close]")?.addEventListener("click", closeOnlineDialog);
+  onlineDialog?.querySelector("[data-online-copy]")?.addEventListener("click", () => void copyOnlineCode());
+  onlineDialog?.querySelector("[data-online-cancel-room]")?.addEventListener("click", () => void cancelOnlineRoom());
+  onlineDialog?.querySelector(".online-code-form")?.addEventListener("submit", (event) => void joinOnlineRoom(event));
+  onlineCodeInput?.addEventListener("input", () => {
+    onlineCodeInput.value = normalizeOnlineRoomCode(onlineCodeInput.value);
+    setOnlineStatus("[data-online-code-status]", "");
+  });
   document.querySelectorAll("[data-open-daily]").forEach((button) => button.addEventListener("click", openDaily));
   document.getElementById("daily-button")?.addEventListener("click", openDaily);
   document.querySelectorAll("[data-open-settings]").forEach((button) => button.addEventListener("click", openSettings));
   document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => closeDialog(button.closest("dialog"))));
-  [modeDialog].forEach((dialog) => dialog?.addEventListener("click", (event) => {
-    if (event.target === dialog) closeDialog(dialog);
-  }));
+  modeDialog?.addEventListener("click", (event) => {
+    if (event.target === modeDialog) closeDialog(modeDialog);
+  });
+  onlineDialog?.addEventListener("click", (event) => {
+    if (event.target === onlineDialog) closeOnlineDialog();
+  });
+  onlineDialog?.addEventListener("close", stopOnlineWatch);
   installButton?.addEventListener("click", requestInstall);
   retryGame?.addEventListener("click", loadPendingGame);
   window.addEventListener("message", (event) => {
@@ -819,7 +1158,7 @@ if (typeof window.requestIdleCallback === "function") {
 const initialUrl = new URL(window.location.href);
 const initialLaunch = initialUrl.searchParams.get("launch") || "";
 const initialMode = initialUrl.searchParams.get("mode") || "";
-const validInitialLaunches = new Set(["ai", "pvp", "puzzle", "road-puzzle", "info", "profile", "ranking", "medals", "daily", "settings", "tug", "crown", "road", "siege"]);
+const validInitialLaunches = new Set(["ai", "pvp", "puzzle", "road-puzzle", "info", "profile", "ranking", "medals", "daily", "settings", "online", "tug", "crown", "road", "siege"]);
 const hasShellMarker = initialUrl.searchParams.has("shell");
 if (hasShellMarker) initialUrl.searchParams.delete("shell");
 if (validInitialLaunches.has(initialLaunch)) {
@@ -828,6 +1167,10 @@ if (validInitialLaunches.has(initialLaunch)) {
   initialUrl.searchParams.delete("fromGame");
   window.history.replaceState(null, "", `${initialUrl.pathname}${initialUrl.search}${initialUrl.hash}`);
   window.setTimeout(() => {
+    if (initialLaunch === "online") {
+      openOnlineDialog();
+      return;
+    }
     if (["tug", "crown", "road", "siege"].includes(initialLaunch) && !initialMode) {
       pendingMinigameLaunch = initialLaunch;
       document.getElementById("mode-dialog-title").textContent = currentWebCopy().minigames[initialLaunch]?.[0]

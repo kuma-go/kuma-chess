@@ -37,6 +37,11 @@ if (!rules.includes("match /nicknameClaims/{displayName}")
   || !rules.includes("nicknameClaims/$(request.resource.data.displayName)")) {
   failures.push("firestore.rules: unique nickname claims are not bound to profile writes");
 }
+if (!rules.includes("match /onlineRooms/{code}")
+  || !rules.includes("allow list: if false")
+  || !rules.includes("request.auth.uid == resource.data.turnUid")) {
+  failures.push("firestore.rules: invite rooms must block listing and enforce the active turn owner");
+}
 
 const client = read("src/firebaseClientEntry.js");
 for (const forbiddenField of [
@@ -63,6 +68,15 @@ if (!client.includes("reserveNickname") || !client.includes("runTransaction")
 }
 if (client.includes("uid: boundedText(snapshot.id")) {
   failures.push("src/firebaseClientEntry.js: leaderboard responses must not expose document IDs as auth UIDs");
+}
+for (const onlineMethod of [
+  "createOnlineRoom",
+  "joinOnlineRoom",
+  "watchOnlineRoom",
+  "submitOnlineMove",
+  "leaveOnlineRoom",
+]) {
+  if (!client.includes(onlineMethod)) failures.push(`src/firebaseClientEntry.js: ${onlineMethod} API is missing`);
 }
 
 if (failures.length) {

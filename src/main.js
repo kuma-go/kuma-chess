@@ -1,24 +1,25 @@
-import { Boot } from "./scenes/Boot.js?v=20260902-mobile88";
-import { Start } from "./scenes/Start.js?v=20260902-mobile88";
-import { PieceSelect } from "./scenes/PieceSelect.js?v=20260902-mobile88";
-import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260902-mobile88";
-import { Game } from "./scenes/Game.js?v=20260902-mobile88";
-import { Result } from "./scenes/Result.js?v=20260902-mobile88";
-import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260902-mobile88";
-import { Puzzle } from "./scenes/Puzzle.js?v=20260902-mobile88";
-import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260902-mobile88";
-import { KingdomTug } from "./scenes/KingdomTug.js?v=20260902-mobile88";
-import { RoyalRoad } from "./scenes/RoyalRoad.js?v=20260902-mobile88";
-import { RoyalRoadPuzzleSelect } from "./scenes/RoyalRoadPuzzleSelect.js?v=20260902-mobile88";
-import { RoyalRoadPuzzle } from "./scenes/RoyalRoadPuzzle.js?v=20260902-mobile88";
-import { CrownClash } from "./scenes/CrownClash.js?v=20260902-mobile88";
-import { KingdomSiege } from "./scenes/KingdomSiege.js?v=20260902-mobile88";
-import { Demo } from "./scenes/Demo.js?v=20260902-mobile88";
-import { installFeedbackUnlock } from "./feedback.js?v=20260902-mobile88";
+import { Boot } from "./scenes/Boot.js?v=20260902-online92";
+import { Start } from "./scenes/Start.js?v=20260902-online92";
+import { PieceSelect } from "./scenes/PieceSelect.js?v=20260902-online92";
+import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260902-online92";
+import { Game } from "./scenes/Game.js?v=20260902-online92";
+import { Result } from "./scenes/Result.js?v=20260902-online92";
+import { OnlineGame } from "./scenes/OnlineGame.js?v=20260902-online92";
+import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260902-online92";
+import { Puzzle } from "./scenes/Puzzle.js?v=20260902-online92";
+import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260902-online92";
+import { KingdomTug } from "./scenes/KingdomTug.js?v=20260902-online92";
+import { RoyalRoad } from "./scenes/RoyalRoad.js?v=20260902-online92";
+import { RoyalRoadPuzzleSelect } from "./scenes/RoyalRoadPuzzleSelect.js?v=20260902-online92";
+import { RoyalRoadPuzzle } from "./scenes/RoyalRoadPuzzle.js?v=20260902-online92";
+import { CrownClash } from "./scenes/CrownClash.js?v=20260902-online92";
+import { KingdomSiege } from "./scenes/KingdomSiege.js?v=20260902-online92";
+import { Demo } from "./scenes/Demo.js?v=20260902-online92";
+import { installFeedbackUnlock } from "./feedback.js?v=20260902-online92";
 import {
   installMenuBgm,
   installMenuBgmSceneHooks,
-} from "./menuBgm.js?v=20260902-mobile88";
+} from "./menuBgm.js?v=20260902-online92";
 
 const isEmbedded = window.parent !== window;
 const config = {
@@ -41,7 +42,7 @@ const config = {
     // iOS/맥 트랙패드에서 pointerup 누락 방지(가능한 경우)
     activePointers: 3,
   },
-  scene: [Boot, Start, PieceSelect, PieceSelectAI, PuzzleSelect, Puzzle, RoyalRoadPuzzleSelect, RoyalRoadPuzzle, Game, Result, MedalCatalog, KingdomTug, RoyalRoad, CrownClash, KingdomSiege, Demo],
+  scene: [Boot, Start, PieceSelect, PieceSelectAI, PuzzleSelect, Puzzle, RoyalRoadPuzzleSelect, RoyalRoadPuzzle, Game, OnlineGame, Result, MedalCatalog, KingdomTug, RoyalRoad, CrownClash, KingdomSiege, Demo],
 };
 
 installFeedbackUnlock();
@@ -83,12 +84,14 @@ const initialParams = new URLSearchParams(window.location.search);
 let launch = initialParams.get("launch") || "";
 let launchMode = initialParams.get("mode") || "";
 let hostSession = initialParams.get("hostSession") || "";
+let launchPayload = null;
 const directLaunchScenes = {
   ai: "PieceSelectAI",
   pvp: "PieceSelect",
   puzzle: "PuzzleSelect",
   "road-puzzle": "RoyalRoadPuzzleSelect",
   medals: "MedalCatalog",
+  "online-game": "OnlineGame",
 };
 let parentReadySent = false;
 
@@ -98,11 +101,12 @@ function stopActiveScenes() {
   }
 }
 
-function startEmbeddedLaunch(nextLaunch, nextMode = "", nextHostSession = "") {
+function startEmbeddedLaunch(nextLaunch, nextMode = "", nextHostSession = "", nextPayload = null) {
   if (!isEmbedded) return;
   launch = nextLaunch || "";
   launchMode = ["ai", "pvp"].includes(nextMode) ? nextMode : "";
   hostSession = nextHostSession || "";
+  launchPayload = nextPayload && typeof nextPayload === "object" ? nextPayload : null;
   parentReadySent = false;
   stopActiveScenes();
 
@@ -130,6 +134,10 @@ function startEmbeddedLaunch(nextLaunch, nextMode = "", nextHostSession = "") {
     game.scene.start("MedalCatalog");
     return;
   }
+  if (launch === "online-game" && launchPayload?.room && launchPayload?.code) {
+    game.scene.start("OnlineGame", launchPayload);
+    return;
+  }
   if (miniGameScenes[launch] && launchMode) {
     game.registry.set("pieceSelectTargetScene", miniGameScenes[launch]);
     game.registry.set("gameMode", launchMode);
@@ -147,6 +155,7 @@ function suspendEmbeddedRuntime() {
   launch = "preload";
   launchMode = "";
   hostSession = "";
+  launchPayload = null;
   parentReadySent = true;
   stopActiveScenes();
   game.scene.start("Start", { embeddedLaunch: "preload", embeddedIdle: true });
@@ -158,6 +167,7 @@ function returnToWebHome() {
   launch = "preload";
   launchMode = "";
   hostSession = "";
+  launchPayload = null;
   parentReadySent = true;
   try {
     if (window.parent.KumaWebHomeHost?.returnHome) {
@@ -186,13 +196,14 @@ window.KumaEmbeddedRuntime = {
   getLaunch: () => launch,
   getMode: () => launchMode,
   getHostSession: () => hostSession,
+  getPayload: () => launchPayload,
 };
 
 if (isEmbedded) {
   window.addEventListener("message", (event) => {
     if (event.origin !== window.location.origin || event.source !== window.parent) return;
     if (event.data?.type === "kuma-game-launch") {
-      startEmbeddedLaunch(event.data.launch, event.data.mode, event.data.hostSession);
+      startEmbeddedLaunch(event.data.launch, event.data.mode, event.data.hostSession, event.data.payload);
     } else if (event.data?.type === "kuma-game-suspend") {
       suspendEmbeddedRuntime();
     }
