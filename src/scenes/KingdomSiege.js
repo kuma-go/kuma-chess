@@ -1,16 +1,16 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260903-online93";
-import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260903-online93";
-import { playFeedback } from "../feedback.js?v=20260903-online93";
-import { t } from "../i18n.js?v=20260903-online93";
-import { recordMiniGameCompletion } from "../medals.js?v=20260903-online93";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-online93";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260903-online94";
+import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260903-online94";
+import { playFeedback } from "../feedback.js?v=20260903-online94";
+import { t } from "../i18n.js?v=20260903-online94";
+import { recordMiniGameCompletion } from "../medals.js?v=20260903-online94";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-online94";
 import {
   createSiegeAllyAura,
   createSiegeKingAura,
   destroySiegeKingAura,
   playSiegeAttackEffect,
   playSiegeCastleHitEffect,
-} from "../siegeEffects.js?v=20260903-online93";
+} from "../siegeEffects.js?v=20260903-online94";
 import {
   chooseSiegeAIAction,
   createSiegeState,
@@ -18,7 +18,7 @@ import {
   siegeEffectiveResourceRate,
   summonSiegeUnit,
   tickSiege,
-} from "../siegeLogic.js?v=20260903-online93";
+} from "../siegeLogic.js?v=20260903-online94";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -28,7 +28,7 @@ import {
   KUMA_FONT_SANS,
   createModalBackdrop,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260903-online93";
+} from "../ui/KumaUi.js?v=20260903-online94";
 
 const BOARD_OUTER_TOP = 317;
 const BOARD_OUTER_WIDTH = 712;
@@ -1059,7 +1059,6 @@ export class KingdomSiege extends Phaser.Scene {
         difficulty: this.isAIMode() ? this.aiDifficulty : null,
         gameSessionId: this.gameSessionId,
         sourceScene: "KingdomSiege",
-        reward: { awarded: false, amount: 0 },
         newlyUnlocked: Array.from(new Set([...medalResult.newlyUnlocked, ...dailyResult.newlyUnlocked])),
       });
     });

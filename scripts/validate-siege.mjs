@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   DEFAULT_SIEGE_CONFIG,
   SIEGE_AI_DIFFICULTIES,
@@ -18,6 +21,13 @@ import {
   tickSiege,
   validateSiegeSummon,
 } from "../src/siegeLogic.js";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const pieceSelectAI = fs.readFileSync(path.join(root, "src/scenes/PieceSelectAI.js"), "utf8");
+const siegeScene = fs.readFileSync(path.join(root, "src/scenes/KingdomSiege.js"), "utf8");
+
+assert.doesNotMatch(pieceSelectAI, /targetScene !== "KingdomSiege"/, "Siege difficulty cards show the shared AI win rewards");
+assert.doesNotMatch(siegeScene, /reward:\s*\{\s*awarded:\s*false/, "Siege AI wins use the shared once-only coin reward");
 
 const createTestState = (overrides = {}, options = {}) => createSiegeState({
   seed: options.seed ?? 42,

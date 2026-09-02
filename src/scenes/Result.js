@@ -1,10 +1,10 @@
-import { createPieceView } from "../pieceStyles.js?v=20260903-online93";
-import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260903-online93";
-import { t } from "../i18n.js?v=20260903-online93";
-import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260903-online93";
-import { markMedalsSeen } from "../medals.js?v=20260903-online93";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-online93";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-online93";
+import { createPieceView } from "../pieceStyles.js?v=20260903-online94";
+import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260903-online94";
+import { t } from "../i18n.js?v=20260903-online94";
+import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260903-online94";
+import { markMedalsSeen } from "../medals.js?v=20260903-online94";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-online94";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-online94";
 
 const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35, challenge: 100 });
 const DIFFICULTY_LABELS = Object.freeze({

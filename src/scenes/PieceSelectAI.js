@@ -1,5 +1,5 @@
-import { createPieceView } from "../pieceStyles.js?v=20260903-online93";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260903-online93";
+import { createPieceView } from "../pieceStyles.js?v=20260903-online94";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260903-online94";
 import {
   AI_DIFFICULTIES,
   DEFAULT_AI_DIFFICULTY,
@@ -11,8 +11,8 @@ import {
   SKIN_SHOP,
   unlockGoldBearPiece,
   unlockSkin,
-} from "../playerState.js?v=20260903-online93";
-import { skinName, t } from "../i18n.js?v=20260903-online93";
+} from "../playerState.js?v=20260903-online94";
+import { skinName, t } from "../i18n.js?v=20260903-online94";
 import {
   addBackButton,
   addCoinPill,
@@ -30,8 +30,8 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260903-online93";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-online93";
+} from "../ui/KumaUi.js?v=20260903-online94";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-online94";
 
 const SHOP = SKIN_SHOP;
 const COMPACT_SHOP = SHOP.length > 9;
@@ -520,7 +520,6 @@ export class PieceSelectAI extends Phaser.Scene {
     const panelW = Math.min(610, width - 48);
     const panelH = allowsChallenge ? panelW * (990 / 790) : panelW * (670 / 770);
     const py = height / 2;
-    const showCoinReward = this.targetScene !== "KingdomSiege";
     let selectedDifficulty = this.aiDifficulty;
     const backdrop = createModalBackdrop(this, 9990);
     const layer = this.add.container(0, 0).setDepth(10000);
@@ -594,25 +593,23 @@ export class PieceSelectAI extends Phaser.Scene {
           fontStyle: "900",
         }).setOrigin(0.5);
         cards.add([box, audience, name]);
-        if (showCoinReward) {
-          const reward = this.add.text(x, y + 40, copy.reward, {
-            fontFamily: KUMA_FONT_SANS,
-            fontSize: language === "en" ? "11px" : "13px",
-            color: "#846f59",
-            fontStyle: "700",
-          }).setOrigin(0.5);
-          const amount = this.add.text(0, y + 70, `+${AI_DIFFICULTIES[id].reward}`, {
-            fontFamily: KUMA_FONT_SANS,
-            fontSize: "18px",
-            color: KUMA_COLORS.ink,
-            fontStyle: "800",
-          }).setOrigin(0, 0.5);
-          const rewardGroupWidth = 20 + 6 + amount.width;
-          const rewardGroupLeft = x - rewardGroupWidth / 2;
-          const coin = this.add.image(rewardGroupLeft + 10, y + 70, "kuma_ui_coin_small").setDisplaySize(20, 20);
-          amount.setX(rewardGroupLeft + 26);
-          cards.add([reward, coin, amount]);
-        }
+        const reward = this.add.text(x, y + 40, copy.reward, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: language === "en" ? "11px" : "13px",
+          color: "#846f59",
+          fontStyle: "700",
+        }).setOrigin(0.5);
+        const amount = this.add.text(0, y + 70, `+${AI_DIFFICULTIES[id].reward}`, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: "18px",
+          color: KUMA_COLORS.ink,
+          fontStyle: "800",
+        }).setOrigin(0, 0.5);
+        const rewardGroupWidth = 20 + 6 + amount.width;
+        const rewardGroupLeft = x - rewardGroupWidth / 2;
+        const coin = this.add.image(rewardGroupLeft + 10, y + 70, "kuma_ui_coin_small").setDisplaySize(20, 20);
+        amount.setX(rewardGroupLeft + 26);
+        cards.add([reward, coin, amount]);
       });
 
       if (allowsChallenge) {
@@ -660,16 +657,14 @@ export class PieceSelectAI extends Phaser.Scene {
           fontStyle: "700",
         }).setOrigin(0, 0.5);
         cards.add([box, audience, name, separator, detail]);
-        if (showCoinReward) {
-          const coin = this.add.image(x - 37, y + 22, "kuma_ui_coin_small").setDisplaySize(20, 20);
-          const amount = this.add.text(x - 22, y + 22, `+${AI_DIFFICULTIES[id].reward}`, {
-            fontFamily: KUMA_FONT_SANS,
-            fontSize: "18px",
-            color: "#f0c666",
-            fontStyle: "800",
-          }).setOrigin(0, 0.5);
-          cards.add([coin, amount]);
-        }
+        const coin = this.add.image(x - 37, y + 22, "kuma_ui_coin_small").setDisplaySize(20, 20);
+        const amount = this.add.text(x - 22, y + 22, `+${AI_DIFFICULTIES[id].reward}`, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: "18px",
+          color: "#f0c666",
+          fontStyle: "800",
+        }).setOrigin(0, 0.5);
+        cards.add([coin, amount]);
       }
     };
 

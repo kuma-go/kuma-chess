@@ -1,14 +1,14 @@
-import { Chess } from "../vendor-chess.js?v=20260903-online93";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-online93";
-import { pieceTextureKey } from "../pieceAssets.js?v=20260903-online93";
-import { t } from "../i18n.js?v=20260903-online93";
-import { playFeedback } from "../feedback.js?v=20260903-online93";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260903-online93";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260903-online93";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260903-online93";
-import { recordCompletedGame } from "../medals.js?v=20260903-online93";
-import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260903-online93";
-import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260903-online93";
+import { Chess } from "../vendor-chess.js?v=20260903-online94";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-online94";
+import { pieceTextureKey } from "../pieceAssets.js?v=20260903-online94";
+import { t } from "../i18n.js?v=20260903-online94";
+import { playFeedback } from "../feedback.js?v=20260903-online94";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260903-online94";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260903-online94";
+import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260903-online94";
+import { recordCompletedGame } from "../medals.js?v=20260903-online94";
+import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260903-online94";
+import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260903-online94";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -19,7 +19,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260903-online93";
+} from "../ui/KumaUi.js?v=20260903-online94";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
@@ -1529,7 +1529,7 @@ export class Game extends Phaser.Scene {
 
       try {
         worker = new Worker(
-          new URL("../ai/challengeWorker.js?v=20260903-online93", import.meta.url),
+          new URL("../ai/challengeWorker.js?v=20260903-online94", import.meta.url),
           { type: "module", name: "kuma-challenge-ai" }
         );
       } catch (error) {
