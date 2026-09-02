@@ -1,13 +1,13 @@
-import { getPieceUnlockNotices, readPlayerState, redeemHiddenRewardCoupon, writePlayerState } from "../playerState.js?v=20260902-frame86";
-import { t } from "../i18n.js?v=20260902-frame86";
-import { SpriteButton } from "./SpriteButton.js?v=20260902-frame86";
-import { setMenuBgmVolume } from "../menuBgm.js?v=20260902-frame86";
+import { getPieceUnlockNotices, readPlayerState, redeemHiddenRewardCoupon, writePlayerState } from "../playerState.js?v=20260902-mobile88";
+import { t } from "../i18n.js?v=20260902-mobile88";
+import { SpriteButton } from "./SpriteButton.js?v=20260902-mobile88";
+import { setMenuBgmVolume } from "../menuBgm.js?v=20260902-mobile88";
 import {
   isVibrationSupported,
   playFeedback,
   primeAudioFromGesture,
   vibrateFeedback,
-} from "../feedback.js?v=20260902-frame86";
+} from "../feedback.js?v=20260902-mobile88";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
@@ -731,7 +731,7 @@ export function showSettingsPanel(scene, options = {}) {
         : t("settings.couponInvalid", {}, pending.language);
       const unlockNotices = result.ok && !result.alreadyUnlocked ? getPieceUnlockNotices() : [];
       if (unlockNotices.length) {
-        import("./PieceUnlockLine.js?v=20260902-frame86").then(({ showPieceUnlockNoticeSequence }) => {
+        import("./PieceUnlockLine.js?v=20260902-mobile88").then(({ showPieceUnlockNoticeSequence }) => {
           showPieceUnlockNoticeSequence(scene, unlockNotices, { depth: 10100 });
         });
       } else {

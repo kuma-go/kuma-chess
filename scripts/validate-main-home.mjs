@@ -74,6 +74,13 @@ assert(css.includes('.primary-play-panel > [data-launch="ai"] { padding-left: 23
 assert(css.includes('.primary-play-panel > [data-launch="pvp"] { padding-left: 3.43cqw; }'), "PVP icon position changed");
 assert(css.includes("left: 14.05cqw;"), "Puzzle and online label alignment changed");
 assert(css.includes(".coin-pill .coin-pill-bg"), "Coin background specificity guard is missing");
+assert(css.includes("width: 21.3cqw") && css.includes("height: 6.48cqw")
+  && css.includes("min-height: 0") && css.includes("object-fit: contain"),
+  "The home coin display must preserve the supplied 230x70 artwork ratio");
+assert(css.includes("@media (hover: none) and (pointer: coarse)") && css.includes("user-select: none"),
+  "Touch controls must not retain focus outlines or allow accidental text selection");
+assert(play.includes('input, textarea, [contenteditable="true"]') && play.includes("user-select: none"),
+  "The game shell must prevent accidental selection while preserving text input editing");
 assert(css.includes("border: 0;") && css.includes(".ornate-heading"), "Ornate heading reset is missing");
 assert(css.includes(".scroll-cue .scroll-cue-ornament-right { right: calc(var(--content-width) * .1676); left: auto; }"), "Right scroll ornament alignment changed");
 assert(css.includes("background: transparent;") && css.includes(".play-menu"), "Main image fade is covered by the play menu");

@@ -1,5 +1,5 @@
-import { createPieceView } from "../pieceStyles.js?v=20260902-frame86";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260902-frame86";
+import { createPieceView } from "../pieceStyles.js?v=20260902-mobile88";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260902-mobile88";
 import {
   AI_DIFFICULTIES,
   DEFAULT_AI_DIFFICULTY,
@@ -11,8 +11,8 @@ import {
   SKIN_SHOP,
   unlockGoldBearPiece,
   unlockSkin,
-} from "../playerState.js?v=20260902-frame86";
-import { skinName, t } from "../i18n.js?v=20260902-frame86";
+} from "../playerState.js?v=20260902-mobile88";
+import { skinName, t } from "../i18n.js?v=20260902-mobile88";
 import {
   addBackButton,
   addCoinPill,
@@ -30,8 +30,8 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260902-frame86";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-frame86";
+} from "../ui/KumaUi.js?v=20260902-mobile88";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-mobile88";
 
 const SHOP = SKIN_SHOP;
 const COMPACT_SHOP = SHOP.length > 9;

@@ -3,7 +3,7 @@ import {
   getProfileFrame,
   getProfilePortrait,
   profileTextureKey,
-} from "../profileCatalog.js?v=20260902-frame86";
+} from "../profileCatalog.js?v=20260902-mobile88";
 
 export function addProfileAvatar(scene, parent, x, y, profile, options = {}) {
   const size = options.size ?? 130;

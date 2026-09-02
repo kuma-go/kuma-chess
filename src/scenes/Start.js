@@ -6,11 +6,11 @@ import {
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260902-frame86";
-import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260902-frame86";
-import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260902-frame86";
-import { setTopAdVisible } from "../adManager.js?v=20260902-frame86";
-import { t } from "../i18n.js?v=20260902-frame86";
+} from "../playerState.js?v=20260902-mobile88";
+import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260902-mobile88";
+import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260902-mobile88";
+import { setTopAdVisible } from "../adManager.js?v=20260902-mobile88";
+import { t } from "../i18n.js?v=20260902-mobile88";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -23,14 +23,14 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260902-frame86";
-import { playFeedback } from "../feedback.js?v=20260902-frame86";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260902-frame86";
-import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260902-frame86";
-import { showLeaderboardPopup } from "../ui/LeaderboardPopup.js?v=20260902-frame86";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260902-frame86";
-import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260902-frame86";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-frame86";
+} from "../ui/KumaUi.js?v=20260902-mobile88";
+import { playFeedback } from "../feedback.js?v=20260902-mobile88";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260902-mobile88";
+import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260902-mobile88";
+import { showLeaderboardPopup } from "../ui/LeaderboardPopup.js?v=20260902-mobile88";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260902-mobile88";
+import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260902-mobile88";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-mobile88";
 
 const BUTTONS = [
   { y: 704, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
