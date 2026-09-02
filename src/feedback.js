@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260902-reward85";
+import { readPlayerState } from "./playerState.js?v=20260902-frame86";
 
 const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
 

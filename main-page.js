@@ -3,20 +3,20 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260902-reward85";
+} from "./src/playerState.js?v=20260902-frame86";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260902-reward85";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260902-reward85";
-import { readProfileState } from "./src/profileState.js?v=20260902-reward85";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260902-reward85";
+} from "./src/dailyMissions.js?v=20260902-frame86";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260902-frame86";
+import { readProfileState } from "./src/profileState.js?v=20260902-frame86";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260902-frame86";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260902-reward85";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260902-reward85";
+} from "./src/menuBgm.js?v=20260902-frame86";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260902-frame86";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -29,7 +29,7 @@ const modeDialog = document.getElementById("mode-dialog");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "ranking", "medals"]);
-const ASSET_RETRY_VERSION = "20260902-reward85";
+const ASSET_RETRY_VERSION = "20260902-frame86";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 

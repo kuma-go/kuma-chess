@@ -29,10 +29,12 @@ assert(editorSource.indexOf("const listHit") < editorSource.indexOf("const listL
   "profile list hit target must remain behind item controls");
 assert(editorSource.includes("getSourceImage()") && editorSource.includes("activeType === \"frame\""),
   "frame previews must preserve the complete source art without portrait compositing");
-const framePreviewIndex = editorSource.indexOf("if (activeType === \"frame\")");
-const selectionRingIndex = editorSource.indexOf("if (isSelected)", framePreviewIndex);
-assert(framePreviewIndex >= 0 && selectionRingIndex > framePreviewIndex,
-  "the selected profile ring must render above complete frame artwork");
+const frameSelectionRingIndex = editorSource.indexOf("if (isSelected && activeType === \"frame\")");
+const framePreviewIndex = editorSource.indexOf("if (activeType === \"frame\") {", frameSelectionRingIndex);
+assert(framePreviewIndex >= 0 && frameSelectionRingIndex >= 0 && frameSelectionRingIndex < framePreviewIndex,
+  "the frame selection ring must render outside and behind complete frame artwork");
+assert(editorSource.includes("scene.add.circle(x, y, 63") && editorSource.includes(".setStrokeStyle(4, 0x08a0bd, 1)"),
+  "the frame selection ring must leave space around the full frame design");
 assert(editorSource.includes("Phaser.Scenes.Events.SHUTDOWN") && editorSource.includes("dispose(false)"),
   "profile editor must clean itself up when the embedded scene is stopped");
 assert(editorSource.includes("closeNicknameDialog?.()") && editorSource.includes("return close;"),

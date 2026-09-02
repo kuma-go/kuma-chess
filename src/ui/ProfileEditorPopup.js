@@ -1,16 +1,16 @@
 import {
   getProfileCosmeticCollection,
   purchaseProfileLoadout,
-} from "../playerState.js?v=20260902-reward85";
+} from "../playerState.js?v=20260902-frame86";
 import {
   ensureProfileAssets,
   profileTextureKey,
-} from "../profileCatalog.js?v=20260902-reward85";
+} from "../profileCatalog.js?v=20260902-frame86";
 import {
   normalizeDisplayName,
   readProfileState,
   writeProfileState,
-} from "../profileState.js?v=20260902-reward85";
+} from "../profileState.js?v=20260902-frame86";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -19,9 +19,9 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260902-reward85";
-import { showConfirm } from "./ConfirmPopup.js?v=20260902-reward85";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260902-reward85";
+} from "./KumaUi.js?v=20260902-frame86";
+import { showConfirm } from "./ConfirmPopup.js?v=20260902-frame86";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260902-frame86";
 
 const GRID_COLUMNS = 4;
 const GRID_ROW_HEIGHT = 148;
@@ -452,6 +452,10 @@ export function showProfileEditorPopup(scene, options = {}) {
       const isSelected = item.id === selectedId();
       grid.add(scene.add.circle(x, y, 55, 0xfffaf0, activeType === "portrait" ? 0.96 : 0.3)
         .setStrokeStyle(2, 0xd2b58d, 1));
+      if (isSelected && activeType === "frame") {
+        grid.add(scene.add.circle(x, y, 63, 0xffffff, 0)
+          .setStrokeStyle(4, 0x08a0bd, 1));
+      }
       if (activeType === "frame") {
         if (scene.textures.exists(profileTextureKey(item))) {
           const key = profileTextureKey(item);
@@ -469,7 +473,7 @@ export function showProfileEditorPopup(scene, options = {}) {
           fontFamily: KUMA_FONT_SANS, fontSize: "15px", color: KUMA_COLORS.ink, fontStyle: "800",
         }).setOrigin(0, 0.5));
       }
-      if (isSelected) {
+      if (isSelected && activeType !== "frame") {
         grid.add(scene.add.circle(x, y, 55, 0xffffff, 0)
           .setStrokeStyle(5, 0x08a0bd, 1));
       }
