@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260903-online94";
+import { readPlayerState } from "./playerState.js?v=20260903-online95";
 
 const TEXT = {
   ko: {
@@ -44,6 +44,10 @@ const TEXT = {
     "game.captured": "처치한 기물 :", "game.turn": "{side} 차례 입니다.{check}", "game.check": " - 체크!",
     "promotion.title": "승급할 체스말 선택", "promotion.subtitle": "폰을 승급할 체스말을 선택하세요.",
     "result.aiWin": "AI 대전 승리", "result.aiEnd": "AI 대전 종료", "result.retry": "다시 하기", "result.onlineMenu": "온라인 메뉴",
+    "result.rematch": "다시하기", "result.revenge": "복수하기", "result.rematchTitle": "재대결 요청",
+    "result.rematchWaiting": "상대방의 수락을 기다리고 있습니다.", "result.rematchIncoming": "상대방이 재대결을 요청했습니다.\n수락하시겠습니까?",
+    "result.rematchAccept": "수락", "result.rematchDecline": "거절", "result.rematchCancel": "요청 취소",
+    "result.rematchFailed": "재대결 요청을 처리하지 못했습니다.", "result.rematchDeclined": "상대방이 재대결 요청을 거절했습니다.",
     "result.main": "메인 화면", "result.checkmate": "체크메이트", "result.resign": "기권",
     "result.draw": "무승부", "result.end": "게임 종료",
     "tug.title": "왕국 힘겨루기", "tug.help": "내 기물을 뒤로 끌었다 놓아 상대 킹을 판 밖으로 밀어내세요.",
@@ -158,6 +162,10 @@ const TEXT = {
     "game.captured": "Captured:", "game.turn": "{side} to move.{check}", "game.check": " Check!",
     "promotion.title": "Choose Promotion", "promotion.subtitle": "Choose the piece for this pawn.",
     "result.aiWin": "AI match won", "result.aiEnd": "AI match ended", "result.retry": "Play Again", "result.onlineMenu": "Online Menu",
+    "result.rematch": "Rematch", "result.revenge": "Revenge", "result.rematchTitle": "Rematch Request",
+    "result.rematchWaiting": "Waiting for the other player to accept.", "result.rematchIncoming": "The other player requested a rematch.\nAccept?",
+    "result.rematchAccept": "Accept", "result.rematchDecline": "Decline", "result.rematchCancel": "Cancel Request",
+    "result.rematchFailed": "Could not process the rematch request.", "result.rematchDeclined": "The other player declined the rematch.",
     "result.main": "Main Menu", "result.checkmate": "Checkmate", "result.resign": "Resigned",
     "result.draw": "Draw", "result.end": "Game Over",
     "tug.title": "Kingdom Push Battle", "tug.help": "Pull one of your pieces back, release, and push the enemy king off the board.",
@@ -272,6 +280,10 @@ const TEXT = {
     "game.captured": "取った駒：", "game.turn": "{side}の番です。{check}", "game.check": " チェック！",
     "promotion.title": "昇格する駒を選択", "promotion.subtitle": "ポーンを昇格させる駒を選んでください。",
     "result.aiWin": "AI対戦 勝利", "result.aiEnd": "AI対戦 終了", "result.retry": "もう一度", "result.onlineMenu": "オンラインメニュー",
+    "result.rematch": "もう一度", "result.revenge": "再挑戦", "result.rematchTitle": "再対局のリクエスト",
+    "result.rematchWaiting": "相手の承認を待っています。", "result.rematchIncoming": "相手から再対局のリクエストが届きました。\n承認しますか？",
+    "result.rematchAccept": "承認", "result.rematchDecline": "断る", "result.rematchCancel": "リクエスト取消",
+    "result.rematchFailed": "再対局のリクエストを処理できませんでした。", "result.rematchDeclined": "相手が再対局を断りました。",
     "result.main": "メイン画面", "result.checkmate": "チェックメイト", "result.resign": "投了",
     "result.draw": "引き分け", "result.end": "ゲーム終了",
     "tug.title": "王国押し合い", "tug.help": "自分の駒を後ろに引いて離し、相手のキングを盤外へ押し出しましょう。",

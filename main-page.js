@@ -3,22 +3,22 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260903-online94";
+} from "./src/playerState.js?v=20260903-online95";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260903-online94";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260903-online94";
-import { readProfileState } from "./src/profileState.js?v=20260903-online94";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260903-online94";
+} from "./src/dailyMissions.js?v=20260903-online95";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260903-online95";
+import { readProfileState } from "./src/profileState.js?v=20260903-online95";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260903-online95";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260903-online94";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260903-online94";
-import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260903-online94";
-import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260903-online94";
+} from "./src/menuBgm.js?v=20260903-online95";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260903-online95";
+import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260903-online95";
+import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260903-online95";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -33,7 +33,7 @@ const onlineCodeInput = document.getElementById("online-code-input");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "ranking", "medals"]);
-const ASSET_RETRY_VERSION = "20260903-online94";
+const ASSET_RETRY_VERSION = "20260903-online95";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 

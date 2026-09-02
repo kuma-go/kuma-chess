@@ -51,6 +51,15 @@ service cloud.firestore {
       ];
     }
 
+    function onlineRoomFieldsV3() {
+      return [
+        'schemaVersion', 'code', 'hostUid', 'hostName', 'hostAvatar',
+        'guestUid', 'guestName', 'guestAvatar', 'whiteUid', 'blackUid',
+        'status', 'fen', 'moves', 'turnUid', 'result', 'reason', 'revision',
+        'round', 'rematchRequesterUid', 'createdAt', 'updatedAt', 'lastMoveAt'
+      ];
+    }
+
     function validOnlineAvatar(avatar) {
       return avatar is map
         && avatar.keys().hasAll(['portraitId', 'frameId'])
@@ -77,6 +86,22 @@ service cloud.firestore {
             && room.keys().hasOnly(onlineRoomFieldsV2())
             && validOnlineAvatar(room.hostAvatar)
             && validOnlineAvatar(room.guestAvatar)
+          )
+          ||
+          (
+            room.schemaVersion == 3
+            && room.keys().hasAll(onlineRoomFieldsV3())
+            && room.keys().hasOnly(onlineRoomFieldsV3())
+            && validOnlineAvatar(room.hostAvatar)
+            && validOnlineAvatar(room.guestAvatar)
+            && validCount(room.round)
+            && room.round >= 1
+            && room.rematchRequesterUid is string
+            && room.rematchRequesterUid.size() <= 128
+            && (
+              room.rematchRequesterUid == ''
+              || room.rematchRequesterUid in [room.whiteUid, room.blackUid]
+            )
           )
         )
         && room.code == code
@@ -281,6 +306,13 @@ service cloud.firestore {
         && request.resource.data.result == ''
         && request.resource.data.reason == ''
         && request.resource.data.revision == 0
+        && (
+          request.resource.data.schemaVersion < 3
+          || (
+            request.resource.data.round == 1
+            && request.resource.data.rematchRequesterUid == ''
+          )
+        )
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
         && request.resource.data.lastMoveAt == request.time;
@@ -289,7 +321,6 @@ service cloud.firestore {
         && request.resource.data.schemaVersion == resource.data.schemaVersion
         && request.resource.data.hostUid == resource.data.hostUid
         && request.resource.data.hostName == resource.data.hostName
-        && request.resource.data.whiteUid == resource.data.whiteUid
         && (
           resource.data.schemaVersion == 1
           || request.resource.data.hostAvatar == resource.data.hostAvatar
@@ -389,6 +420,54 @@ service cloud.firestore {
             && request.resource.data.reason == 'cancelled'
             && request.resource.data.turnUid == ''
             && request.resource.data.revision == resource.data.revision + 1
+          )
+          ||
+          (
+            resource.data.schemaVersion == 3
+            && resource.data.status == 'finished'
+            && isOnlinePlayer(resource.data)
+            && resource.data.rematchRequesterUid == ''
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'rematchRequesterUid', 'revision', 'updatedAt', 'lastMoveAt'
+            ])
+            && request.resource.data.rematchRequesterUid == request.auth.uid
+            && request.resource.data.revision == resource.data.revision + 1
+          )
+          ||
+          (
+            resource.data.schemaVersion == 3
+            && resource.data.status == 'finished'
+            && isOnlinePlayer(resource.data)
+            && resource.data.rematchRequesterUid != ''
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'rematchRequesterUid', 'revision', 'updatedAt', 'lastMoveAt'
+            ])
+            && request.resource.data.rematchRequesterUid == ''
+            && request.resource.data.revision == resource.data.revision + 1
+          )
+          ||
+          (
+            resource.data.schemaVersion == 3
+            && resource.data.status == 'finished'
+            && isOnlinePlayer(resource.data)
+            && resource.data.rematchRequesterUid != ''
+            && resource.data.rematchRequesterUid != request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'whiteUid', 'blackUid', 'status', 'fen', 'moves', 'turnUid',
+              'result', 'reason', 'revision', 'round', 'rematchRequesterUid',
+              'updatedAt', 'lastMoveAt'
+            ])
+            && request.resource.data.whiteUid == resource.data.blackUid
+            && request.resource.data.blackUid == resource.data.whiteUid
+            && request.resource.data.status == 'active'
+            && request.resource.data.fen == 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+            && request.resource.data.moves.size() == 0
+            && request.resource.data.turnUid == request.resource.data.whiteUid
+            && request.resource.data.result == ''
+            && request.resource.data.reason == ''
+            && request.resource.data.revision == resource.data.revision + 1
+            && request.resource.data.round == resource.data.round + 1
+            && request.resource.data.rematchRequesterUid == ''
           )
         );
       allow delete: if false;

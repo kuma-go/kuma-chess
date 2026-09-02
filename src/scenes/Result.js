@@ -1,10 +1,20 @@
-import { createPieceView } from "../pieceStyles.js?v=20260903-online94";
-import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260903-online94";
-import { t } from "../i18n.js?v=20260903-online94";
-import { addDarkTopBar, addLargeTextButton, KUMA_COLORS, showRewardLine } from "../ui/KumaUi.js?v=20260903-online94";
-import { markMedalsSeen } from "../medals.js?v=20260903-online94";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-online94";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-online94";
+import { createPieceView } from "../pieceStyles.js?v=20260903-online95";
+import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260903-online95";
+import { t } from "../i18n.js?v=20260903-online95";
+import {
+  addDarkTopBar,
+  addLargeTextButton,
+  addPanel,
+  createModalBackdrop,
+  KUMA_COLORS,
+  KUMA_FONT_SANS,
+  showRewardLine,
+} from "../ui/KumaUi.js?v=20260903-online95";
+import { markMedalsSeen } from "../medals.js?v=20260903-online95";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-online95";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-online95";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260903-online95";
+import { saveOnlineSession } from "../onlineSession.js?v=20260903-online95";
 
 const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35, challenge: 100 });
 const DIFFICULTY_LABELS = Object.freeze({
@@ -13,13 +23,33 @@ const DIFFICULTY_LABELS = Object.freeze({
   ja: { easy: "かんたん", normal: "ふつう", hard: "むずかしい", challenge: "挑戦" },
 });
 
+function cloudApi() {
+  try {
+    return window.parent?.KumaCloud || window.KumaCloud || null;
+  } catch (_error) {
+    return window.KumaCloud || null;
+  }
+}
+
 export class Result extends Phaser.Scene {
   constructor() {
     super("Result");
+    this.unsubscribeRoom = null;
+    this.rematchPopup = null;
+    this.latestOnlineRoom = null;
+    this.playerUid = "";
+    this.startingRematch = false;
+    this.suppressDeclinedNotice = false;
   }
 
   init(data) {
     this.dataIn = data || { result: "draw", reason: "" };
+    this.unsubscribeRoom = null;
+    this.rematchPopup = null;
+    this.latestOnlineRoom = this.dataIn?.onlineRoom || null;
+    this.playerUid = cloudApi()?.getState?.()?.uid || "";
+    this.startingRematch = false;
+    this.suppressDeclinedNotice = false;
   }
 
   create() {
@@ -47,6 +77,7 @@ export class Result extends Phaser.Scene {
       this.dataIn?.winnerColor ??
       (result === "w_win" ? "w" : result === "b_win" ? "b" : null);
     const skins = this.dataIn?.skins || this.registry.get("pieceSkin") || { w: "classic", b: "classic" };
+    const isOnline = this.dataIn?.mode === "online";
 
     if (winnerColor) {
       this.spawnCelebration();
@@ -55,7 +86,9 @@ export class Result extends Phaser.Scene {
       king.setDepth(20);
     }
 
-    this.add.text(width / 2, 830, title, {
+    if (isOnline && winnerColor) this.addOnlineWinnerIdentity(winnerColor, 758);
+
+    this.add.text(width / 2, isOnline ? 850 : 830, title, {
       fontFamily: '"Noto Serif KR", "Noto Serif", Georgia, serif',
       fontSize: "58px",
       color: KUMA_COLORS.orange,
@@ -72,7 +105,7 @@ export class Result extends Phaser.Scene {
       : this.dataIn?.mode === "ai"
       ? (playerWonAI ? t("result.aiWin") : t("result.aiEnd"))
       : this.reasonText(this.dataIn?.reason, this.dataIn);
-    this.add.text(width / 2, 895, stats, {
+    this.add.text(width / 2, isOnline ? 915 : 895, stats, {
       fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
       fontSize: "25px",
       color: KUMA_COLORS.orange,
@@ -101,10 +134,11 @@ export class Result extends Phaser.Scene {
     const newlyUnlockedMedals = Array.from(new Set(this.dataIn?.newlyUnlocked || []));
 
     const yBtn = height - 165;
-    const isOnline = this.dataIn?.mode === "online";
-    const retryAction = addLargeTextButton(this, width / 2 - 165, yBtn, t(isOnline ? "result.onlineMenu" : "result.retry"), "", () => {
+    const playerWonOnline = result === `${this.dataIn?.playerColor}_win`;
+    const onlineActionLabel = t(playerWonOnline ? "result.rematch" : "result.revenge");
+    const retryAction = addLargeTextButton(this, width / 2 - 165, yBtn, isOnline ? onlineActionLabel : t("result.retry"), "", () => {
       if (isOnline) {
-        if (!window.KumaEmbeddedRuntime?.returnHome?.()) this.scene.start("Start");
+        void this.requestRematch();
         return;
       }
       if (this.dataIn?.mode) this.registry.set("gameMode", this.dataIn.mode);
@@ -116,6 +150,7 @@ export class Result extends Phaser.Scene {
     }, { width: 300, height: 82, fontSize: 25, depth: 80 });
 
     const mainAction = addLargeTextButton(this, width / 2 + 165, yBtn, t("result.main"), "", () => {
+      if (this.rematchPopup?.kind === "waiting") void this.cancelRematch(true);
       if (!window.KumaEmbeddedRuntime?.returnHome?.()) this.scene.start("Start");
     }, { width: 300, height: 82, fontSize: 25, dark: true, depth: 80 });
 
@@ -125,6 +160,7 @@ export class Result extends Phaser.Scene {
         action.title.setAlpha(enabled ? 1 : 0.55);
       });
     };
+    this.setActionsEnabled = setActionsEnabled;
     const showSecondaryNotices = () => {
       if (!this.scene.isActive()) return;
       if (reward.awarded) {
@@ -155,6 +191,170 @@ export class Result extends Phaser.Scene {
     } else {
       this.time.delayedCall(650, showSecondaryNotices);
     }
+
+    if (isOnline && this.dataIn?.roomCode && cloudApi()?.watchOnlineRoom) {
+      this.unsubscribeRoom = cloudApi().watchOnlineRoom(
+        this.dataIn.roomCode,
+        (room) => this.onOnlineRoomChanged(room),
+        () => showRewardLine(this, t("result.rematchFailed"), {
+          y: height * 0.52, hold: 1800, showCoin: false, tone: "failure",
+        }),
+      );
+    }
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanupOnlineResult());
+  }
+
+  addOnlineWinnerIdentity(winnerColor, y) {
+    const room = this.dataIn?.onlineRoom || {};
+    const winnerUid = winnerColor === "w" ? room.whiteUid : room.blackUid;
+    const isHost = winnerUid && winnerUid === room.hostUid;
+    const displayName = (isHost ? room.hostName : room.guestName) || "Player";
+    const avatar = isHost ? room.hostAvatar : room.guestAvatar;
+    const text = this.add.text(0, y, displayName, {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "24px",
+      color: KUMA_COLORS.ink,
+      fontStyle: "800",
+    }).setOrigin(0, 0.5).setDepth(42);
+    const avatarSize = 70;
+    const gap = 14;
+    const startX = (this.scale.width - avatarSize - gap - text.width) / 2;
+    addProfileAvatar(this, null, startX + avatarSize / 2, y, { avatar }, {
+      size: avatarSize,
+      maxFrameScale: 1.2,
+      depth: 42,
+    });
+    text.setX(startX + avatarSize + gap);
+  }
+
+  async requestRematch() {
+    const api = cloudApi();
+    if (!api?.requestOnlineRematch || !this.dataIn?.roomCode) return;
+    this.setActionsEnabled?.(false);
+    const response = await api.requestOnlineRematch(this.dataIn.roomCode);
+    if (!this.scene.isActive()) return;
+    if (!response?.ok) {
+      this.setActionsEnabled?.(true);
+      showRewardLine(this, t("result.rematchFailed"), {
+        y: this.scale.height * 0.52, hold: 1800, showCoin: false, tone: "failure",
+      });
+      return;
+    }
+    this.showRematchPopup("waiting");
+  }
+
+  async acceptRematch() {
+    const response = await cloudApi()?.acceptOnlineRematch?.(this.dataIn.roomCode);
+    if (!this.scene.isActive() || response?.ok) return;
+    this.clearRematchPopup();
+    this.setActionsEnabled?.(true);
+    showRewardLine(this, t("result.rematchFailed"), {
+      y: this.scale.height * 0.52, hold: 1800, showCoin: false, tone: "failure",
+    });
+  }
+
+  async cancelRematch(silent = false) {
+    this.suppressDeclinedNotice = silent || this.rematchPopup?.kind === "waiting";
+    const response = await cloudApi()?.cancelOnlineRematch?.(this.dataIn.roomCode);
+    if (!this.scene.isActive()) return;
+    this.clearRematchPopup();
+    this.setActionsEnabled?.(true);
+    if (!response?.ok && !silent) {
+      showRewardLine(this, t("result.rematchFailed"), {
+        y: this.scale.height * 0.52, hold: 1800, showCoin: false, tone: "failure",
+      });
+    }
+  }
+
+  onOnlineRoomChanged(room) {
+    if (!this.scene.isActive() || !room) return;
+    const previousRequester = this.latestOnlineRoom?.rematchRequesterUid || "";
+    this.latestOnlineRoom = room;
+    if (room.status === "active" && !this.startingRematch) {
+      const playerColor = room.whiteUid === this.playerUid ? "w" : room.blackUid === this.playerUid ? "b" : "";
+      if (!playerColor) return;
+      this.startingRematch = true;
+      this.clearRematchPopup();
+      saveOnlineSession(room.code, playerColor);
+      this.scene.start("OnlineGame", { code: room.code, room, playerColor });
+      return;
+    }
+    if (room.status !== "finished") return;
+    const requester = room.rematchRequesterUid || "";
+    if (requester === this.playerUid) {
+      this.showRematchPopup("waiting");
+    } else if (requester) {
+      this.showRematchPopup("incoming");
+    } else {
+      const wasWaiting = previousRequester === this.playerUid;
+      this.clearRematchPopup();
+      this.setActionsEnabled?.(true);
+      if (wasWaiting && !this.suppressDeclinedNotice) {
+        showRewardLine(this, t("result.rematchDeclined"), {
+          y: this.scale.height * 0.52, hold: 1800, showCoin: false,
+        });
+      }
+      this.suppressDeclinedNotice = false;
+    }
+  }
+
+  showRematchPopup(kind) {
+    if (this.rematchPopup?.kind === kind) return;
+    this.clearRematchPopup();
+    this.setActionsEnabled?.(false);
+    const { width, height } = this.scale;
+    const depth = 10000;
+    const backdrop = createModalBackdrop(this, depth - 10);
+    const layer = this.add.container(0, 0).setDepth(depth);
+    const panelW = Math.min(514, width * 0.86);
+    const panelH = 447;
+    const px = width / 2;
+    const py = height / 2;
+    layer.add(addPanel(this, px, py, panelW, panelH, depth + 1));
+    layer.add(this.add.text(px, py - 110, t("result.rematchTitle"), {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "28px",
+      color: "#352719",
+      fontStyle: "900",
+    }).setOrigin(0.5).setDepth(depth + 2));
+    layer.add(this.add.text(px, py - 20, t(kind === "waiting" ? "result.rematchWaiting" : "result.rematchIncoming"), {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "18px",
+      color: "#352719",
+      fontStyle: "600",
+      align: "center",
+      lineSpacing: 6,
+      wordWrap: { width: panelW * 0.82 },
+    }).setOrigin(0.5).setDepth(depth + 2));
+    const buttonY = py + 143;
+    if (kind === "waiting") {
+      const cancel = addLargeTextButton(this, px, buttonY, t("result.rematchCancel"), "", () => void this.cancelRematch(true), {
+        width: 270, height: 81, fontSize: 22, depth: depth + 2,
+      });
+      layer.add([cancel.button, cancel.title]);
+    } else {
+      const decline = addLargeTextButton(this, px - 105, buttonY, t("result.rematchDecline"), "", () => void this.cancelRematch(), {
+        width: 187, height: 81, fontSize: 22, depth: depth + 2,
+      });
+      const accept = addLargeTextButton(this, px + 105, buttonY, t("result.rematchAccept"), "", () => void this.acceptRematch(), {
+        width: 195, height: 81, fontSize: 22, dark: true, depth: depth + 2,
+      });
+      layer.add([decline.button, decline.title, accept.button, accept.title]);
+    }
+    this.rematchPopup = { kind, layer, backdrop };
+  }
+
+  clearRematchPopup() {
+    if (!this.rematchPopup) return;
+    this.rematchPopup.backdrop.cleanup();
+    this.rematchPopup.layer.destroy(true);
+    this.rematchPopup = null;
+  }
+
+  cleanupOnlineResult() {
+    this.unsubscribeRoom?.();
+    this.unsubscribeRoom = null;
+    this.clearRematchPopup();
   }
 
   refreshLanguage() {

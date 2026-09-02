@@ -63,16 +63,28 @@ for (const asset of ["pop_3p_top.png", "pop_3p_center.png", "pop_3p_bottom.png"]
 }
 assert.match(css, /#online-dialog \.online-resource-button[\s\S]*font-family: "Pretendard"/);
 assert.match(html, /class="online-three-patch-center"/);
-assert.match(css, /\.online-three-patch-center[\s\S]*top: 25\.602cqi;[\s\S]*bottom: 20\.152cqi;[\s\S]*pop_3p_center\.png/);
+assert.match(css, /\.online-three-patch-center[\s\S]*top: calc\(25\.602cqi - 2px\);[\s\S]*bottom: calc\(20\.152cqi - 2px\);[\s\S]*pop_3p_center\.png/);
 assert.doesNotMatch(css, /#online-dialog:not\(\[data-online-view-state="entry"\]\)::backdrop/);
 assert.doesNotMatch(html, /secondary-play is-disabled[^>]*>[\s\S]{0,240}온라인 플레이/);
-for (const method of ["createOnlineRoom", "joinOnlineRoom", "watchOnlineRoom", "submitOnlineMove", "leaveOnlineRoom"]) {
+for (const method of [
+  "createOnlineRoom",
+  "joinOnlineRoom",
+  "watchOnlineRoom",
+  "submitOnlineMove",
+  "leaveOnlineRoom",
+  "requestOnlineRematch",
+  "cancelOnlineRematch",
+  "acceptOnlineRematch",
+]) {
   assert.match(client, new RegExp(method));
 }
 assert.match(rules, /match \/onlineRooms\/\{code\}/);
 assert.match(rules, /allow list: if false/);
 assert.match(rules, /request\.auth\.uid == resource\.data\.turnUid/);
 assert.match(rules, /validOnlineAvatar/);
+assert.match(rules, /onlineRoomFieldsV3/);
+assert.match(rules, /rematchRequesterUid/);
+assert.match(rules, /request\.resource\.data\.whiteUid == resource\.data\.blackUid/);
 assert.match(client, /hostAvatar: onlineAvatarSnapshot\(\)/);
 assert.match(client, /guestAvatar = onlineAvatarSnapshot\(\)/);
 assert.match(home, /function openOnlineDialog/);
@@ -86,7 +98,12 @@ assert.match(onlineGame, /addProfileAvatar/);
 assert.match(onlineGame, /rebuildCapturedFromHistory/);
 assert.match(onlineGame, /showLineText\("CHECKMATE!"/);
 assert.match(onlineGame, /showLineText\("CHECK!"/);
+assert.match(onlineGame, /panelW = 513/);
+assert.match(onlineGame, /onlineRoom: \{ \.\.\.room \}/);
 assert.ok(resultScene.indexOf("showMedalAwardSequence") < resultScene.indexOf("showSecondaryNotices();"));
 assert.match(resultScene, /setActionsEnabled\(false\)/);
+assert.match(resultScene, /addOnlineWinnerIdentity/);
+assert.match(resultScene, /showRematchPopup\("waiting"\)/);
+assert.match(resultScene, /showRematchPopup\("incoming"\)/);
 
 console.log("Online validation passed: main-screen invite flow, turn revisions, non-ranked UI, and medal-first result flow are wired.");

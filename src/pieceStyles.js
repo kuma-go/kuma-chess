@@ -1,4 +1,4 @@
-import { pieceTextureKey } from "./pieceAssets.js?v=20260903-online94";
+import { pieceTextureKey } from "./pieceAssets.js?v=20260903-online95";
 
 export const SKINS = [
   { id: "classic", name: "CLASSIC" },

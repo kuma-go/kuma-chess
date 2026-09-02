@@ -1620,9 +1620,9 @@ html[lang="ja"] #mode-dialog .mode-home { font-size: 4.5cqi; }
 #online-dialog:not([data-online-view-state="entry"]) .online-three-patch-center {
   position: absolute;
   z-index: 0;
-  top: 25.602cqi;
+  top: calc(25.602cqi - 2px);
   right: 0;
-  bottom: 20.152cqi;
+  bottom: calc(20.152cqi - 2px);
   left: 0;
   background: url("./assets/kuma/ui/pop_3p_center.png") center / 100% 100% no-repeat;
   pointer-events: none;
@@ -1641,13 +1641,17 @@ html[lang="ja"] #mode-dialog .mode-home { font-size: 4.5cqi; }
 }
 #online-dialog:not([data-online-view-state="entry"]) .dialog-panel::before {
   top: 0;
-  height: 25.602cqi;
+  height: calc(25.602cqi - 1px);
   background-image: url("./assets/kuma/ui/pop_3p_top.png");
+  background-position: center top;
+  background-size: 100% auto;
 }
 #online-dialog:not([data-online-view-state="entry"]) .dialog-panel::after {
   bottom: 0;
-  height: 20.152cqi;
+  height: calc(20.152cqi - 1px);
   background-image: url("./assets/kuma/ui/pop_3p_bottom.png");
+  background-position: center bottom;
+  background-size: 100% auto;
 }
 #online-dialog:not([data-online-view-state="entry"]) [data-online-view] {
   position: relative;

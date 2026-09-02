@@ -1,7 +1,7 @@
-import { getMedalEntries, medalTextureKey } from "../medals.js?v=20260903-online94";
-import { readPlayerState } from "../playerState.js?v=20260903-online94";
-import { playFeedback } from "../feedback.js?v=20260903-online94";
-import { KUMA_FONT_SANS } from "./KumaUi.js?v=20260903-online94";
+import { getMedalEntries, medalTextureKey } from "../medals.js?v=20260903-online95";
+import { readPlayerState } from "../playerState.js?v=20260903-online95";
+import { playFeedback } from "../feedback.js?v=20260903-online95";
+import { KUMA_FONT_SANS } from "./KumaUi.js?v=20260903-online95";
 
 const UI_ROOT = "assets/kuma/ui/";
 const NORMAL_TIMING = Object.freeze({ gather: 1040, settle: 430, exit: 240 });

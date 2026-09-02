@@ -1,5 +1,5 @@
-import { grantCoinsOnce } from "./playerState.js?v=20260903-online94";
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260903-online94";
+import { grantCoinsOnce } from "./playerState.js?v=20260903-online95";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260903-online95";
 
 export const ROYAL_ROAD_PUZZLE_PROGRESS_KEY = "kumaChessRoyalRoadPuzzleV1";
 export const ROYAL_ROAD_PUZZLE_PROGRESS_BACKUP_KEY = "kumaChessRoyalRoadPuzzleBackupV1";

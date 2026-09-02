@@ -1,11 +1,11 @@
-import { Chess } from "../vendor-chess.js?v=20260903-online94";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-online94";
-import { readProfileState } from "../profileState.js?v=20260903-online94";
-import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260903-online94";
-import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260903-online94";
-import { playFeedback } from "../feedback.js?v=20260903-online94";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260903-online94";
-import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260903-online94";
+import { Chess } from "../vendor-chess.js?v=20260903-online95";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-online95";
+import { readProfileState } from "../profileState.js?v=20260903-online95";
+import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260903-online95";
+import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260903-online95";
+import { playFeedback } from "../feedback.js?v=20260903-online95";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260903-online95";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260903-online95";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -17,7 +17,7 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260903-online94";
+} from "../ui/KumaUi.js?v=20260903-online95";
 
 const FILES = "abcdefgh";
 const COPY = Object.freeze({
@@ -27,7 +27,8 @@ const COPY = Object.freeze({
     syncing: "수를 전송하고 있습니다.", reconnecting: "연결을 복구하고 있습니다.",
     moveFailed: "수를 전송하지 못했습니다. 다시 시도해주세요.",
     resignTitle: "대국 나가기", resignMessage: "진행 중인 온라인 대국에서 기권할까요?",
-    resign: "기권", cancel: "계속하기", promotion: "승급할 기물을 선택하세요", promotionCancel: "취소",
+    resign: "기권", cancel: "계속하기", promotion: "승급할 체스말 선택",
+    promotionSubtitle: "폰을 승급할 체스말을 선택하세요.", promotionCancel: "취소", promotionChange: "변경",
   }),
   en: Object.freeze({
     title: "Online Match", room: "Invite code {code}", you: "You", turn: "Your turn", wait: "Opponent's turn",
@@ -35,7 +36,8 @@ const COPY = Object.freeze({
     syncing: "Sending move...", reconnecting: "Restoring connection...",
     moveFailed: "Could not send the move. Try again.",
     resignTitle: "Leave Match", resignMessage: "Resign this online match?",
-    resign: "Resign", cancel: "Keep Playing", promotion: "Choose a promotion piece", promotionCancel: "Cancel",
+    resign: "Resign", cancel: "Keep Playing", promotion: "Choose Promotion",
+    promotionSubtitle: "Choose the piece for this pawn.", promotionCancel: "Cancel", promotionChange: "Change",
   }),
   ja: Object.freeze({
     title: "オンライン対局", room: "招待コード {code}", you: "自分", turn: "あなたの番", wait: "相手の番",
@@ -43,7 +45,8 @@ const COPY = Object.freeze({
     syncing: "指し手を送信中です。", reconnecting: "接続を復旧しています。",
     moveFailed: "指し手を送信できませんでした。もう一度お試しください。",
     resignTitle: "対局を終了", resignMessage: "進行中のオンライン対局で投了しますか？",
-    resign: "投了", cancel: "続ける", promotion: "昇格する駒を選択", promotionCancel: "キャンセル",
+    resign: "投了", cancel: "続ける", promotion: "昇格する駒を選択",
+    promotionSubtitle: "ポーンを昇格させる駒を選んでください。", promotionCancel: "キャンセル", promotionChange: "変更",
   }),
 });
 
@@ -135,7 +138,7 @@ export class OnlineGame extends Phaser.Scene {
     this._resultTimer = null;
     this._playerAvatarSignature = "";
     this._opponentAvatarSignature = "";
-    this.gameStartedAt = data.room?.createdAtMs || Date.now();
+    this.gameStartedAt = data.room?.updatedAtMs || data.room?.createdAtMs || Date.now();
   }
 
   create() {
@@ -150,7 +153,7 @@ export class OnlineGame extends Phaser.Scene {
 
     this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0xfff8ea).setOrigin(0).setDepth(-100);
     addDarkTopBar(this, this.copy.title, { onHome: () => this.confirmResign() });
-    this.add.text(this.scale.width / 2, 155, interpolate(this.copy.room, { code: this.roomCode }), {
+    this.add.text(this.scale.width / 2, 137, interpolate(this.copy.room, { code: this.roomCode }), {
       fontFamily: KUMA_FONT_SANS, fontSize: "17px", color: "#95795d", fontStyle: "700",
     }).setOrigin(0.5).setDepth(120);
     addChessBoard(this, this.boardLayout, 0);
@@ -161,16 +164,16 @@ export class OnlineGame extends Phaser.Scene {
     this.playerAvatar = addProfileAvatar(this, null, 0, 0, profile, {
       size: 64, maxFrameScale: 1.2, depth: 120,
     });
-    this.opponentText = this.add.text(0, 205, "", {
+    this.opponentText = this.add.text(0, 190, "", {
       fontFamily: KUMA_FONT_SANS, fontSize: "24px", color: KUMA_COLORS.ink, fontStyle: "800",
     }).setOrigin(0, 0.5).setDepth(120);
-    this.playerText = this.add.text(0, 1064, "", {
+    this.playerText = this.add.text(0, 1086, "", {
       fontFamily: KUMA_FONT_SANS, fontSize: "24px", color: KUMA_COLORS.ink, fontStyle: "800",
     }).setOrigin(0, 0.5).setDepth(120);
-    this.statusText = this.add.text(this.scale.width / 2, 1120, "", {
+    this.statusText = this.add.text(this.scale.width / 2, 1160, "", {
       fontFamily: KUMA_FONT_SERIF, fontSize: "28px", color: "#009bb8", fontStyle: "800",
     }).setOrigin(0.5).setDepth(120);
-    this.connectionText = this.add.text(this.scale.width / 2, 1160, "", {
+    this.connectionText = this.add.text(this.scale.width / 2, 1202, "", {
       fontFamily: KUMA_FONT_SANS, fontSize: "17px", color: "#a14c42", fontStyle: "700",
     }).setOrigin(0.5).setDepth(120);
 
@@ -205,13 +208,13 @@ export class OnlineGame extends Phaser.Scene {
       this.playerAvatar,
       this.playerText,
       `${playerName || this.copy.you} · ${this.playerColor.toUpperCase()}`,
-      1064,
+      1086,
     );
     this.layoutIdentity(
       this.opponentAvatar,
       this.opponentText,
       `${opponentName || "Player"} · ${(isWhite ? "b" : "w").toUpperCase()}`,
-      205,
+      190,
     );
     if (this.syncing) this.statusText?.setText(this.copy.syncing);
     else {
@@ -283,8 +286,8 @@ export class OnlineGame extends Phaser.Scene {
     this.capturedLayer = this.add.container(0, 0).setDepth(110);
     const opponentColor = this.playerColor === "w" ? "b" : "w";
     const rows = [
-      { y: 258, pieces: this.capturedBy[opponentColor] || [] },
-      { y: 1008, pieces: this.capturedBy[this.playerColor] || [] },
+      { y: 250, pieces: this.capturedBy[opponentColor] || [] },
+      { y: 1014, pieces: this.capturedBy[this.playerColor] || [] },
     ];
     const labelX = this.boardX + 8;
     const iconsStartX = this.boardX + 124;
@@ -443,38 +446,86 @@ export class OnlineGame extends Phaser.Scene {
   }
 
   showPromotionPicker(from, to) {
+    if (this.promotionLayer) return;
     const backdrop = createModalBackdrop(this, 9900);
     const layer = this.add.container(0, 0).setDepth(10000);
     this.promotionLayer = layer;
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
-    layer.add(addPanel(this, centerX, centerY, 600, 510, 10000));
-    layer.add(this.add.text(centerX, centerY - 160, this.copy.promotion, {
-      fontFamily: KUMA_FONT_SANS, fontSize: "26px", color: KUMA_COLORS.ink, fontStyle: "800",
-    }).setOrigin(0.5).setDepth(10001));
-    const close = () => {
+    const panelW = 513;
+    const panelH = 647;
+    layer.add(addPanel(this, centerX, centerY, panelW, panelH, 10001));
+    layer.add(this.add.text(centerX, centerY - 195, this.copy.promotion, {
+      fontFamily: KUMA_FONT_SANS, fontSize: "26px", color: KUMA_COLORS.ink, fontStyle: "900",
+    }).setOrigin(0.5).setDepth(10002));
+    layer.add(this.add.rectangle(centerX, centerY - 153, panelW * 0.74, 2, 0xc69d72).setDepth(10002));
+    layer.add(this.add.text(centerX, centerY - 110, this.copy.promotionSubtitle, {
+      fontFamily: KUMA_FONT_SANS, fontSize: "23px", color: KUMA_COLORS.ink, fontStyle: "800",
+    }).setOrigin(0.5).setDepth(10002));
+
+    const choices = [
+      { key: "q", label: "Queen" },
+      { key: "r", label: "Rook" },
+      { key: "b", label: "Bishop" },
+      { key: "n", label: "Knight" },
+    ];
+    let selectedChoice = "q";
+    let choiceLayer = null;
+    const drawChoices = () => {
+      choiceLayer?.destroy(true);
+      choiceLayer = this.add.container(0, 0).setDepth(10002);
+      const y = centerY + 49;
+      choices.forEach((choice, index) => {
+        const x = centerX - 160 + index * 106.7;
+        const selected = choice.key === selectedChoice;
+        const card = this.add.rectangle(x, y, 98, 218, 0xfff4df, selected ? 0.94 : 0.62)
+          .setStrokeStyle(2, selected ? 0xc79a37 : 0xc69d72, 1)
+          .setInteractive({ useHandCursor: true });
+        card.on("pointerdown", () => {
+          selectedChoice = choice.key;
+          drawChoices();
+        });
+        const topLabel = this.add.text(x, y - 82, choice.label, {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: "15px",
+          color: selected ? KUMA_COLORS.teal : "#8b735b",
+          fontStyle: "700",
+        }).setOrigin(0.5);
+        const piece = createPieceView(
+          this,
+          x,
+          y + 2,
+          100,
+          this.skins[this.playerColor] || "classic",
+          this.playerColor,
+          choice.key,
+          "front",
+        );
+        const keyLabel = this.add.text(x, y + 84, choice.key.toUpperCase(), {
+          fontFamily: KUMA_FONT_SANS,
+          fontSize: "24px",
+          color: selected ? KUMA_COLORS.teal : KUMA_COLORS.ink,
+          fontStyle: "900",
+        }).setOrigin(0.5);
+        choiceLayer.add([card, topLabel, piece, keyLabel]);
+      });
+      layer.add(choiceLayer);
+    };
+    drawChoices();
+
+    const close = (choice = null) => {
       backdrop.cleanup();
       layer.destroy(true);
       this.promotionLayer = null;
+      if (choice) void this.tryMove(from, to, choice);
     };
-    ["q", "r", "b", "n"].forEach((type, index) => {
-      const x = centerX - 210 + index * 140;
-      const hit = this.add.circle(x, centerY - 15, 58, 0xfff8e8, 0.82)
-        .setStrokeStyle(3, 0xc18a31, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(10001);
-      const piece = createPieceView(this, x, centerY - 15, 106, this.skins[this.playerColor] || "classic", this.playerColor, type, "front")
-        .setDepth(10002);
-      hit.on("pointerup", () => {
-        close();
-        void this.tryMove(from, to, type);
-      });
-      layer.add([hit, piece]);
+    const cancel = addLargeTextButton(this, centerX - 106, centerY + 243, this.copy.promotionCancel, "", () => close(), {
+      width: 187, height: 81, fontSize: 24, depth: 10002,
     });
-    const cancel = addLargeTextButton(this, centerX, centerY + 160, this.copy.promotionCancel, "", close, {
-      width: 310, height: 76, fontSize: 23, depth: 10001,
+    const change = addLargeTextButton(this, centerX + 103, centerY + 243, this.copy.promotionChange, "", () => close(selectedChoice), {
+      width: 195, height: 81, fontSize: 24, dark: true, depth: 10002,
     });
-    layer.add([cancel.button, cancel.title]);
+    layer.add([cancel.button, cancel.title, change.button, change.title]);
   }
 
   onRoomChanged(room) {
@@ -576,6 +627,8 @@ export class OnlineGame extends Phaser.Scene {
         skins: { ...this.skins },
         mode: "online",
         playerColor: this.playerColor,
+        roomCode: this.roomCode,
+        onlineRoom: { ...room },
         sourceScene: "OnlineGame",
         gameSessionId: `online:${this.roomCode}:${room.revision}`,
         history: this.game.history({ verbose: true }),

@@ -278,6 +278,7 @@ function onlineRoomSnapshot(snapshot) {
   const timestamp = (value) => value?.toMillis?.() ?? 0;
   return Object.freeze({
     code: normalizeOnlineRoomCode(snapshot.id),
+    schemaVersion: boundedCount(data.schemaVersion),
     hostUid: boundedText(data.hostUid, 128),
     guestUid: boundedText(data.guestUid, 128),
     hostName: boundedText(data.hostName || "Player", 16) || "Player",
@@ -293,6 +294,8 @@ function onlineRoomSnapshot(snapshot) {
     result: boundedText(data.result, 16),
     reason: boundedText(data.reason, 20),
     revision: boundedCount(data.revision),
+    round: Math.max(1, boundedCount(data.round) || 1),
+    rematchRequesterUid: boundedText(data.rematchRequesterUid, 128),
     createdAtMs: timestamp(data.createdAt),
     updatedAtMs: timestamp(data.updatedAt),
     lastMoveAtMs: timestamp(data.lastMoveAt),
@@ -310,7 +313,7 @@ async function createOnlineRoom() {
           throw Object.assign(new Error("room-code-collision"), { code: "room-code-collision" });
         }
         transaction.set(roomRef, {
-          schemaVersion: 2,
+          schemaVersion: 3,
           code,
           hostUid: user.uid,
           hostName: onlineDisplayName(),
@@ -327,6 +330,8 @@ async function createOnlineRoom() {
           result: "",
           reason: "",
           revision: 0,
+          round: 1,
+          rematchRequesterUid: "",
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           lastMoveAt: serverTimestamp(),
@@ -457,6 +462,105 @@ async function leaveOnlineRoom(value) {
     return Object.freeze({ ok: true });
   } catch (error) {
     return Object.freeze({ ok: false, reason: error?.code || "leave-failed" });
+  }
+}
+
+async function requestOnlineRematch(value) {
+  const user = await requireActiveUser();
+  const code = normalizeOnlineRoomCode(value);
+  if (code.length !== 6) return Object.freeze({ ok: false, reason: "invalid-code" });
+  const roomRef = doc(database, ONLINE_ROOM_COLLECTION, code);
+  try {
+    await runTransaction(database, async (transaction) => {
+      const snapshot = await transaction.get(roomRef);
+      if (!snapshot.exists()) throw Object.assign(new Error("room-not-found"), { code: "room-not-found" });
+      const room = snapshot.data() || {};
+      if (Number(room.schemaVersion) < 3) throw Object.assign(new Error("rematch-unavailable"), { code: "rematch-unavailable" });
+      if (room.status !== "finished") throw Object.assign(new Error("room-not-finished"), { code: "room-not-finished" });
+      if (![room.whiteUid, room.blackUid].includes(user.uid)) {
+        throw Object.assign(new Error("not-a-player"), { code: "not-a-player" });
+      }
+      if (room.rematchRequesterUid === user.uid) return;
+      if (room.rematchRequesterUid) throw Object.assign(new Error("rematch-already-requested"), { code: "rematch-already-requested" });
+      transaction.update(roomRef, {
+        rematchRequesterUid: user.uid,
+        revision: boundedCount(room.revision) + 1,
+        updatedAt: serverTimestamp(),
+        lastMoveAt: serverTimestamp(),
+      });
+    });
+    return Object.freeze({ ok: true });
+  } catch (error) {
+    return Object.freeze({ ok: false, reason: error?.code || "rematch-request-failed" });
+  }
+}
+
+async function cancelOnlineRematch(value) {
+  const user = await requireActiveUser();
+  const code = normalizeOnlineRoomCode(value);
+  if (code.length !== 6) return Object.freeze({ ok: false, reason: "invalid-code" });
+  const roomRef = doc(database, ONLINE_ROOM_COLLECTION, code);
+  try {
+    await runTransaction(database, async (transaction) => {
+      const snapshot = await transaction.get(roomRef);
+      if (!snapshot.exists()) throw Object.assign(new Error("room-not-found"), { code: "room-not-found" });
+      const room = snapshot.data() || {};
+      if (Number(room.schemaVersion) < 3 || room.status !== "finished" || !room.rematchRequesterUid) return;
+      if (![room.whiteUid, room.blackUid].includes(user.uid)) {
+        throw Object.assign(new Error("not-a-player"), { code: "not-a-player" });
+      }
+      transaction.update(roomRef, {
+        rematchRequesterUid: "",
+        revision: boundedCount(room.revision) + 1,
+        updatedAt: serverTimestamp(),
+        lastMoveAt: serverTimestamp(),
+      });
+    });
+    return Object.freeze({ ok: true });
+  } catch (error) {
+    return Object.freeze({ ok: false, reason: error?.code || "rematch-cancel-failed" });
+  }
+}
+
+async function acceptOnlineRematch(value) {
+  const user = await requireActiveUser();
+  const code = normalizeOnlineRoomCode(value);
+  if (code.length !== 6) return Object.freeze({ ok: false, reason: "invalid-code" });
+  const roomRef = doc(database, ONLINE_ROOM_COLLECTION, code);
+  try {
+    await runTransaction(database, async (transaction) => {
+      const snapshot = await transaction.get(roomRef);
+      if (!snapshot.exists()) throw Object.assign(new Error("room-not-found"), { code: "room-not-found" });
+      const room = snapshot.data() || {};
+      if (Number(room.schemaVersion) < 3 || room.status !== "finished") {
+        throw Object.assign(new Error("rematch-unavailable"), { code: "rematch-unavailable" });
+      }
+      if (!room.rematchRequesterUid || room.rematchRequesterUid === user.uid) {
+        throw Object.assign(new Error("rematch-not-requested"), { code: "rematch-not-requested" });
+      }
+      if (![room.whiteUid, room.blackUid].includes(user.uid)) {
+        throw Object.assign(new Error("not-a-player"), { code: "not-a-player" });
+      }
+      const nextWhiteUid = room.blackUid;
+      transaction.update(roomRef, {
+        whiteUid: nextWhiteUid,
+        blackUid: room.whiteUid,
+        status: "active",
+        fen: ONLINE_INITIAL_FEN,
+        moves: [],
+        turnUid: nextWhiteUid,
+        result: "",
+        reason: "",
+        revision: boundedCount(room.revision) + 1,
+        round: Math.max(1, boundedCount(room.round)) + 1,
+        rematchRequesterUid: "",
+        updatedAt: serverTimestamp(),
+        lastMoveAt: serverTimestamp(),
+      });
+    });
+    return Object.freeze({ ok: true });
+  } catch (error) {
+    return Object.freeze({ ok: false, reason: error?.code || "rematch-accept-failed" });
   }
 }
 
@@ -627,6 +731,9 @@ window.KumaCloud = Object.freeze({
   watchOnlineRoom: (code, onChange, onError) => watchOnlineRoom(code, onChange, onError),
   submitOnlineMove: (code, request) => submitOnlineMove(code, request),
   leaveOnlineRoom: (code) => leaveOnlineRoom(code),
+  requestOnlineRematch: (code) => requestOnlineRematch(code),
+  cancelOnlineRematch: (code) => cancelOnlineRematch(code),
+  acceptOnlineRematch: (code) => acceptOnlineRematch(code),
 });
 
 void initializeCloud();

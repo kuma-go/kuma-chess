@@ -76,6 +76,9 @@ for (const onlineMethod of [
   "watchOnlineRoom",
   "submitOnlineMove",
   "leaveOnlineRoom",
+  "requestOnlineRematch",
+  "cancelOnlineRematch",
+  "acceptOnlineRematch",
 ]) {
   if (!client.includes(onlineMethod)) failures.push(`src/firebaseClientEntry.js: ${onlineMethod} API is missing`);
 }
