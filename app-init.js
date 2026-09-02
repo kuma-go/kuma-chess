@@ -3,7 +3,7 @@
     || !("serviceWorker" in navigator)
     || (location.protocol !== "https:" && location.hostname !== "localhost")) return;
 
-  const shellVersion = "20260902-online92";
+  const shellVersion = "20260903-online93";
   const reloadKey = `kuma-sw-controller-${shellVersion}`;
   let reloading = false;
   let refreshPending = false;

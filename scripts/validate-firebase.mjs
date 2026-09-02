@@ -39,7 +39,8 @@ if (!rules.includes("match /nicknameClaims/{displayName}")
 }
 if (!rules.includes("match /onlineRooms/{code}")
   || !rules.includes("allow list: if false")
-  || !rules.includes("request.auth.uid == resource.data.turnUid")) {
+  || !rules.includes("request.auth.uid == resource.data.turnUid")
+  || !rules.includes("validOnlineAvatar")) {
   failures.push("firestore.rules: invite rooms must block listing and enforce the active turn owner");
 }
 
@@ -77,6 +78,10 @@ for (const onlineMethod of [
   "leaveOnlineRoom",
 ]) {
   if (!client.includes(onlineMethod)) failures.push(`src/firebaseClientEntry.js: ${onlineMethod} API is missing`);
+}
+if (!client.includes("hostAvatar: onlineAvatarSnapshot()")
+  || !client.includes("guestAvatar = onlineAvatarSnapshot()")) {
+  failures.push("src/firebaseClientEntry.js: online room profiles must include public avatar cosmetics");
 }
 
 if (failures.length) {

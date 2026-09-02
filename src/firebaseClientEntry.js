@@ -261,6 +261,17 @@ function onlineDisplayName() {
   return boundedText(profileSnapshot().displayName || "Player", 16) || "Player";
 }
 
+function normalizeOnlineAvatar(value = {}) {
+  return Object.freeze({
+    portraitId: boundedText(value?.portraitId || "portrait-basic-01", 40) || "portrait-basic-01",
+    frameId: boundedText(value?.frameId || "frame-basic-01", 40) || "frame-basic-01",
+  });
+}
+
+function onlineAvatarSnapshot() {
+  return normalizeOnlineAvatar(profileSnapshot().avatar);
+}
+
 function onlineRoomSnapshot(snapshot) {
   if (!snapshot?.exists?.()) return null;
   const data = snapshot.data() || {};
@@ -271,6 +282,8 @@ function onlineRoomSnapshot(snapshot) {
     guestUid: boundedText(data.guestUid, 128),
     hostName: boundedText(data.hostName || "Player", 16) || "Player",
     guestName: boundedText(data.guestName || "", 16),
+    hostAvatar: normalizeOnlineAvatar(data.hostAvatar),
+    guestAvatar: normalizeOnlineAvatar(data.guestAvatar),
     whiteUid: boundedText(data.whiteUid, 128),
     blackUid: boundedText(data.blackUid, 128),
     status: boundedText(data.status, 16),
@@ -297,12 +310,14 @@ async function createOnlineRoom() {
           throw Object.assign(new Error("room-code-collision"), { code: "room-code-collision" });
         }
         transaction.set(roomRef, {
-          schemaVersion: 1,
+          schemaVersion: 2,
           code,
           hostUid: user.uid,
           hostName: onlineDisplayName(),
+          hostAvatar: onlineAvatarSnapshot(),
           guestUid: "",
           guestName: "",
+          guestAvatar: normalizeOnlineAvatar(),
           whiteUid: user.uid,
           blackUid: "",
           status: "waiting",
@@ -340,14 +355,16 @@ async function joinOnlineRoom(value) {
       if (room.status !== "waiting" || room.guestUid) {
         throw Object.assign(new Error("room-unavailable"), { code: "room-unavailable" });
       }
-      transaction.update(roomRef, {
+      const update = {
         guestUid: user.uid,
         guestName: onlineDisplayName(),
         blackUid: user.uid,
         status: "active",
         updatedAt: serverTimestamp(),
         lastMoveAt: serverTimestamp(),
-      });
+      };
+      if (Number(room.schemaVersion) >= 2) update.guestAvatar = onlineAvatarSnapshot();
+      transaction.update(roomRef, update);
     });
     return Object.freeze({ ok: true, code, color: "b", uid: user.uid });
   } catch (error) {

@@ -1427,6 +1427,13 @@ html[lang="ja"] #mode-dialog .mode-home { font-size: 4.5cqi; }
 
 #online-dialog { width: min(600px, calc(var(--content-width) - 24px), calc(100vw - 24px)); }
 #online-dialog [data-online-view][hidden] { display: none; }
+#online-dialog:not([data-online-view-state="entry"])::backdrop {
+  background-color: #eddec1;
+  background-image: url("./assets/kuma/ui/pattern.png");
+  background-position: center top;
+  background-size: 560px 560px;
+  backdrop-filter: none;
+}
 #online-dialog[data-online-view-state="entry"] {
   width: min(700px, calc(var(--content-width) - 20px), calc(100vw - 20px));
   max-height: calc(100dvh - 16px);

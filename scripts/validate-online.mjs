@@ -62,6 +62,7 @@ for (const asset of ["pop_3p_top.png", "pop_3p_center.png", "pop_3p_bottom.png"]
   assert.match(css, new RegExp(asset.replace(".", "\\.")));
 }
 assert.match(css, /#online-dialog \.online-resource-button[\s\S]*font-family: "Pretendard"/);
+assert.match(css, /#online-dialog:not\(\[data-online-view-state="entry"\]\)::backdrop[\s\S]*pattern\.png/);
 assert.doesNotMatch(html, /secondary-play is-disabled[^>]*>[\s\S]{0,240}온라인 플레이/);
 for (const method of ["createOnlineRoom", "joinOnlineRoom", "watchOnlineRoom", "submitOnlineMove", "leaveOnlineRoom"]) {
   assert.match(client, new RegExp(method));
@@ -69,6 +70,9 @@ for (const method of ["createOnlineRoom", "joinOnlineRoom", "watchOnlineRoom", "
 assert.match(rules, /match \/onlineRooms\/\{code\}/);
 assert.match(rules, /allow list: if false/);
 assert.match(rules, /request\.auth\.uid == resource\.data\.turnUid/);
+assert.match(rules, /validOnlineAvatar/);
+assert.match(client, /hostAvatar: onlineAvatarSnapshot\(\)/);
+assert.match(client, /guestAvatar = onlineAvatarSnapshot\(\)/);
 assert.match(home, /function openOnlineDialog/);
 assert.match(home, /function createOnlineRoom/);
 assert.match(home, /function joinOnlineRoom/);
@@ -76,6 +80,10 @@ assert.match(home, /openGameLaunch\("online-game"/);
 assert.match(home, /비랭크 대전/);
 assert.match(onlineGame, /expectedRevision/);
 assert.match(onlineGame, /room\.status === "finished"/);
+assert.match(onlineGame, /addProfileAvatar/);
+assert.match(onlineGame, /rebuildCapturedFromHistory/);
+assert.match(onlineGame, /showLineText\("CHECKMATE!"/);
+assert.match(onlineGame, /showLineText\("CHECK!"/);
 assert.ok(resultScene.indexOf("showMedalAwardSequence") < resultScene.indexOf("showSecondaryNotices();"));
 assert.match(resultScene, /setActionsEnabled\(false\)/);
 

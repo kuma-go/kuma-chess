@@ -34,7 +34,7 @@ service cloud.firestore {
         && validCount(value.played);
     }
 
-    function onlineRoomFields() {
+    function onlineRoomFieldsV1() {
       return [
         'schemaVersion', 'code', 'hostUid', 'hostName', 'guestUid', 'guestName',
         'whiteUid', 'blackUid', 'status', 'fen', 'moves', 'turnUid', 'result',
@@ -42,10 +42,43 @@ service cloud.firestore {
       ];
     }
 
+    function onlineRoomFieldsV2() {
+      return [
+        'schemaVersion', 'code', 'hostUid', 'hostName', 'hostAvatar',
+        'guestUid', 'guestName', 'guestAvatar', 'whiteUid', 'blackUid',
+        'status', 'fen', 'moves', 'turnUid', 'result', 'reason', 'revision',
+        'createdAt', 'updatedAt', 'lastMoveAt'
+      ];
+    }
+
+    function validOnlineAvatar(avatar) {
+      return avatar is map
+        && avatar.keys().hasAll(['portraitId', 'frameId'])
+        && avatar.keys().hasOnly(['portraitId', 'frameId'])
+        && avatar.portraitId is string
+        && avatar.portraitId.size() > 0
+        && avatar.portraitId.size() <= 40
+        && avatar.frameId is string
+        && avatar.frameId.size() > 0
+        && avatar.frameId.size() <= 40;
+    }
+
     function validOnlineRoom(room, code) {
-      return room.keys().hasAll(onlineRoomFields())
-        && room.keys().hasOnly(onlineRoomFields())
-        && room.schemaVersion == 1
+      return (
+          (
+            room.schemaVersion == 1
+            && room.keys().hasAll(onlineRoomFieldsV1())
+            && room.keys().hasOnly(onlineRoomFieldsV1())
+          )
+          ||
+          (
+            room.schemaVersion == 2
+            && room.keys().hasAll(onlineRoomFieldsV2())
+            && room.keys().hasOnly(onlineRoomFieldsV2())
+            && validOnlineAvatar(room.hostAvatar)
+            && validOnlineAvatar(room.guestAvatar)
+          )
+        )
         && room.code == code
         && code.size() == 6
         && room.hostUid is string
@@ -253,9 +286,14 @@ service cloud.firestore {
         && request.resource.data.lastMoveAt == request.time;
       allow update: if validOnlineRoom(request.resource.data, code)
         && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.schemaVersion == resource.data.schemaVersion
         && request.resource.data.hostUid == resource.data.hostUid
         && request.resource.data.hostName == resource.data.hostName
         && request.resource.data.whiteUid == resource.data.whiteUid
+        && (
+          resource.data.schemaVersion == 1
+          || request.resource.data.hostAvatar == resource.data.hostAvatar
+        )
         && request.resource.data.updatedAt == request.time
         && request.resource.data.lastMoveAt == request.time
         && (
@@ -265,11 +303,16 @@ service cloud.firestore {
             && signedIn()
             && request.auth.uid != resource.data.hostUid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-              'guestUid', 'guestName', 'blackUid', 'status', 'updatedAt', 'lastMoveAt'
+              'guestUid', 'guestName', 'guestAvatar', 'blackUid', 'status',
+              'updatedAt', 'lastMoveAt'
             ])
             && request.resource.data.guestUid == request.auth.uid
             && request.resource.data.blackUid == request.auth.uid
             && request.resource.data.guestName.size() >= 1
+            && (
+              resource.data.schemaVersion == 1
+              || validOnlineAvatar(request.resource.data.guestAvatar)
+            )
             && request.resource.data.status == 'active'
             && request.resource.data.turnUid == resource.data.turnUid
             && request.resource.data.revision == resource.data.revision
@@ -286,6 +329,10 @@ service cloud.firestore {
             && request.resource.data.guestUid == resource.data.guestUid
             && request.resource.data.guestName == resource.data.guestName
             && request.resource.data.blackUid == resource.data.blackUid
+            && (
+              resource.data.schemaVersion == 1
+              || request.resource.data.guestAvatar == resource.data.guestAvatar
+            )
             && request.resource.data.moves.size() == resource.data.moves.size() + 1
             && request.resource.data.revision == resource.data.revision + 1
             && (
@@ -316,6 +363,10 @@ service cloud.firestore {
             && request.resource.data.guestUid == resource.data.guestUid
             && request.resource.data.guestName == resource.data.guestName
             && request.resource.data.blackUid == resource.data.blackUid
+            && (
+              resource.data.schemaVersion == 1
+              || request.resource.data.guestAvatar == resource.data.guestAvatar
+            )
             && request.resource.data.moves == resource.data.moves
             && request.resource.data.fen == resource.data.fen
             && request.resource.data.status == 'finished'

@@ -1,16 +1,16 @@
-import { Chess } from "../vendor-chess.js?v=20260902-online92";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260902-online92";
-import { playFeedback } from "../feedback.js?v=20260902-online92";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260902-online92";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260902-online92";
+import { Chess } from "../vendor-chess.js?v=20260903-online93";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-online93";
+import { playFeedback } from "../feedback.js?v=20260903-online93";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260903-online93";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260903-online93";
 import {
   markMedalsSeen,
   recordPuzzleCompletion,
   recordPuzzleHint,
-} from "../medals.js?v=20260902-online92";
-import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260902-online92";
-import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260902-online92";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260902-online92";
+} from "../medals.js?v=20260903-online93";
+import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260903-online93";
+import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260903-online93";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260903-online93";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -23,9 +23,9 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260902-online92";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260902-online92";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-online92";
+} from "../ui/KumaUi.js?v=20260903-online93";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-online93";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-online93";
 
 const FILES = "abcdefgh";
 

@@ -1,10 +1,11 @@
-import { Chess } from "../vendor-chess.js?v=20260902-online92";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260902-online92";
-import { readProfileState } from "../profileState.js?v=20260902-online92";
-import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260902-online92";
-import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260902-online92";
-import { playFeedback } from "../feedback.js?v=20260902-online92";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260902-online92";
+import { Chess } from "../vendor-chess.js?v=20260903-online93";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-online93";
+import { readProfileState } from "../profileState.js?v=20260903-online93";
+import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260903-online93";
+import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260903-online93";
+import { playFeedback } from "../feedback.js?v=20260903-online93";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260903-online93";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260903-online93";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -16,12 +17,13 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260902-online92";
+} from "../ui/KumaUi.js?v=20260903-online93";
 
 const FILES = "abcdefgh";
 const COPY = Object.freeze({
   ko: Object.freeze({
     title: "온라인 대전", room: "초대 코드 {code}", you: "나", turn: "내 차례", wait: "상대 차례",
+    captured: "잡은 기물",
     syncing: "수를 전송하고 있습니다.", reconnecting: "연결을 복구하고 있습니다.",
     moveFailed: "수를 전송하지 못했습니다. 다시 시도해주세요.",
     resignTitle: "대국 나가기", resignMessage: "진행 중인 온라인 대국에서 기권할까요?",
@@ -29,6 +31,7 @@ const COPY = Object.freeze({
   }),
   en: Object.freeze({
     title: "Online Match", room: "Invite code {code}", you: "You", turn: "Your turn", wait: "Opponent's turn",
+    captured: "Captured",
     syncing: "Sending move...", reconnecting: "Restoring connection...",
     moveFailed: "Could not send the move. Try again.",
     resignTitle: "Leave Match", resignMessage: "Resign this online match?",
@@ -36,6 +39,7 @@ const COPY = Object.freeze({
   }),
   ja: Object.freeze({
     title: "オンライン対局", room: "招待コード {code}", you: "自分", turn: "あなたの番", wait: "相手の番",
+    captured: "取った駒",
     syncing: "指し手を送信中です。", reconnecting: "接続を復旧しています。",
     moveFailed: "指し手を送信できませんでした。もう一度お試しください。",
     resignTitle: "対局を終了", resignMessage: "進行中のオンライン対局で投了しますか？",
@@ -98,6 +102,13 @@ export class OnlineGame extends Phaser.Scene {
     this.dragStart = null;
     this.modalOpen = false;
     this.demoMode = false;
+    this.capturedBy = { w: [], b: [] };
+    this.capturedLayer = null;
+    this._lastCheckKey = "";
+    this._lineFxLayer = null;
+    this._resultTimer = null;
+    this._playerAvatarSignature = "";
+    this._opponentAvatarSignature = "";
   }
 
   init(data = {}) {
@@ -117,6 +128,14 @@ export class OnlineGame extends Phaser.Scene {
     this.dragging = false;
     this.dragStart = null;
     this.modalOpen = false;
+    this.capturedBy = { w: [], b: [] };
+    this.capturedLayer = null;
+    this._lastCheckKey = "";
+    this._lineFxLayer = null;
+    this._resultTimer = null;
+    this._playerAvatarSignature = "";
+    this._opponentAvatarSignature = "";
+    this.gameStartedAt = data.room?.createdAtMs || Date.now();
   }
 
   create() {
@@ -136,20 +155,28 @@ export class OnlineGame extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(120);
     addChessBoard(this, this.boardLayout, 0);
 
-    this.opponentText = this.add.text(this.scale.width / 2, 205, "", {
+    this.opponentAvatar = addProfileAvatar(this, null, 0, 0, {}, {
+      size: 64, maxFrameScale: 1.2, depth: 120,
+    });
+    this.playerAvatar = addProfileAvatar(this, null, 0, 0, profile, {
+      size: 64, maxFrameScale: 1.2, depth: 120,
+    });
+    this.opponentText = this.add.text(0, 205, "", {
       fontFamily: KUMA_FONT_SANS, fontSize: "24px", color: KUMA_COLORS.ink, fontStyle: "800",
-    }).setOrigin(0.5).setDepth(120);
-    this.playerText = this.add.text(this.scale.width / 2, 1055, "", {
+    }).setOrigin(0, 0.5).setDepth(120);
+    this.playerText = this.add.text(0, 1064, "", {
       fontFamily: KUMA_FONT_SANS, fontSize: "24px", color: KUMA_COLORS.ink, fontStyle: "800",
-    }).setOrigin(0.5).setDepth(120);
-    this.statusText = this.add.text(this.scale.width / 2, 1100, "", {
+    }).setOrigin(0, 0.5).setDepth(120);
+    this.statusText = this.add.text(this.scale.width / 2, 1120, "", {
       fontFamily: KUMA_FONT_SERIF, fontSize: "28px", color: "#009bb8", fontStyle: "800",
     }).setOrigin(0.5).setDepth(120);
-    this.connectionText = this.add.text(this.scale.width / 2, 1140, "", {
+    this.connectionText = this.add.text(this.scale.width / 2, 1160, "", {
       fontFamily: KUMA_FONT_SANS, fontSize: "17px", color: "#a14c42", fontStyle: "700",
     }).setOrigin(0.5).setDepth(120);
 
     this.renderPosition();
+    this.rebuildCapturedFromHistory();
+    this.renderCaptured();
     this.updateLabels();
     this.input.on("pointerdown", this.onPointerDown, this);
     this.input.on("pointermove", this.onPointerMove, this);
@@ -170,10 +197,46 @@ export class OnlineGame extends Phaser.Scene {
     const isWhite = this.playerColor === "w";
     const playerName = isWhite ? this.room?.hostName : this.room?.guestName;
     const opponentName = isWhite ? this.room?.guestName : this.room?.hostName;
-    this.playerText?.setText(`${playerName || this.copy.you} · ${this.playerColor.toUpperCase()}`);
-    this.opponentText?.setText(`${opponentName || "Player"} · ${(isWhite ? "b" : "w").toUpperCase()}`);
+    const playerProfile = { avatar: isWhite ? this.room?.hostAvatar : this.room?.guestAvatar };
+    const opponentProfile = { avatar: isWhite ? this.room?.guestAvatar : this.room?.hostAvatar };
+    this.updateIdentityAvatar("player", this.playerAvatar, playerProfile);
+    this.updateIdentityAvatar("opponent", this.opponentAvatar, opponentProfile);
+    this.layoutIdentity(
+      this.playerAvatar,
+      this.playerText,
+      `${playerName || this.copy.you} · ${this.playerColor.toUpperCase()}`,
+      1064,
+    );
+    this.layoutIdentity(
+      this.opponentAvatar,
+      this.opponentText,
+      `${opponentName || "Player"} · ${(isWhite ? "b" : "w").toUpperCase()}`,
+      205,
+    );
     if (this.syncing) this.statusText?.setText(this.copy.syncing);
-    else this.statusText?.setText(this.game.turn() === this.playerColor ? this.copy.turn : this.copy.wait);
+    else {
+      const turn = this.game.turn() === this.playerColor ? this.copy.turn : this.copy.wait;
+      this.statusText?.setText(`${turn}${this.game.isCheck() ? " · CHECK" : ""}`);
+    }
+  }
+
+  layoutIdentity(avatar, text, label, y) {
+    if (!avatar?.container || !text) return;
+    text.setText(label);
+    const avatarSize = 64;
+    const gap = 12;
+    const totalWidth = avatarSize + gap + text.width;
+    const startX = Math.max(42, (this.scale.width - totalWidth) / 2);
+    avatar.container.setPosition(startX + avatarSize / 2, y);
+    text.setPosition(startX + avatarSize + gap, y);
+  }
+
+  updateIdentityAvatar(slot, avatar, profile) {
+    const signature = `${profile?.avatar?.portraitId || ""}:${profile?.avatar?.frameId || ""}`;
+    const key = slot === "player" ? "_playerAvatarSignature" : "_opponentAvatarSignature";
+    if (this[key] === signature) return;
+    this[key] = signature;
+    avatar?.setProfile(profile);
   }
 
   renderPosition() {
@@ -202,6 +265,57 @@ export class OnlineGame extends Phaser.Scene {
         this.pieceViews.set(square, view);
       }
     }
+  }
+
+  rebuildCapturedFromHistory() {
+    this.capturedBy = { w: [], b: [] };
+    for (const move of this.game.history({ verbose: true })) {
+      if (!move.captured) continue;
+      this.capturedBy[move.color].push({
+        color: move.color === "w" ? "b" : "w",
+        type: move.captured,
+      });
+    }
+  }
+
+  renderCaptured() {
+    this.capturedLayer?.destroy(true);
+    this.capturedLayer = this.add.container(0, 0).setDepth(110);
+    const opponentColor = this.playerColor === "w" ? "b" : "w";
+    const rows = [
+      { y: 258, pieces: this.capturedBy[opponentColor] || [] },
+      { y: 1008, pieces: this.capturedBy[this.playerColor] || [] },
+    ];
+    const labelX = this.boardX + 8;
+    const iconsStartX = this.boardX + 124;
+    const maxX = this.boardX + this.squareSize * 8 - 10;
+
+    rows.forEach(({ y, pieces }) => {
+      const label = this.add.text(labelX, y, this.copy.captured, {
+        fontFamily: KUMA_FONT_SANS,
+        fontSize: "16px",
+        color: "#8e765f",
+        fontStyle: "700",
+      }).setOrigin(0, 0.5);
+      this.capturedLayer.add(label);
+      const gap = pieces.length > 1
+        ? Math.min(38, (maxX - iconsStartX) / (pieces.length - 1))
+        : 0;
+      pieces.forEach((piece, index) => {
+        const icon = createPieceView(
+          this,
+          iconsStartX + gap * index,
+          y,
+          pieces.length > 10 ? 32 : 36,
+          this.skins[piece.color] || "classic",
+          piece.color,
+          piece.type,
+          "front",
+        );
+        icon.setDepth(111);
+        this.capturedLayer.add(icon);
+      });
+    });
   }
 
   onPointerDown(pointer) {
@@ -303,7 +417,10 @@ export class OnlineGame extends Phaser.Scene {
         revision: expectedRevision + 1,
       };
       this.syncing = false;
+      this.rebuildCapturedFromHistory();
+      this.renderCaptured();
       this.updateLabels();
+      this.showCheckNotice();
       return;
     }
 
@@ -368,9 +485,64 @@ export class OnlineGame extends Phaser.Scene {
     this.connectionText.setText("");
     this.game = chessFromRoom(room);
     this.renderPosition();
+    this.rebuildCapturedFromHistory();
+    this.renderCaptured();
     this.updateLabels();
+    if (room.status === "active") this.showCheckNotice();
     if (room.status === "finished" && !this.finished) this.finishMatch(room);
     if (room.status === "cancelled" && !this.finished) this.returnHome();
+  }
+
+  showCheckNotice() {
+    if (!this.game.isCheck() || this.game.isCheckmate()) {
+      this._lastCheckKey = "";
+      return;
+    }
+    const key = this.game.fen();
+    if (this._lastCheckKey === key) return;
+    this._lastCheckKey = key;
+    playFeedback("check");
+    this.showLineText("CHECK!", { y: this.scale.height * 0.39, stay: 650 });
+  }
+
+  showLineText(message, options = {}) {
+    this._lineFxLayer?.destroy(true);
+    const y = options.y ?? this.scale.height * 0.42;
+    const stay = options.stay ?? 1000;
+    const duration = options.duration ?? 700;
+    const layer = this.add.container(0, -10).setDepth(5000).setAlpha(0);
+    this._lineFxLayer = layer;
+    layer.add(this.add.rectangle(this.scale.width / 2, y, this.scale.width, 74, 0x000000, 0.35));
+    layer.add(this.add.text(this.scale.width / 2, y, message, {
+      fontFamily: KUMA_FONT_SANS,
+      fontSize: "34px",
+      color: "#ffffff",
+      fontStyle: "900",
+      stroke: "#000000",
+      strokeThickness: 8,
+    }).setOrigin(0.5));
+    this.tweens.add({
+      targets: layer,
+      alpha: 1,
+      y: 0,
+      duration: 140,
+      ease: "Quad.Out",
+      onComplete: () => {
+        this.time.delayedCall(stay, () => {
+          if (!layer.scene) return;
+          this.tweens.add({
+            targets: layer,
+            alpha: 0,
+            duration,
+            ease: "Quad.In",
+            onComplete: () => {
+              if (this._lineFxLayer === layer) this._lineFxLayer = null;
+              layer.destroy(true);
+            },
+          });
+        });
+      },
+    });
   }
 
   onConnectionError() {
@@ -385,7 +557,17 @@ export class OnlineGame extends Phaser.Scene {
     if (!this.demoMode) clearOnlineSession(this.roomCode);
     this.clearSelection();
     this.statusText.setText(room.result === "draw" ? "DRAW" : room.result === `${this.playerColor}_win` ? "WIN" : "LOSE");
-    this.time.delayedCall(900, () => {
+    const checkmate = room.reason === "checkmate";
+    const draw = room.result === "draw";
+    if (checkmate) {
+      playFeedback("win");
+      this.showLineText("CHECKMATE!", { y: this.scale.height * 0.4, stay: 800, duration: 1100 });
+    } else if (draw) {
+      playFeedback("draw");
+      this.showLineText("DRAW", { y: this.scale.height * 0.4, stay: 700, duration: 900 });
+    }
+    const delay = checkmate ? 3200 : draw ? 1800 : 900;
+    this._resultTimer = this.time.delayedCall(delay, () => {
       if (!this.scene.isActive()) return;
       this.scene.start("Result", {
         result: room.result || "draw",
@@ -396,6 +578,9 @@ export class OnlineGame extends Phaser.Scene {
         playerColor: this.playerColor,
         sourceScene: "OnlineGame",
         gameSessionId: `online:${this.roomCode}:${room.revision}`,
+        history: this.game.history({ verbose: true }),
+        finalPieces: this.game.board(),
+        durationMs: Math.max(0, Date.now() - this.gameStartedAt),
         newlyUnlocked: [],
       });
     });
@@ -464,5 +649,9 @@ export class OnlineGame extends Phaser.Scene {
   cleanup() {
     this.unsubscribeRoom?.();
     this.unsubscribeRoom = null;
+    this._resultTimer?.remove?.(false);
+    this._resultTimer = null;
+    this._lineFxLayer?.destroy(true);
+    this._lineFxLayer = null;
   }
 }
