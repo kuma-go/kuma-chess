@@ -54,6 +54,8 @@ assert(play.includes("game-bootstrap.js?v="), "Game frame error bootstrap is mis
 assert(!html.includes('href="./play.html?launch='), "Game actions can still leave the web shell directly");
 assert(!html.includes('id="close-game"'), "The game shell still adds an unrelated top-right close button");
 assert(!html.includes('id="daily-dialog"') && !html.includes('id="settings-dialog"'), "Duplicate HTML daily/settings dialogs remain in the web shell");
+assert(html.includes('id="home-reward-line"') && html.includes('id="home-reward-line-label"'),
+  "The web home is missing visible daily-login reward feedback");
 
 const shellVersion = html.match(/main-page\.js\?v=([^"']+)/)?.[1];
 const frameVersion = html.match(/data-src="\.\/play\.html\?v=([^"']+)/)?.[1];
@@ -97,6 +99,9 @@ assert(main.includes('openGameLaunch("daily"') && main.includes('openGameLaunch(
 assert(main.includes("POPUP_GAME_LAUNCHES") && fallback.includes("popupGameLaunches"), "Popup launches do not preserve the web home backdrop");
 assert(main.includes('new Set(["daily", "settings", "info", "profile", "ranking", "medals"])') && fallback.includes('new Set(["daily", "settings", "info", "profile", "ranking", "medals"])'), "Profile, ranking, and medal catalogs are not treated as web-home popups");
 assert(main.includes("WEB_COPY") && main.includes("renderHomeLanguage(state.language)"), "The web home does not follow the saved language");
+assert(main.includes("const dailyLoginReward = claimDailyReward()")
+  && main.includes("showHomeRewardLine(currentWebCopy().dailyLoginReward(dailyLoginReward.amount))"),
+"The web home must surface a successfully claimed daily-login reward");
 assert(main.includes("fitModeButtonLabel") && main.includes('width: "max-content"') && main.includes("probe.getBoundingClientRect().width") && main.includes("measureAt(size) > availableWidth"), "Long mode button labels are not fitted to their available width");
 assert(main.includes("applyMainPageContentLanguage(activeWebLanguage)") && mainContentI18n.includes("#guide .guide-intro") && mainContentI18n.includes("#rewards .reward-6"), "Lower guide content does not follow the saved language");
 assert(css.includes(".game-overlay.is-popup") && css.includes("backdrop-filter: blur(7px)") && css.includes(".game-overlay {\n  position: fixed") && css.includes("background: transparent;"), "Popup blur or persistent side pattern styling is missing");

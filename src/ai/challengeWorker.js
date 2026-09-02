@@ -1,5 +1,5 @@
-import { Chess } from "../vendor-chess.js?v=20260902-profile81";
-import { chooseChallengeMove } from "./challengeEngine.js?v=20260902-profile81";
+import { Chess } from "../vendor-chess.js?v=20260902-reward85";
+import { chooseChallengeMove } from "./challengeEngine.js?v=20260902-reward85";
 
 self.onmessage = (event) => {
   const { requestId, fen, aiColor, limits } = event.data || {};

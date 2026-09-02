@@ -450,6 +450,12 @@ img { max-width: 100%; }
   -webkit-backdrop-filter: blur(7px);
   backdrop-filter: blur(7px);
 }
+.game-overlay.is-content {
+  background-color: #eddec1;
+  background-image: url("./assets/kuma/ui/pattern.png");
+  background-position: center top;
+  background-size: 560px 560px;
+}
 body.game-open { overflow: hidden; }
 .game-popup-open .landing-document { z-index: auto; }
 .game-wallet-open .coin-pill {
@@ -817,6 +823,55 @@ body::after { display: none; }
 @keyframes daily-reward-pulse { from { opacity: .32; transform: scale(.92); } to { opacity: .9; transform: scale(1.18); } }
 @keyframes daily-reward-float { from { transform: translate(-50%, .19cqw) scale(1); } to { transform: translate(-50%, -.19cqw) scale(1.06); } }
 @keyframes daily-reward-sparkle { from { opacity: .35; transform: rotate(22deg) scale(.72); } to { opacity: 1; transform: rotate(68deg) scale(1.22); } }
+
+.home-reward-line {
+  position: fixed;
+  top: max(42%, calc(env(safe-area-inset-top, 0px) + 160px));
+  left: 50%;
+  z-index: 40;
+  display: grid;
+  width: min(100vw, var(--content-width));
+  min-height: 84px;
+  overflow: hidden;
+  color: #fff4cf;
+  background: rgba(47, 37, 26, .96);
+  box-shadow: 0 8px 24px rgba(45, 27, 10, .26);
+  transform: translate(-50%, -50%);
+  animation: home-reward-line-show 2600ms ease both;
+  pointer-events: none;
+}
+.home-reward-line-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px 28px;
+}
+.home-reward-line-content img { width: 46px; height: 46px; flex: 0 0 auto; }
+.home-reward-line-content strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: clamp(22px, 4cqw, 29px);
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 2px 0 #4b2e12;
+}
+.home-reward-line-edge {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: #e0b353;
+}
+.home-reward-line-edge-top { top: 0; }
+.home-reward-line-edge-bottom { bottom: 0; }
+@keyframes home-reward-line-show {
+  0% { opacity: 0; transform: translate(-50%, -50%) scaleX(.05); }
+  10%, 80% { opacity: 1; transform: translate(-50%, -50%) scaleX(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scaleX(.2); }
+}
 .new-badge {
   right: -.09cqw;
   bottom: .05cqw;
@@ -1056,10 +1111,18 @@ body::after { display: none; }
 .scroll-top span { margin-top: -1.1cqw; font-size: 1.3cqw; }
 
 @media (max-width: 720px) {
-  html { background: #fcf6ea; }
+  html {
+    background-color: #eddec1;
+    background-image: url("./assets/kuma/web/Pattern.png");
+    background-position: center top;
+    background-size: 560px 560px;
+  }
   body::before,
   body::after { display: none; }
-  .landing-document { width: 100vw; }
+  .landing-document {
+    width: 100vw;
+    margin-top: max(12px, env(safe-area-inset-top, 0px));
+  }
 }
 
 @media (min-width: 721px) {
@@ -1567,5 +1630,6 @@ html[lang="ja"] .reference-section li { font-size: 2.02cqw; line-height: 1.24; }
   .daily-reward-glow,
   .daily-reward-ring,
   .daily-reward-badge,
-  .daily-sparkle { animation: none; }
+  .daily-sparkle,
+  .home-reward-line { animation: none; }
 }

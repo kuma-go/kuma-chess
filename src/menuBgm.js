@@ -1,5 +1,5 @@
-import { readPlayerState } from "./playerState.js?v=20260902-profile81";
-import { recordAmbientMedalEvent } from "./medals.js?v=20260902-profile81";
+import { readPlayerState } from "./playerState.js?v=20260902-reward85";
+import { recordAmbientMedalEvent } from "./medals.js?v=20260902-reward85";
 
 const TRACKS = Object.freeze([
   Object.freeze({
@@ -26,6 +26,7 @@ let audio = null;
 let currentTrack = null;
 let menuPlaybackWanted = true;
 let userActivated = false;
+let autoplayAttemptPending = false;
 let installed = false;
 let sceneHooksInstalled = false;
 let liveVolume = 0.35;
@@ -95,26 +96,37 @@ function ensureAudio() {
   return audio;
 }
 
-function syncPlayback() {
-  if (!userActivated && !audio) return;
+function syncPlayback(options = {}) {
+  const allowAutoplay = options.allowAutoplay === true;
+  if (allowAutoplay) autoplayAttemptPending = true;
+  if (!userActivated && !allowAutoplay && !audio) return;
   const player = ensureAudio();
   player.volume = liveVolume;
-  const shouldPlay = userActivated
+  const shouldPlay = (userActivated || autoplayAttemptPending)
     && menuPlaybackWanted
     && !document.hidden
     && liveVolume > 0;
 
   if (!shouldPlay) {
+    if (allowAutoplay) autoplayAttemptPending = false;
     player.pause();
     return;
   }
   if (!player.paused) return;
   const request = player.play();
-  if (request?.catch) request.catch(() => {});
+  if (request?.then) {
+    request.then(() => {
+      autoplayAttemptPending = false;
+      userActivated = true;
+    }).catch(() => {
+      autoplayAttemptPending = false;
+    });
+  }
 }
 
 function activateFromGesture() {
   resetIdleListening();
+  autoplayAttemptPending = false;
   userActivated = true;
   syncPlayback();
 }
@@ -191,6 +203,7 @@ export function installMenuBgm() {
   window.addEventListener("kuma-state-changed", (event) => {
     setMenuBgmVolume(event.detail?.bgmVolume ?? readPlayerState().bgmVolume);
   });
+  syncPlayback({ allowAutoplay: true });
 }
 
 export function installMenuBgmSceneHooks(game) {

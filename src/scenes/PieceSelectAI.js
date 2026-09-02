@@ -1,5 +1,5 @@
-import { createPieceView } from "../pieceStyles.js?v=20260902-profile81";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260902-profile81";
+import { createPieceView } from "../pieceStyles.js?v=20260902-reward85";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260902-reward85";
 import {
   AI_DIFFICULTIES,
   DEFAULT_AI_DIFFICULTY,
@@ -11,8 +11,8 @@ import {
   SKIN_SHOP,
   unlockGoldBearPiece,
   unlockSkin,
-} from "../playerState.js?v=20260902-profile81";
-import { skinName, t } from "../i18n.js?v=20260902-profile81";
+} from "../playerState.js?v=20260902-reward85";
+import { skinName, t } from "../i18n.js?v=20260902-reward85";
 import {
   addBackButton,
   addCoinPill,
@@ -30,8 +30,8 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260902-profile81";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-profile81";
+} from "../ui/KumaUi.js?v=20260902-reward85";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260902-reward85";
 
 const SHOP = SKIN_SHOP;
 const COMPACT_SHOP = SHOP.length > 9;
@@ -531,12 +531,12 @@ export class PieceSelectAI extends Phaser.Scene {
       .setDisplaySize(panelW, panelH)
       .setDepth(10001);
     const panelTop = py - panelH / 2;
-    const titleY = panelTop + (allowsChallenge ? 91 : 62);
-    const dividerY = panelTop + (allowsChallenge ? 133 : 98);
-    const guideY = panelTop + (allowsChallenge ? 172 : 131);
-    const cardY = panelTop + (allowsChallenge ? 315 : 254);
+    const titleY = panelTop + (allowsChallenge ? 91 : 95);
+    const dividerY = panelTop + (allowsChallenge ? 133 : 137);
+    const guideY = panelTop + (allowsChallenge ? 172 : 166);
+    const cardY = panelTop + (allowsChallenge ? 315 : 300);
     const challengeY = panelTop + 506;
-    const actionY = panelTop + (allowsChallenge ? 666 : 452);
+    const actionY = panelTop + (allowsChallenge ? 666 : 470);
     const title = this.add.text(px, titleY, copy.title, {
       fontFamily: KUMA_FONT_SANS,
       fontSize: language === "en" ? "30px" : "32px",
@@ -562,7 +562,7 @@ export class PieceSelectAI extends Phaser.Scene {
         const y = cardY;
         const selected = id === selectedDifficulty;
         const cardW = 164;
-        const cardH = allowsChallenge ? 218 : 224;
+        const cardH = allowsChallenge ? 218 : 208;
         const box = this.add.graphics();
         box.fillStyle(selected ? 0xffefbd : 0xfff8e9, selected ? 0.76 : 0.58);
         box.fillRoundedRect(x - cardW / 2, y - cardH / 2, cardW, cardH, 10);
@@ -601,13 +601,16 @@ export class PieceSelectAI extends Phaser.Scene {
             color: "#846f59",
             fontStyle: "700",
           }).setOrigin(0.5);
-          const coin = this.add.image(x - 17, y + 70, "kuma_ui_coin_small").setDisplaySize(20, 20);
-          const amount = this.add.text(x - 2, y + 70, `+${AI_DIFFICULTIES[id].reward}`, {
+          const amount = this.add.text(0, y + 70, `+${AI_DIFFICULTIES[id].reward}`, {
             fontFamily: KUMA_FONT_SANS,
             fontSize: "18px",
             color: KUMA_COLORS.ink,
             fontStyle: "800",
           }).setOrigin(0, 0.5);
+          const rewardGroupWidth = 20 + 6 + amount.width;
+          const rewardGroupLeft = x - rewardGroupWidth / 2;
+          const coin = this.add.image(rewardGroupLeft + 10, y + 70, "kuma_ui_coin_small").setDisplaySize(20, 20);
+          amount.setX(rewardGroupLeft + 26);
           cards.add([reward, coin, amount]);
         }
       });

@@ -1,16 +1,16 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260902-profile81";
-import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260902-profile81";
-import { playFeedback } from "../feedback.js?v=20260902-profile81";
-import { t } from "../i18n.js?v=20260902-profile81";
-import { recordMiniGameCompletion } from "../medals.js?v=20260902-profile81";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260902-profile81";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260902-reward85";
+import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260902-reward85";
+import { playFeedback } from "../feedback.js?v=20260902-reward85";
+import { t } from "../i18n.js?v=20260902-reward85";
+import { recordMiniGameCompletion } from "../medals.js?v=20260902-reward85";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260902-reward85";
 import {
   createSiegeAllyAura,
   createSiegeKingAura,
   destroySiegeKingAura,
   playSiegeAttackEffect,
   playSiegeCastleHitEffect,
-} from "../siegeEffects.js?v=20260902-profile81";
+} from "../siegeEffects.js?v=20260902-reward85";
 import {
   chooseSiegeAIAction,
   createSiegeState,
@@ -18,7 +18,7 @@ import {
   siegeEffectiveResourceRate,
   summonSiegeUnit,
   tickSiege,
-} from "../siegeLogic.js?v=20260902-profile81";
+} from "../siegeLogic.js?v=20260902-reward85";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -28,7 +28,7 @@ import {
   KUMA_FONT_SANS,
   createModalBackdrop,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260902-profile81";
+} from "../ui/KumaUi.js?v=20260902-reward85";
 
 const BOARD_OUTER_TOP = 317;
 const BOARD_OUTER_WIDTH = 712;

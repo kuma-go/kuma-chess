@@ -1,16 +1,16 @@
 import {
   getProfileCosmeticCollection,
   purchaseProfileLoadout,
-} from "../playerState.js?v=20260902-profile81";
+} from "../playerState.js?v=20260902-reward85";
 import {
   ensureProfileAssets,
   profileTextureKey,
-} from "../profileCatalog.js?v=20260902-profile81";
+} from "../profileCatalog.js?v=20260902-reward85";
 import {
   normalizeDisplayName,
   readProfileState,
   writeProfileState,
-} from "../profileState.js?v=20260902-profile81";
+} from "../profileState.js?v=20260902-reward85";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -19,13 +19,13 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260902-profile81";
-import { showConfirm } from "./ConfirmPopup.js?v=20260902-profile81";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260902-profile81";
+} from "./KumaUi.js?v=20260902-reward85";
+import { showConfirm } from "./ConfirmPopup.js?v=20260902-reward85";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260902-reward85";
 
 const GRID_COLUMNS = 4;
-const GRID_ROW_HEIGHT = 140;
-const LIST_HEIGHT = 545;
+const GRID_ROW_HEIGHT = 148;
+const LIST_HEIGHT = 510;
 
 const COPY = {
   ko: {
@@ -306,10 +306,10 @@ export function showProfileEditorPopup(scene, options = {}) {
     size: profile.language === "en" ? 12 : 13, color: "#a48769", weight: "600",
   });
 
-  const tabY = panelTop + 365;
+  const tabY = panelTop + 378;
   const tabContainer = scene.add.container(0, 0).setDepth(11004);
   layer.add(tabContainer);
-  const listTop = panelTop + 405;
+  const listTop = panelTop + 434;
   const listWidth = Math.min(568, panelW - 76);
   const listHit = scene.add.rectangle(px, listTop + LIST_HEIGHT / 2, listWidth, LIST_HEIGHT, 0xffffff, 0.001)
     .setDepth(11003).setInteractive({ useHandCursor: true });
@@ -448,10 +448,10 @@ export function showProfileEditorPopup(scene, options = {}) {
       const col = absoluteIndex % GRID_COLUMNS;
       const row = Math.floor(absoluteIndex / GRID_COLUMNS);
       const x = px - 195 + col * 130;
-      const y = row * GRID_ROW_HEIGHT + 56;
+      const y = row * GRID_ROW_HEIGHT + 68;
       const isSelected = item.id === selectedId();
       grid.add(scene.add.circle(x, y, 55, 0xfffaf0, activeType === "portrait" ? 0.96 : 0.3)
-        .setStrokeStyle(isSelected ? 5 : 2, isSelected ? 0x08a0bd : 0xd2b58d, 1));
+        .setStrokeStyle(2, 0xd2b58d, 1));
       if (activeType === "frame") {
         if (scene.textures.exists(profileTextureKey(item))) {
           const key = profileTextureKey(item);
@@ -468,6 +468,10 @@ export function showProfileEditorPopup(scene, options = {}) {
         grid.add(scene.add.text(x + 1, y + 61, String(item.cost), {
           fontFamily: KUMA_FONT_SANS, fontSize: "15px", color: KUMA_COLORS.ink, fontStyle: "800",
         }).setOrigin(0, 0.5));
+      }
+      if (isSelected) {
+        grid.add(scene.add.circle(x, y, 55, 0xffffff, 0)
+          .setStrokeStyle(5, 0x08a0bd, 1));
       }
       const tileHit = scene.add.circle(x, y, 62, 0xffffff, 0.001);
       let downY = 0;
@@ -492,14 +496,14 @@ export function showProfileEditorPopup(scene, options = {}) {
     tabContainer.removeAll(true);
     [{ type: "portrait", label: copy.portrait }, { type: "frame", label: copy.frame }]
       .forEach((tab, index) => {
-        const x = px + (index ? 156 : -156);
+        const x = px + (index ? 153 : -153);
         const selected = activeType === tab.type;
         const bg = scene.add.nineslice(
           x,
           tabY,
           selected ? "kuma_ui_btn_tab_on" : "kuma_ui_btn_tab_off",
           null,
-          300,
+          286,
           64,
           24,
           24,

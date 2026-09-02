@@ -1,13 +1,13 @@
-import { getPlayStats } from "../playerState.js?v=20260902-profile81";
-import { readProfileState } from "../profileState.js?v=20260902-profile81";
+import { getPlayStats } from "../playerState.js?v=20260902-reward85";
+import { readProfileState } from "../profileState.js?v=20260902-reward85";
 import {
   addLargeTextButton,
   addThreePatchPanel,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260902-profile81";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260902-profile81";
+} from "./KumaUi.js?v=20260902-reward85";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260902-reward85";
 
 const COPY = {
   ko: {

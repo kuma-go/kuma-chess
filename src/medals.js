@@ -1,4 +1,4 @@
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260902-profile81";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260902-reward85";
 
 const STORAGE_KEY = "kumaChessMedalsV1";
 const BACKUP_STORAGE_KEY = "kumaChessMedalsBackupV1";
@@ -94,7 +94,7 @@ const CHALLENGE_MEDALS = [
   medal("perfect-defense", "challenge", "완벽한방어", 3,
     { ko: "완벽한 방어", en: "Perfect Defense", ja: "完全防御" },
     { ko: "체크를 받거나 왕을 움직이지 않고 AI 대전에서 3승을 달성하세요.", en: "Win 3 AI games without being checked or moving your king.", ja: "チェックされず、キングも動かさずにAI戦で3勝しましょう。" }),
-  medal("coin-master", "challenge", "코인", 10000,
+  medal("coin-master", "honor", "코인", 10000,
     { ko: "코인", en: "Coin Master", ja: "コイン" },
     { ko: "코인을 10,000개 보유하세요.", en: "Hold 10,000 coins.", ja: "コインを10,000枚集めましょう。" }),
   medal("ai-win-streak", "challenge", "연승의깃발", 10,
@@ -112,7 +112,7 @@ const CHALLENGE_MEDALS = [
   medal("capture-streak", "challenge", "몰아치는공격", 1,
     { ko: "몰아치는 공격", en: "Relentless Attack", ja: "畳みかける攻撃" },
     { ko: "한 AI 대전에서 내 차례마다 5회 연속으로 기물을 잡으세요.", en: "Capture on 5 consecutive turns in one AI game.", ja: "1回のAI戦で5手連続で駒を取りましょう。" }),
-  medal("collector", "challenge", "보물수집가", 1,
+  medal("collector", "honor", "보물수집가", 1,
     { ko: "보물 수집가", en: "Treasure Collector", ja: "宝物コレクター" },
     { ko: "획득 가능한 기본 메달과 18가지 기물 색상을 모두 모으세요.", en: "Collect every available base medal and all 18 piece colors.", ja: "獲得可能な基本メダルと18種類の駒カラーをすべて集めましょう。" },
     { collector: true }),
@@ -163,7 +163,7 @@ const CHALLENGE_MEDALS = [
   medal("bare-kings-draw-5", "challenge", "킹대킹", 5,
     { ko: "킹 대 킹", en: "King vs. King", ja: "キング対キング" },
     { ko: "킹만 남은 상태로 5회 무승부를 기록하세요.", en: "Draw 5 games with only the two kings remaining.", ja: "キングだけが残った状態で5回引き分けましょう。" }),
-  medal("diligent-knight", "challenge", "성실한기사", 7,
+  medal("diligent-knight", "honor", "성실한기사", 7,
     { ko: "성실한 기사", en: "The Diligent Knight", ja: "誠実な騎士" },
     {
       ko: "데일리 미션을 7일 연속 모두 완료하세요.",
@@ -171,7 +171,7 @@ const CHALLENGE_MEDALS = [
       ja: "デイリーミッションを7日連続ですべて達成しましょう。",
     },
     { assetFile: "메달_성실한기사.png", dailyMetric: "streak" }),
-  medal("kingdom-routine", "challenge", "왕국의일과", 30,
+  medal("kingdom-routine", "honor", "왕국의일과", 30,
     { ko: "왕국의 일과", en: "The Kingdom's Routine", ja: "王国の日課" },
     {
       ko: "데일리 미션을 모두 완료한 날을 30일 달성하세요.",
@@ -179,7 +179,7 @@ const CHALLENGE_MEDALS = [
       ja: "デイリーミッションをすべて達成した日を30日記録しましょう。",
     },
     { assetFile: "메달_왕국의일과.png", dailyMetric: "totalDays" }),
-  medal("hundred-day-training", "challenge", "백일의수련", 100,
+  medal("hundred-day-training", "honor", "백일의수련", 100,
     { ko: "백일의 수련", en: "One Hundred Days of Training", ja: "百日の修練" },
     {
       ko: "데일리 미션을 모두 완료한 날을 100일 달성하세요.",
@@ -198,7 +198,7 @@ const MINI_GAME_MEDALS = [
     { ko: "미니게임 경험자", en: "Mini-Game Explorer", ja: "ミニゲーム体験者" },
     { ko: "모든 미니게임을 한 번 이상 완료하세요.", en: "Complete every mini-game at least once.", ja: "すべてのミニゲームを1回以上完了しましょう。" },
     { assetFile: "메달_미니게임경험자.png", minigameMeta: true }),
-  medal("minigame-enthusiast", "challenge", "미니게임마니아", 1,
+  medal("minigame-enthusiast", "honor", "미니게임마니아", 1,
     { ko: "미니게임 마니아", en: "Mini-Game Enthusiast", ja: "ミニゲームマニア" },
     { ko: "미니게임 경험자 메달과 모든 미니게임 도전 메달을 획득하세요.", en: "Earn the explorer medal and every mini-game challenge medal.", ja: "体験者メダルとすべてのミニゲーム挑戦メダルを獲得しましょう。" },
     { assetFile: "메달_미니게임마니아.png", minigameMeta: true }),

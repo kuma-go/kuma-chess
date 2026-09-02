@@ -1,10 +1,10 @@
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260902-profile81";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260902-reward85";
 import {
   DEFAULT_PROFILE_FRAME_ID,
   DEFAULT_PROFILE_PORTRAIT_ID,
   getProfileFrame,
   getProfilePortrait,
-} from "./profileCatalog.js?v=20260902-profile81";
+} from "./profileCatalog.js?v=20260902-reward85";
 
 export const PROFILE_STATE_KEY = "kumaChessProfileState";
 export const PROFILE_STATE_BACKUP_KEY = "kumaChessProfileStateBackupV1";

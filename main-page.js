@@ -3,20 +3,20 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260902-profile81";
+} from "./src/playerState.js?v=20260902-reward85";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260902-profile81";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260902-profile81";
-import { readProfileState } from "./src/profileState.js?v=20260902-profile81";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260902-profile81";
+} from "./src/dailyMissions.js?v=20260902-reward85";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260902-reward85";
+import { readProfileState } from "./src/profileState.js?v=20260902-reward85";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260902-reward85";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260902-profile81";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260902-profile81";
+} from "./src/menuBgm.js?v=20260902-reward85";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260902-reward85";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -29,6 +29,7 @@ const modeDialog = document.getElementById("mode-dialog");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "ranking", "medals"]);
+const ASSET_RETRY_VERSION = "20260902-reward85";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 
@@ -48,6 +49,7 @@ const WEB_COPY = Object.freeze({
     installAria: "쿠마체스 설치",
     install: "설치",
     installReward: (amount) => `설치 +${amount}코인`,
+    dailyLoginReward: (amount) => `접속 보상 +${amount} 코인`,
     installIos: "공유 버튼을 누른 뒤 ‘홈 화면에 추가’를 선택하세요.",
     installBrowser: "브라우저 메뉴에서 ‘앱 설치’ 또는 ‘홈 화면에 추가’를 선택하세요.",
     playMenuAria: "플레이 모드 선택",
@@ -104,6 +106,7 @@ const WEB_COPY = Object.freeze({
     installAria: "Install KUMA CHESS",
     install: "Install",
     installReward: (amount) => `Install +${amount} coins`,
+    dailyLoginReward: (amount) => `Daily login reward +${amount} coins`,
     installIos: "Tap Share, then choose ‘Add to Home Screen.’",
     installBrowser: "Choose ‘Install app’ or ‘Add to Home Screen’ from the browser menu.",
     playMenuAria: "Choose a Play Mode",
@@ -160,6 +163,7 @@ const WEB_COPY = Object.freeze({
     installAria: "KUMA CHESSをインストール",
     install: "インストール",
     installReward: (amount) => `インストール +${amount}コイン`,
+    dailyLoginReward: (amount) => `ログイン報酬 +${amount}コイン`,
     installIos: "共有ボタンを押し、「ホーム画面に追加」を選んでください。",
     installBrowser: "ブラウザメニューから「アプリをインストール」または「ホーム画面に追加」を選んでください。",
     playMenuAria: "プレイモード選択",
@@ -366,6 +370,58 @@ function fitModeButtonLabel(element) {
 
 function fitModeDialogLabels() {
   modeDialog?.querySelectorAll(".mode-choice-grid strong, .mode-home").forEach(fitModeButtonLabel);
+}
+
+function installMinigameImageRecovery() {
+  document.querySelectorAll(".minigame-card img, #mode-dialog .mode-card-art").forEach((image) => {
+    const retry = () => {
+      if (image.dataset.kumaImageRetried === "true") return;
+      image.dataset.kumaImageRetried = "true";
+      const source = new URL(image.currentSrc || image.src, window.location.href);
+      source.searchParams.set("assetVersion", ASSET_RETRY_VERSION);
+      image.src = source.href;
+    };
+    const verify = () => {
+      if (!image.naturalWidth || !image.naturalHeight) {
+        retry();
+        return;
+      }
+      image.decode?.().catch(retry);
+    };
+    image.addEventListener("error", retry);
+    if (image.complete) verify();
+    else image.addEventListener("load", verify, { once: true });
+  });
+}
+
+function ensureHomeMotionStarted() {
+  if (reducedMotion) return;
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".hero-logo-layer, .hero-logo-layer img").forEach((element) => {
+      element.getAnimations?.().forEach((animation) => animation.play());
+    });
+  });
+}
+
+function showHomeRewardLine(message) {
+  const line = document.getElementById("home-reward-line");
+  const label = document.getElementById("home-reward-line-label");
+  if (!line || !label || !message) return;
+  label.textContent = message;
+  line.hidden = false;
+  line.getAnimations?.().forEach((animation) => animation.cancel());
+  if (reducedMotion) {
+    window.setTimeout(() => { line.hidden = true; }, 2200);
+    return;
+  }
+  const animation = line.animate([
+    { opacity: 0, transform: "translate(-50%, -50%) scaleX(.05)" },
+    { opacity: 1, transform: "translate(-50%, -50%) scaleX(1)", offset: 0.1 },
+    { opacity: 1, transform: "translate(-50%, -50%) scaleX(1)", offset: 0.8 },
+    { opacity: 0, transform: "translate(-50%, -50%) scaleX(.2)" },
+  ], { duration: 2600, easing: "ease", fill: "both" });
+  animation.finished.finally(() => { line.hidden = true; });
+  playFeedback("reward");
 }
 
 function renderHomeState() {
@@ -740,12 +796,18 @@ function bindEvents() {
 installFeedbackUnlock();
 installMenuBgm();
 setMenuBgmVolume(readProfileState(readPlayerState()).bgmVolume);
-claimDailyReward();
+const dailyLoginReward = claimDailyReward();
 consumeInstallReward();
+installMinigameImageRecovery();
 bindEvents();
 syncScrollControls();
 renderHomeState();
+if (dailyLoginReward.claimed) {
+  showHomeRewardLine(currentWebCopy().dailyLoginReward(dailyLoginReward.amount));
+}
+ensureHomeMotionStarted();
 document.documentElement.dataset.kumaMainReady = "true";
+window.addEventListener("pageshow", ensureHomeMotionStarted, { passive: true });
 window.addEventListener("load", installAds, { once: true });
 const scheduleRuntimePreload = () => preloadGameRuntime();
 if (typeof window.requestIdleCallback === "function") {

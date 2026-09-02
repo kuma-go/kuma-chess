@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
     <link rel="preload" href="./assets/kuma/web/main_img_B.png" as="image" fetchpriority="high" />
     <link rel="preload" href="./assets/kuma/web/main_logo_B.png" as="image" fetchpriority="high" />
-    <link rel="stylesheet" href="./main-page.css?v=20260902-profile81" />
+    <link rel="stylesheet" href="./main-page.css?v=20260902-reward85" />
   </head>
   <body data-kuma-shell="web">
     <aside class="ad-rail ad-rail-left" data-ad-position="left" aria-label="왼쪽 광고" hidden></aside>
@@ -115,23 +115,23 @@
         <h2 class="ornate-heading">쿠마체스 미니게임</h2>
         <div class="minigame-grid">
           <button class="minigame-card" type="button" data-open-minigame data-launch="tug" data-title="왕국 힘겨루기">
-            <img src="./assets/kuma/web/image%20440.png" alt="왕국 힘겨루기" />
+            <img src="./assets/kuma/web/image%20440.png" alt="왕국 힘겨루기" width="405" height="640" decoding="async" />
             <span><strong>왕국 힘겨루기</strong><small>밀어내기 알까기 한판</small></span>
           </button>
           <button class="minigame-card" type="button" data-open-minigame data-launch="crown" data-title="왕관 쟁탈전">
-            <img src="./assets/kuma/web/image%20438.png" alt="왕관 쟁탈전" />
+            <img src="./assets/kuma/web/image%20438.png" alt="왕관 쟁탈전" width="415" height="640" decoding="async" />
             <span><strong>왕관 쟁탈전</strong><small>왕관을 차지하여 귀환하라</small></span>
           </button>
           <button class="minigame-card" type="button" data-open-minigame data-launch="road" data-title="왕국의 길">
-            <img src="./assets/kuma/web/image%20441.png" alt="왕국의 길" />
+            <img src="./assets/kuma/web/image%20441.png" alt="왕국의 길" width="405" height="640" decoding="async" />
             <span><strong>왕국의 길</strong><small>타일로 길 이어가기</small></span>
           </button>
           <button class="minigame-card" type="button" data-open-game data-launch="road-puzzle">
-            <img src="./assets/kuma/web/image%20437.png" alt="왕국의 길 퍼즐" />
+            <img src="./assets/kuma/web/image%20437.png" alt="왕국의 길 퍼즐" width="419" height="640" decoding="async" />
             <span><strong>왕국의 길 퍼즐</strong><small>길 찾기, 미로찾기</small></span>
           </button>
           <button class="minigame-card" type="button" data-open-minigame data-launch="siege" data-title="왕국 공성전">
-            <img src="./assets/kuma/web/image%20439.png" alt="왕국 공성전" />
+            <img src="./assets/kuma/web/image%20439.png" alt="왕국 공성전" width="428" height="640" decoding="async" />
             <span><strong>왕국 공성전</strong><small>공성을 향한 치열한 전투</small></span>
           </button>
         </div>
@@ -262,6 +262,15 @@
       <span>맨 위로</span>
     </button>
 
+    <div id="home-reward-line" class="home-reward-line" role="status" aria-live="polite" hidden>
+      <span class="home-reward-line-edge home-reward-line-edge-top"></span>
+      <span class="home-reward-line-content">
+        <img src="./assets/kuma/ui/coin_nomal.png" alt="" />
+        <strong id="home-reward-line-label"></strong>
+      </span>
+      <span class="home-reward-line-edge home-reward-line-edge-bottom"></span>
+    </div>
+
     <div id="game-overlay" class="game-overlay" hidden>
       <div id="game-loading" class="game-loading" role="status">
         <span></span>
@@ -269,7 +278,7 @@
         <p id="game-loading-message">게임을 준비하고 있습니다.</p>
         <button id="retry-game" type="button" hidden>다시 불러오기</button>
       </div>
-      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260902-profile81"></iframe>
+      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260902-reward85"></iframe>
     </div>
 
     <dialog id="mode-dialog" class="web-dialog mode-dialog">
@@ -295,9 +304,9 @@
     </dialog>
 
     <script src="./ads-config.js"></script>
-    <script src="./app-init.js?v=20260902-profile81"></script>
-    <script type="module" src="./firebase-client.js?v=20260902-profile81"></script>
-    <script type="module" src="./main-page.js?v=20260902-profile81"></script>
-    <script defer src="./main-page-fallback.js?v=20260902-profile81"></script>
+    <script src="./app-init.js?v=20260902-reward85"></script>
+    <script type="module" src="./firebase-client.js?v=20260902-reward85"></script>
+    <script type="module" src="./main-page.js?v=20260902-reward85"></script>
+    <script defer src="./main-page-fallback.js?v=20260902-reward85"></script>
   </body>
 </html>
