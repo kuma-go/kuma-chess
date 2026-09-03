@@ -1,9 +1,9 @@
-import { ensurePieceSetsLoaded, pieceTextureKey } from "../pieceAssets.js?v=20260903-online95";
-import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260903-online95";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260903-online95";
-import { t } from "../i18n.js?v=20260903-online95";
-import { recordMiniGameCompletion } from "../medals.js?v=20260903-online95";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-online95";
+import { ensurePieceSetsLoaded, pieceTextureKey } from "../pieceAssets.js?v=20260903-gameplay99";
+import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260903-gameplay99";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260903-gameplay99";
+import { t } from "../i18n.js?v=20260903-gameplay99";
+import { recordMiniGameCompletion } from "../medals.js?v=20260903-gameplay99";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-gameplay99";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -13,7 +13,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260903-online95";
+} from "../ui/KumaUi.js?v=20260903-gameplay99";
 
 const AI_POWER = Object.freeze({ easy: 0.58, normal: 0.88, hard: 1 });
 const AI_ERROR = Object.freeze({ easy: 90, normal: 28, hard: 7 });
@@ -43,6 +43,7 @@ const COLLIDER_BASE_SHIFT = 0.44;
 const COLLIDER_VIEW_SHIFT = Object.freeze({ front: 0.153, back: 0.44 });
 const MATCH_DURATION_MS = 2 * 60 * 1000;
 const TIMER_WARNING_SECONDS = 30;
+const TURN_DURATION_MS = 8 * 1000;
 const ARENA_OUTER_SIZE = 712;
 
 function clampVector(x, y, maxLength) {
@@ -84,6 +85,8 @@ export class KingdomTug extends Phaser.Scene {
     this.matchTimeRemainingMs = MATCH_DURATION_MS;
     this.displayedTimerSecond = null;
     this.timerUrgent = false;
+    this.turnTimeRemainingMs = TURN_DURATION_MS;
+    this.displayedTurnSecond = null;
   }
 
   create() {
@@ -230,10 +233,13 @@ export class KingdomTug extends Phaser.Scene {
     this.gameOver = false;
     this.matchTimeRemainingMs = MATCH_DURATION_MS;
     this.displayedTimerSecond = null;
+    this.turnTimeRemainingMs = TURN_DURATION_MS;
+    this.displayedTurnSecond = null;
     this.setTimerUrgent(false);
     this.timerBadge?.setVisible(false);
     this.opponentTimerBadge?.setVisible(false);
     this.updateTimerDisplay(MATCH_DURATION_MS / 1000);
+    this.resetTurnClock();
     this.aiTimer?.remove(false);
     this.aiTimer = null;
     this.capturedBy = { w: [], b: [] };
@@ -612,6 +618,7 @@ export class KingdomTug extends Phaser.Scene {
     this.timerBadge?.setVisible(true);
     this.opponentTimerBadge?.setVisible(!this.isAIMode());
     this.updateTimerDisplay(MATCH_DURATION_MS / 1000);
+    this.resetTurnClock();
     this.renderCaptured();
     this.updateHud();
     this.scheduleAiTurn();
@@ -870,6 +877,7 @@ export class KingdomTug extends Phaser.Scene {
     this.updateMatchClock(delta);
     if (this.gameOver) return;
     if (!this.selected) this.checkSettled();
+    this.updateTurnClock(delta);
   }
 
   integrate(dt) {
@@ -1106,6 +1114,7 @@ export class KingdomTug extends Phaser.Scene {
     this.settleFrames = 0;
     this.shotInProgress = false;
     this.turn = this.turn === "w" ? "b" : "w";
+    this.resetTurnClock();
     this.updateHud();
     this.applyTurnPerspective(() => this.scheduleAiTurn());
   }
@@ -1121,6 +1130,42 @@ export class KingdomTug extends Phaser.Scene {
     const seconds = Math.ceil(this.matchTimeRemainingMs / 1000);
     this.updateTimerDisplay(seconds);
     if (this.matchTimeRemainingMs <= 0) this.finishMatchByTime();
+  }
+
+  resetTurnClock() {
+    this.turnTimeRemainingMs = TURN_DURATION_MS;
+    this.displayedTurnSecond = Math.ceil(TURN_DURATION_MS / 1000);
+  }
+
+  updateTurnClock(delta) {
+    if (this.setupPhase || this.gameOver || this.shotInProgress || this.isMotionActive() || this._turnFlipBusy) return;
+    const elapsed = Number.isFinite(delta) ? Math.max(0, delta) : 0;
+    this.turnTimeRemainingMs = Math.max(0, this.turnTimeRemainingMs - elapsed);
+    const seconds = Math.ceil(this.turnTimeRemainingMs / 1000);
+    if (seconds !== this.displayedTurnSecond) {
+      this.displayedTurnSecond = seconds;
+      this.updateHud();
+    }
+    if (this.turnTimeRemainingMs <= 0) this.skipExpiredTurn();
+  }
+
+  skipExpiredTurn() {
+    if (this.gameOver || this.setupPhase || this.shotInProgress || this.isMotionActive()) return;
+    const expiredSide = this.turn;
+    this.selected = null;
+    this.pointerDown = null;
+    this.clearGuide();
+    this.turn = this.turn === "w" ? "b" : "w";
+    this.resetTurnClock();
+    this.updateHud();
+    playFeedback("wrong");
+    showRewardLine(this, t("tug.turnExpired", { side: sideName(expiredSide) }), {
+      y: this.scale.height * 0.5,
+      tone: "failure",
+      showCoin: false,
+      hold: 1100,
+    });
+    this.applyTurnPerspective(() => this.scheduleAiTurn());
   }
 
   updateTimerDisplay(seconds) {
@@ -1209,7 +1254,10 @@ export class KingdomTug extends Phaser.Scene {
     this.topStatus.setVisible(true).setFontSize(24);
     this.bottomStatus.setVisible(true);
     this.helpText?.setText(t("tug.help")).setColor("#8b6d4f");
-    const base = message || t("tug.turn", { side: sideName(this.turn) });
+    const base = message || t("tug.turnTimed", {
+      side: sideName(this.turn),
+      seconds: Math.max(0, this.displayedTurnSecond ?? Math.ceil(TURN_DURATION_MS / 1000)),
+    });
     this.topStatus.setText(this.turn === "b" ? base : t("tug.wait", { side: sideName("b") }));
     this.bottomStatus.setText(this.turn === "w" ? base : t("tug.wait", { side: sideName("w") }));
     this.topStatus.setColor(this.turn === "b" ? KUMA_COLORS.orange : "#9b8268");

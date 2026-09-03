@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
     <link rel="preload" href="./assets/kuma/web/main_img_B.png" as="image" fetchpriority="high" />
     <link rel="preload" href="./assets/kuma/web/main_logo_B.png" as="image" fetchpriority="high" />
-    <link rel="stylesheet" href="./main-page.css?v=20260903-online95" />
+    <link rel="stylesheet" href="./main-page.css?v=20260903-gameplay99" />
   </head>
   <body data-kuma-shell="web">
     <aside class="ad-rail ad-rail-left" data-ad-position="left" aria-label="왼쪽 광고" hidden></aside>
@@ -46,7 +46,7 @@
           <strong id="coin-count">0</strong>
         </div>
 
-        <div class="hero-actions-left" aria-label="미션과 순위">
+        <div class="hero-actions-left" aria-label="오늘의 미션">
           <button id="daily-button" class="hero-action" type="button" aria-label="오늘의 미션">
             <span id="daily-reward-effect" class="daily-reward-effect" hidden aria-hidden="true">
               <i class="daily-reward-glow"></i>
@@ -58,10 +58,6 @@
             <span class="action-icon"><img src="./assets/kuma/web/btn_daily_new.png" alt="" /></span>
             <strong id="daily-count">0/3</strong>
             <span id="daily-new" class="new-badge" hidden><img src="./assets/kuma/web/icon_new.png" alt="새 알림" /></span>
-          </button>
-          <button id="ranking-button" class="hero-action ranking-action" type="button" data-open-game data-launch="ranking" aria-label="체스 순위">
-            <span class="action-icon"><img src="./assets/kuma/ui/btn_leaderboard.png" alt="" /></span>
-            <strong>순위</strong>
           </button>
         </div>
 
@@ -215,7 +211,7 @@
         <article class="mode-feature mode-puzzle"><img src="./assets/kuma/web/image%20474.png" alt="체스 퍼즐" loading="lazy" /><div><h3>퍼즐</h3><p>체크메이트, 포크, 핀, 캐슬링, 승급 등 실전 전술을 순서대로 배웁니다. 기물을 탭하거나 드래그해 이동하고, 힌트와 용어 설명 버튼으로 규칙을 확인할 수 있습니다.</p></div><button class="reference-hit-area" type="button" data-open-game data-launch="puzzle" aria-label="퍼즐 시작"></button></article>
         <article class="mode-feature mode-ai"><img src="./assets/kuma/web/image%20475.png" alt="AI 대전" loading="lazy" /><div><h3>AI 대전</h3><p>쉬움, 보통, 어려움과 최상급 도전 난이도를 고릅니다. 승리 보상은 5, 15, 35, 100코인이며 도전 AI는 더 깊게 수를 탐색합니다.</p></div><button class="reference-hit-area" type="button" data-open-game data-launch="ai" aria-label="AI 대전 시작"></button></article>
         <article class="mode-feature mode-pvp"><img src="./assets/kuma/web/image%20476.png" alt="마주보기 대전" loading="lazy" /><div><h3>PVP 대전</h3><p>한 기기를 마주 보고 사용하는 로컬 2인 모드입니다. 턴이 바뀌면 기물과 안내가 상대 방향으로 회전합니다.</p></div><button class="reference-hit-area" type="button" data-open-game data-launch="pvp" aria-label="마주보기 대전 시작"></button></article>
-        <article class="mode-feature mode-data"><img src="./assets/kuma/web/image%20479.png" alt="데이터 저장과 동기화" loading="lazy" /><div><h3>데이터 저장과 동기화</h3><p>게임은 브라우저에 먼저 저장되며, 프로필 설정과 검증 전 진행 요약은 익명 Firebase 계정에 백업됩니다. 서버가 집계한 주간·전체 체스 순위는 읽기 전용으로 표시됩니다. 현재는 다른 기기로 자동 이전하거나 삭제된 로컬 기록을 복원하지 않으며, 코인·보상·보유 기물은 아직 서버에서 검증하지 않습니다.</p></div></article>
+        <article class="mode-feature mode-data"><img src="./assets/kuma/web/image%20479.png" alt="데이터 저장과 동기화" loading="lazy" /><div><h3>데이터 저장과 동기화</h3><p>게임은 브라우저에 먼저 저장되며, 프로필 설정과 검증 전 진행 요약은 익명 Firebase 계정에 백업됩니다. 현재는 다른 기기로 자동 이전하거나 삭제된 로컬 기록을 복원하지 않으며, 코인·보상·보유 기물과 공식 순위는 아직 서버에서 검증하거나 제공하지 않습니다.</p></div></article>
       </section>
 
       <section id="collection" class="page-section reference-section collection-section">
@@ -278,7 +274,7 @@
         <p id="game-loading-message">게임을 준비하고 있습니다.</p>
         <button id="retry-game" type="button" hidden>다시 불러오기</button>
       </div>
-      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260903-online95"></iframe>
+      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260903-gameplay99"></iframe>
     </div>
 
     <dialog id="mode-dialog" class="web-dialog mode-dialog">
@@ -355,9 +351,9 @@
     </dialog>
 
     <script src="./ads-config.js"></script>
-    <script src="./app-init.js?v=20260903-online95"></script>
-    <script type="module" src="./firebase-client.js?v=20260903-online95"></script>
-    <script type="module" src="./main-page.js?v=20260903-online95"></script>
-    <script defer src="./main-page-fallback.js?v=20260903-online95"></script>
+    <script src="./app-init.js?v=20260903-gameplay99"></script>
+    <script type="module" src="./firebase-client.js?v=20260903-gameplay99"></script>
+    <script type="module" src="./main-page.js?v=20260903-gameplay99"></script>
+    <script defer src="./main-page-fallback.js?v=20260903-gameplay99"></script>
   </body>
 </html>

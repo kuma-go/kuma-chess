@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import {
   canTraverseRoadPuzzle,
   createRoadPuzzleState,
@@ -13,6 +14,9 @@ import {
   tileConnections,
 } from "../src/royalRoadPuzzleLogic.js";
 import { ROYAL_ROAD_PUZZLE_STAGES } from "../src/royalRoadPuzzleStages.js";
+
+const puzzleSceneSource = fs.readFileSync(new URL("../src/scenes/RoyalRoadPuzzle.js", import.meta.url), "utf8");
+assert.match(puzzleSceneSource, /fillTriangle\(/, "direct-move highlights must include directional triangles");
 
 assert.equal(ROYAL_ROAD_PUZZLE_STAGES.length, 24, "24 stages are required");
 assert.equal(new Set(ROYAL_ROAD_PUZZLE_STAGES.map((stage) => stage.id)).size, 24, "stage ids must be unique");

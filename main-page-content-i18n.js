@@ -286,8 +286,8 @@ const CONTENT_TARGETS = Object.freeze([
   },
   {
     selector: "#modes .mode-data p",
-    en: "The game is stored locally first, while profile preferences and an unverified progress summary are backed up to an anonymous Firebase account. Server-produced weekly and overall chess rankings are displayed read-only. Data is not yet transferred automatically to another device or restored after local deletion, and coins, rewards, and owned pieces are not yet server-verified.",
-    ja: "ゲームはブラウザに優先保存され、プロフィール設定と未検証の進行概要はFirebase匿名アカウントへバックアップされます。サーバー集計の週間・総合チェスランキングは読み取り専用で表示します。現在は別の端末への自動移行や削除したローカル記録の復元には対応せず、コイン・報酬・保有駒もまだサーバー検証の対象ではありません。",
+    en: "The game is stored locally first, while profile preferences and an unverified progress summary are backed up to an anonymous Firebase account. Data is not yet transferred automatically to another device or restored after local deletion, and coins, rewards, owned pieces, and official rankings are not yet server-verified or provided.",
+    ja: "ゲームはブラウザに優先保存され、プロフィール設定と未検証の進行概要はFirebase匿名アカウントへバックアップされます。現在は別の端末への自動移行や削除したローカル記録の復元には対応せず、コイン・報酬・保有駒・公式ランキングもまだサーバー検証または提供の対象ではありません。",
   },
   {
     selector: "#collection .collection-intro h3",

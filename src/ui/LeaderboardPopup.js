@@ -1,13 +1,14 @@
-import { getPlayStats } from "../playerState.js?v=20260903-online95";
-import { readProfileState } from "../profileState.js?v=20260903-online95";
+import { getPlayStats } from "../playerState.js?v=20260903-gameplay99";
+import { recordVerifiedLeaderboardPlacement } from "../medals.js?v=20260903-gameplay99";
+import { readProfileState } from "../profileState.js?v=20260903-gameplay99";
 import {
   addLargeTextButton,
   addThreePatchPanel,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260903-online95";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260903-online95";
+} from "./KumaUi.js?v=20260903-gameplay99";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260903-gameplay99";
 
 const COPY = {
   ko: {
@@ -29,10 +30,11 @@ const COPY = {
     score: "점수",
     unranked: "미등록",
     local: "내 로컬 기록",
+    onlineMine: "내 온라인 순위",
     noTime: "집계 전",
-    notice: "현재 기기의 플레이 기록은 서버 검증 전이므로 순위와 점수에 반영되지 않습니다.",
-    allEmpty: "첫 공식 시즌이 열리면 검증된 전체 순위가 표시됩니다.",
-    weeklyEmpty: "주간 순위는 공식 시즌 시작 후 매주 갱신됩니다.",
+    notice: "초대 대국 결과는 서버 검증 후 Elo 점수와 순위에 반영됩니다.",
+    allEmpty: "검증된 온라인 대국이 완료되면 전체 순위가 표시됩니다.",
+    weeklyEmpty: "주간 순위는 매주 월요일 새로 시작합니다.",
     friendsEmpty: "친구 기능은 계정 연결과 함께 제공될 예정입니다.",
     hall: "명예의 전당",
     back: "돌아가기",
@@ -56,10 +58,11 @@ const COPY = {
     score: "Score",
     unranked: "Unranked",
     local: "Local record",
+    onlineMine: "My online rank",
     noTime: "Pending",
-    notice: "Local device records are not used for rankings until server verification is available.",
-    allEmpty: "Verified overall rankings will appear when the first official season opens.",
-    weeklyEmpty: "Weekly rankings will refresh after the official season begins.",
+    notice: "Invite-match results update Elo ratings after server verification.",
+    allEmpty: "Overall rankings appear after a verified online match is completed.",
+    weeklyEmpty: "Weekly rankings reset every Monday.",
     friendsEmpty: "Friends rankings will arrive with linked accounts.",
     hall: "Hall of Fame",
     back: "Back",
@@ -83,10 +86,11 @@ const COPY = {
     score: "スコア",
     unranked: "未登録",
     local: "ローカル記録",
+    onlineMine: "自分のオンライン順位",
     noTime: "集計前",
-    notice: "この端末の記録はサーバー検証前のため、順位とスコアには反映されません。",
-    allEmpty: "最初の公式シーズン開始後、認証済み全体順位が表示されます。",
-    weeklyEmpty: "週間順位は公式シーズン開始後に更新されます。",
+    notice: "招待対局の結果はサーバー認証後、Eloスコアと順位に反映されます。",
+    allEmpty: "認証済みオンライン対局が完了すると全体順位が表示されます。",
+    weeklyEmpty: "週間順位は毎週月曜日にリセットされます。",
     friendsEmpty: "フレンド順位はアカウント連携とともに提供予定です。",
     hall: "栄光の殿堂",
     back: "戻る",
@@ -163,6 +167,7 @@ export function showLeaderboardPopup(scene, options = {}) {
   let activeTab = "weekly";
   let loadToken = 0;
   let disposed = false;
+  let refreshEvent = null;
 
   const backdrop = createModalBackdrop(scene, 10990, options.externalBackdrop
     ? { capture: false, dimAlpha: 0.001 }
@@ -271,12 +276,15 @@ export function showLeaderboardPopup(scene, options = {}) {
     });
   }
 
-  async function loadRanking() {
+  async function loadRanking(options = {}) {
+    const silent = options.silent === true;
     const token = ++loadToken;
-    renderPodium([]);
-    renderTableRows([]);
-    spotlight.setText(copy.loading);
-    emptyText.setText(copy.loading);
+    if (!silent) {
+      renderPodium([]);
+      renderTableRows([]);
+      spotlight.setText(copy.loading);
+      emptyText.setText(copy.loading);
+    }
     if (activeTab === "friends") {
       spotlight.setText(copy.noRecord);
       emptyText.setText(copy.friendsEmpty);
@@ -285,21 +293,23 @@ export function showLeaderboardPopup(scene, options = {}) {
     }
     const api = cloudApi();
     if (!api?.getLeaderboard) {
+      if (silent) return;
       spotlight.setText(copy.loadError);
       emptyText.setText(copy.loadError);
       renderTableRows([]);
       return;
     }
     try {
-      let result = await api.getLeaderboard(activeTab === "all" ? "all" : "weekly");
+      const result = await api.getLeaderboard(activeTab === "all" ? "all" : "weekly");
       if (token !== loadToken || !layer.scene) return;
-      let isWeekly = activeTab === "weekly" && result.entries.length > 0;
-      if (activeTab === "weekly" && !result.entries.length) {
-        result = await api.getLeaderboard("all");
-        if (token !== loadToken || !layer.scene) return;
-        isWeekly = false;
-      }
       const entries = result.entries || [];
+      if (result.viewerRank > 0) {
+        recordVerifiedLeaderboardPlacement({
+          eventId: result.season,
+          period: result.period,
+          rank: result.viewerRank,
+        });
+      }
       renderPodium(entries);
       renderTableRows(entries);
       if (!entries.length) {
@@ -308,12 +318,13 @@ export function showLeaderboardPopup(scene, options = {}) {
         return;
       }
       const best = entries[0];
-      spotlight.setText(isWeekly
+      spotlight.setText(activeTab === "weekly"
         ? format(copy.weeklyBest, { name: best.displayName, score: best.score })
         : format(copy.currentBest, { name: best.displayName, time: relativeTime(best.updatedAtMs, profile.language) }));
-      emptyText.setText(activeTab === "weekly" && !isWeekly ? copy.weeklyEmpty : "");
+      emptyText.setText("");
     } catch (_error) {
       if (token !== loadToken || !layer.scene) return;
+      if (silent) return;
       spotlight.setText(copy.noRecord);
       emptyText.setText(copy.loadError);
       renderPodium([]);
@@ -343,8 +354,9 @@ export function showLeaderboardPopup(scene, options = {}) {
     if (rankedRows.length) {
       rankedRows.forEach((entry, index) => {
         const rowY = tableTop + 44 + index * 31;
-        tableRowsLayer.add(scene.add.rectangle(px, rowY, panelW - 80, 31, index % 2 ? 0xfff9ed : 0xfff3dc, 0.75)
-          .setStrokeStyle(1, 0xd7c2a3, 0.5));
+        tableRowsLayer.add(scene.add.rectangle(
+          px, rowY, panelW - 80, 31, entry.isCurrentUser ? 0xffe5a7 : index % 2 ? 0xfff9ed : 0xfff3dc, 0.82,
+        ).setStrokeStyle(entry.isCurrentUser ? 2 : 1, entry.isCurrentUser ? 0xd5a447 : 0xd7c2a3, 0.8));
         addText(scene, tableRowsLayer, px - 252, rowY, String(index + 4), {
           size: 17, color: "#6c5339", weight: "800", originX: 0.5,
         });
@@ -364,26 +376,31 @@ export function showLeaderboardPopup(scene, options = {}) {
       return;
     }
 
+    const viewerIndex = entries.findIndex((entry) => entry.isCurrentUser);
+    const viewerEntry = viewerIndex >= 0 ? entries[viewerIndex] : null;
     const rowY = tableTop + 78;
     tableRowsLayer.add(scene.add.rectangle(px, rowY, panelW - 80, 92, 0xfff2d4, 0.9)
       .setStrokeStyle(3, 0xd5a447, 0.9));
-    addText(scene, tableRowsLayer, px - 252, rowY - 13, copy.unranked, {
+    addText(scene, tableRowsLayer, px - 252, rowY - 13, viewerEntry ? String(viewerIndex + 1) : copy.unranked, {
       size: 14, color: "#8b6e50", weight: "800", originX: 0.5,
     });
-    addText(scene, tableRowsLayer, px - 252, rowY + 16, copy.local, {
+    addText(scene, tableRowsLayer, px - 252, rowY + 16, viewerEntry ? copy.onlineMine : copy.local, {
       size: 11, color: "#b28b55", weight: "700", originX: 0.5,
     });
-    addProfileAvatar(scene, tableRowsLayer, px - 180, rowY, profile, { size: 62, maxFrameScale: 1.3, depth: 11005 });
-    addText(scene, tableRowsLayer, px - 139, rowY, profile.displayName, {
-      size: profile.displayName.length > 12 ? 16 : 19, color: "#3b2c20", weight: "800",
+    const viewerProfile = viewerEntry || profile;
+    addProfileAvatar(scene, tableRowsLayer, px - 180, rowY, viewerProfile, { size: 62, maxFrameScale: 1.3, depth: 11005 });
+    addText(scene, tableRowsLayer, px - 139, rowY, viewerProfile.displayName, {
+      size: viewerProfile.displayName.length > 12 ? 16 : 19, color: "#3b2c20", weight: "800",
     });
-    addText(scene, tableRowsLayer, px + 64, rowY, String(totalWins(stats)), {
+    addText(scene, tableRowsLayer, px + 64, rowY, String(viewerEntry?.wins ?? totalWins(stats)), {
       size: 20, color: "#6c5339", weight: "800", originX: 0.5,
     });
-    addText(scene, tableRowsLayer, px + 166, rowY, copy.noTime, {
+    addText(scene, tableRowsLayer, px + 166, rowY, viewerEntry
+      ? formatPlayTime(viewerEntry.playTimeSeconds, profile.language)
+      : copy.noTime, {
       size: 16, color: "#8f765e", weight: "700", originX: 0.5,
     });
-    addText(scene, tableRowsLayer, px + 277, rowY, "—", {
+    addText(scene, tableRowsLayer, px + 277, rowY, viewerEntry ? String(viewerEntry.score) : "—", {
       size: 23, color: "#b18335", weight: "900", originX: 1,
     });
   }
@@ -404,6 +421,8 @@ export function showLeaderboardPopup(scene, options = {}) {
     if (disposed) return;
     disposed = true;
     loadToken += 1;
+    refreshEvent?.remove?.(false);
+    refreshEvent = null;
     scene.events.off(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
     backdrop.cleanup();
     if (layer.scene) layer.destroy();
@@ -419,4 +438,11 @@ export function showLeaderboardPopup(scene, options = {}) {
   layer.add([back.button, back.title]);
   renderTabs();
   loadRanking();
+  refreshEvent = scene.time.addEvent({
+    delay: 15000,
+    loop: true,
+    callback: () => {
+      if (!disposed && activeTab !== "friends") loadRanking({ silent: true });
+    },
+  });
 }

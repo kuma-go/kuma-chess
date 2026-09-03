@@ -1,11 +1,12 @@
-import { Chess } from "../vendor-chess.js?v=20260903-online95";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-online95";
-import { readProfileState } from "../profileState.js?v=20260903-online95";
-import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260903-online95";
-import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260903-online95";
-import { playFeedback } from "../feedback.js?v=20260903-online95";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260903-online95";
-import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260903-online95";
+import { Chess } from "../vendor-chess.js?v=20260903-gameplay99";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-gameplay99";
+import { readProfileState } from "../profileState.js?v=20260903-gameplay99";
+import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260903-gameplay99";
+import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260903-gameplay99";
+import { playFeedback } from "../feedback.js?v=20260903-gameplay99";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260903-gameplay99";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260903-gameplay99";
+import { recordOnlineGameCompletion } from "../medals.js?v=20260903-gameplay99";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -17,7 +18,7 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260903-online95";
+} from "../ui/KumaUi.js?v=20260903-gameplay99";
 
 const FILES = "abcdefgh";
 const COPY = Object.freeze({
@@ -618,6 +619,11 @@ export class OnlineGame extends Phaser.Scene {
       this.showLineText("DRAW", { y: this.scale.height * 0.4, stay: 700, duration: 900 });
     }
     const delay = checkmate ? 3200 : draw ? 1800 : 900;
+    const medalResult = this.demoMode
+      ? { newlyUnlocked: [] }
+      : recordOnlineGameCompletion({
+        eventId: `${room.code || this.roomCode}:round:${Math.max(1, Number(room.round) || 1)}`,
+      });
     this._resultTimer = this.time.delayedCall(delay, () => {
       if (!this.scene.isActive()) return;
       this.scene.start("Result", {
@@ -634,7 +640,7 @@ export class OnlineGame extends Phaser.Scene {
         history: this.game.history({ verbose: true }),
         finalPieces: this.game.board(),
         durationMs: Math.max(0, Date.now() - this.gameStartedAt),
-        newlyUnlocked: [],
+        newlyUnlocked: medalResult.newlyUnlocked,
       });
     });
   }

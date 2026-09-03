@@ -3,22 +3,22 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260903-online95";
+} from "./src/playerState.js?v=20260903-gameplay99";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260903-online95";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260903-online95";
-import { readProfileState } from "./src/profileState.js?v=20260903-online95";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260903-online95";
+} from "./src/dailyMissions.js?v=20260903-gameplay99";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260903-gameplay99";
+import { readProfileState } from "./src/profileState.js?v=20260903-gameplay99";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260903-gameplay99";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260903-online95";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260903-online95";
-import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260903-online95";
-import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260903-online95";
+} from "./src/menuBgm.js?v=20260903-gameplay99";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260903-gameplay99";
+import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260903-gameplay99";
+import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260903-gameplay99";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -32,8 +32,8 @@ const onlineDialog = document.getElementById("online-dialog");
 const onlineCodeInput = document.getElementById("online-code-input");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "ranking", "medals"]);
-const ASSET_RETRY_VERSION = "20260903-online95";
+const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "medals"]);
+const ASSET_RETRY_VERSION = "20260903-gameplay99";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 
@@ -42,9 +42,7 @@ const WEB_COPY = Object.freeze({
     lang: "ko",
     brand: "쿠마체스",
     dailyAria: "오늘의 미션",
-    leftActionsAria: "미션과 순위",
-    rankingAria: "체스 순위",
-    ranking: "순위",
+    leftActionsAria: "오늘의 미션",
     mainActionsAria: "메인 기능",
     settingsAria: "설정",
     infoAria: "내 정보",
@@ -122,9 +120,7 @@ const WEB_COPY = Object.freeze({
     lang: "en",
     brand: "KUMA CHESS",
     dailyAria: "Daily Missions",
-    leftActionsAria: "Missions and Ranking",
-    rankingAria: "Chess Ranking",
-    ranking: "Ranking",
+    leftActionsAria: "Daily Missions",
     mainActionsAria: "Main Features",
     settingsAria: "Settings",
     infoAria: "My profile",
@@ -202,9 +198,7 @@ const WEB_COPY = Object.freeze({
     lang: "ja",
     brand: "クマチェス",
     dailyAria: "デイリーミッション",
-    leftActionsAria: "ミッションとランキング",
-    rankingAria: "チェスランキング",
-    ranking: "ランキング",
+    leftActionsAria: "今日のミッション",
     mainActionsAria: "メイン機能",
     settingsAria: "設定",
     infoAria: "マイプロフィール",
@@ -328,8 +322,6 @@ function renderHomeLanguage(language) {
   setText(".hero-nameplate", copy.brand);
   document.getElementById("daily-button")?.setAttribute("aria-label", copy.dailyAria);
   document.querySelector(".hero-actions-left")?.setAttribute("aria-label", copy.leftActionsAria);
-  document.getElementById("ranking-button")?.setAttribute("aria-label", copy.rankingAria);
-  setText("#ranking-button strong", copy.ranking);
   document.querySelector(".hero-actions-right")?.setAttribute("aria-label", copy.mainActionsAria);
   document.querySelector("[data-open-settings]")?.setAttribute("aria-label", copy.settingsAria);
   document.querySelector('[data-open-game][data-launch="info"]')?.setAttribute("aria-label", copy.infoAria);
@@ -1158,7 +1150,7 @@ if (typeof window.requestIdleCallback === "function") {
 const initialUrl = new URL(window.location.href);
 const initialLaunch = initialUrl.searchParams.get("launch") || "";
 const initialMode = initialUrl.searchParams.get("mode") || "";
-const validInitialLaunches = new Set(["ai", "pvp", "puzzle", "road-puzzle", "info", "profile", "ranking", "medals", "daily", "settings", "online", "tug", "crown", "road", "siege"]);
+const validInitialLaunches = new Set(["ai", "pvp", "puzzle", "road-puzzle", "info", "profile", "medals", "daily", "settings", "online", "tug", "crown", "road", "siege"]);
 const hasShellMarker = initialUrl.searchParams.has("shell");
 if (hasShellMarker) initialUrl.searchParams.delete("shell");
 if (validInitialLaunches.has(initialLaunch)) {

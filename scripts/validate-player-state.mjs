@@ -84,6 +84,12 @@ assert(state.AI_DIFFICULTIES.easy.reward === 5, "easy AI reward must be 5 coins"
 assert(state.AI_DIFFICULTIES.normal.reward === 15, "normal AI reward must be 15 coins");
 assert(state.AI_DIFFICULTIES.hard.reward === 35, "hard AI reward must be 35 coins");
 assert(state.AI_DIFFICULTIES.challenge.reward === 100, "challenge AI reward must be 100 coins");
+assert(state.COSTS.aiUndo === 5, "AI undo must use the configured 5-coin cost");
+state.writePlayerState({ ...state.readPlayerState(), coins: 5 });
+const undoPayment = state.spendCoins(state.COSTS.aiUndo);
+assert(undoPayment.ok && undoPayment.coins === 0, "AI undo payment must deduct its configured cost");
+assert(!state.spendCoins(state.COSTS.aiUndo).ok, "AI undo payment must fail without enough coins");
+state.writePlayerState({ ...state.readPlayerState(), coins: 100 });
 
 const legacyHourglassState = state.readPlayerState();
 legacyHourglassState.ownedProfilePortraits.push("portrait-hourglass");

@@ -1,6 +1,6 @@
-import { createPieceView } from "../pieceStyles.js?v=20260903-online95";
-import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260903-online95";
-import { t } from "../i18n.js?v=20260903-online95";
+import { createPieceView } from "../pieceStyles.js?v=20260903-gameplay99";
+import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260903-gameplay99";
+import { t } from "../i18n.js?v=20260903-gameplay99";
 import {
   addDarkTopBar,
   addLargeTextButton,
@@ -9,12 +9,12 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260903-online95";
-import { markMedalsSeen } from "../medals.js?v=20260903-online95";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-online95";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-online95";
-import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260903-online95";
-import { saveOnlineSession } from "../onlineSession.js?v=20260903-online95";
+} from "../ui/KumaUi.js?v=20260903-gameplay99";
+import { markMedalsSeen, recordOnlineRematch } from "../medals.js?v=20260903-gameplay99";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-gameplay99";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-gameplay99";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260903-gameplay99";
+import { saveOnlineSession } from "../onlineSession.js?v=20260903-gameplay99";
 
 const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35, challenge: 100 });
 const DIFFICULTY_LABELS = Object.freeze({
@@ -86,8 +86,6 @@ export class Result extends Phaser.Scene {
       king.setDepth(20);
     }
 
-    if (isOnline && winnerColor) this.addOnlineWinnerIdentity(winnerColor, 758);
-
     this.add.text(width / 2, isOnline ? 850 : 830, title, {
       fontFamily: '"Noto Serif KR", "Noto Serif", Georgia, serif',
       fontSize: "58px",
@@ -105,12 +103,16 @@ export class Result extends Phaser.Scene {
       : this.dataIn?.mode === "ai"
       ? (playerWonAI ? t("result.aiWin") : t("result.aiEnd"))
       : this.reasonText(this.dataIn?.reason, this.dataIn);
-    this.add.text(width / 2, isOnline ? 915 : 895, stats, {
-      fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
-      fontSize: "25px",
-      color: KUMA_COLORS.orange,
-      fontStyle: "500",
-    }).setOrigin(0.5).setDepth(40);
+    if (isOnline && winnerColor) {
+      this.addOnlineWinnerIdentity(winnerColor, 925);
+    } else {
+      this.add.text(width / 2, isOnline ? 915 : 895, stats, {
+        fontFamily: '"Pretendard", "Apple SD Gothic Neo", sans-serif',
+        fontSize: "25px",
+        color: KUMA_COLORS.orange,
+        fontStyle: "500",
+      }).setOrigin(0.5).setDepth(40);
+    }
 
     if (playerWonAI) {
       const language = readPlayerState().language || "ko";
@@ -266,7 +268,7 @@ export class Result extends Phaser.Scene {
     }
   }
 
-  onOnlineRoomChanged(room) {
+  async onOnlineRoomChanged(room) {
     if (!this.scene.isActive() || !room) return;
     const previousRequester = this.latestOnlineRoom?.rematchRequesterUid || "";
     this.latestOnlineRoom = room;
@@ -276,6 +278,16 @@ export class Result extends Phaser.Scene {
       this.startingRematch = true;
       this.clearRematchPopup();
       saveOnlineSession(room.code, playerColor);
+      const medalResult = recordOnlineRematch({
+        eventId: `${room.code}:round:${Math.max(1, Number(room.round) || 1)}`,
+      });
+      if (medalResult.newlyUnlocked.length) {
+        const confirmedIds = await showMedalAwardSequence(this, medalResult.newlyUnlocked, {
+          y: this.scale.height * 0.47,
+        });
+        if (confirmedIds.length) markMedalsSeen(confirmedIds);
+        if (!this.scene.isActive()) return;
+      }
       this.scene.start("OnlineGame", { code: room.code, room, playerColor });
       return;
     }

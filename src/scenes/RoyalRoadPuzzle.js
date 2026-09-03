@@ -1,9 +1,9 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260903-online95";
-import { createPieceView } from "../pieceStyles.js?v=20260903-online95";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260903-online95";
-import { t } from "../i18n.js?v=20260903-online95";
-import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260903-online95";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-online95";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260903-gameplay99";
+import { createPieceView } from "../pieceStyles.js?v=20260903-gameplay99";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260903-gameplay99";
+import { t } from "../i18n.js?v=20260903-gameplay99";
+import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260903-gameplay99";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-gameplay99";
 import {
   createRoadPuzzleState,
   findRoadPuzzlePath,
@@ -14,10 +14,10 @@ import {
   roadPuzzleNeighbors,
   rotateRoadPuzzleTile,
   scoreRoadPuzzle,
-} from "../royalRoadPuzzleLogic.js?v=20260903-online95";
-import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260903-online95";
-import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260903-online95";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-online95";
+} from "../royalRoadPuzzleLogic.js?v=20260903-gameplay99";
+import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260903-gameplay99";
+import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260903-gameplay99";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-gameplay99";
 import {
   addDarkTopBar,
   addLargeTextButton,
@@ -27,7 +27,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260903-online95";
+} from "../ui/KumaUi.js?v=20260903-gameplay99";
 
 const VIEW = Object.freeze({ x: 18, y: 214, width: 684, height: 882 });
 const PLAY_VIEW = Object.freeze({
@@ -527,6 +527,16 @@ export class RoyalRoadPuzzle extends Phaser.Scene {
     this.highlightLayer.lineStyle(4, 0x19a9bf, 0.88);
     for (const cell of roadPuzzleNeighbors(this.state)) {
       this.highlightLayer.strokeRoundedRect(cell.x * CELL + 5, cell.y * CELL + 5, CELL - 10, CELL - 10, 8);
+      const cx = cell.x * CELL + CELL / 2;
+      const cy = cell.y * CELL + CELL / 2;
+      const dx = cell.x - this.state.player.x;
+      const dy = cell.y - this.state.player.y;
+      this.highlightLayer.fillStyle(0xfff8ea, 0.86).fillCircle(cx, cy, 18);
+      this.highlightLayer.fillStyle(0x19a9bf, 0.96);
+      if (dx > 0) this.highlightLayer.fillTriangle(cx + 15, cy, cx - 8, cy - 12, cx - 8, cy + 12);
+      else if (dx < 0) this.highlightLayer.fillTriangle(cx - 15, cy, cx + 8, cy - 12, cx + 8, cy + 12);
+      else if (dy > 0) this.highlightLayer.fillTriangle(cx, cy + 15, cx - 12, cy - 8, cx + 12, cy - 8);
+      else this.highlightLayer.fillTriangle(cx, cy - 15, cx - 12, cy + 8, cx + 12, cy + 8);
     }
   }
 

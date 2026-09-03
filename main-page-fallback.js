@@ -18,7 +18,7 @@
     let runtimePreloadSession = "";
     let requestedGame = null;
     let ticking = false;
-    const popupGameLaunches = new Set(["daily", "settings", "info", "profile", "ranking", "medals"]);
+    const popupGameLaunches = new Set(["daily", "settings", "info", "profile", "medals"]);
 
     document.documentElement.dataset.kumaActionFallback = "true";
 

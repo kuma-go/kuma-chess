@@ -13,6 +13,9 @@ for (const file of [
   "src/firebaseConfig.js",
   "src/firebaseClientEntry.js",
   "firebase-client.js",
+  "functions/package.json",
+  "functions/index.js",
+  "functions/ranking.js",
 ]) {
   if (!fs.existsSync(path.join(root, file))) failures.push(`${file}: missing`);
 }
@@ -28,6 +31,9 @@ if (!rules.includes("request.auth.uid == uid")) failures.push("firestore.rules: 
 if (!rules.includes("source == 'local-unverified'")) failures.push("firestore.rules: local progress trust label is missing");
 if (!rules.includes("match /leaderboards/{season}/entries/{entryId}")) {
   failures.push("firestore.rules: read-only leaderboard path is missing");
+}
+if (!rules.includes("match /ranking/identity") || !rules.includes("match /rankingEvents/{eventId}")) {
+  failures.push("firestore.rules: private ranking identity or server-only event ledger is missing");
 }
 if (!rules.includes("validAccountType(request.resource.data.accountType)")) {
   failures.push("firestore.rules: account type is not bound to the authentication provider");
@@ -60,7 +66,7 @@ for (const forbiddenField of [
 if (client.includes("getAnalytics") || client.includes("firebase/analytics")) {
   failures.push("src/firebaseClientEntry.js: Analytics requires a separate consent decision");
 }
-if (!client.includes("getLeaderboard") || !client.includes("weekly-current") || !client.includes("all-time")) {
+if (!client.includes("getLeaderboard") || !client.includes("currentWeeklySeasonId") || !client.includes("all-time")) {
   failures.push("src/firebaseClientEntry.js: verified leaderboard read API is missing");
 }
 if (!client.includes("reserveNickname") || !client.includes("runTransaction")
@@ -85,6 +91,19 @@ for (const onlineMethod of [
 if (!client.includes("hostAvatar: onlineAvatarSnapshot()")
   || !client.includes("guestAvatar = onlineAvatarSnapshot()")) {
   failures.push("src/firebaseClientEntry.js: online room profiles must include public avatar cosmetics");
+}
+
+const rankingFunction = read("functions/index.js");
+const rankingLogic = read("functions/ranking.js");
+if (!rankingFunction.includes("onDocumentUpdatedWithAuthContext")
+  || !rankingFunction.includes("rankingEvents")
+  || !rankingFunction.includes("leaderboards/")) {
+  failures.push("functions/index.js: authenticated online result aggregation is missing");
+}
+if (!rankingLogic.includes("new Chess()")
+  || !rankingLogic.includes("calculateEloPair")
+  || !rankingLogic.includes("publicLeaderboardId")) {
+  failures.push("functions/ranking.js: replay validation, Elo, or opaque identity logic is missing");
 }
 
 if (failures.length) {

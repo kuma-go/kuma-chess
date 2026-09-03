@@ -1,25 +1,26 @@
-import { Chess } from "../vendor-chess.js?v=20260903-online95";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-online95";
-import { pieceTextureKey } from "../pieceAssets.js?v=20260903-online95";
-import { t } from "../i18n.js?v=20260903-online95";
-import { playFeedback } from "../feedback.js?v=20260903-online95";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260903-online95";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260903-online95";
-import { AI_DIFFICULTIES, getAIDifficulty, grantCoinsOnce, recordGameResult } from "../playerState.js?v=20260903-online95";
-import { recordCompletedGame } from "../medals.js?v=20260903-online95";
-import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260903-online95";
-import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260903-online95";
+import { Chess } from "../vendor-chess.js?v=20260903-gameplay99";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260903-gameplay99";
+import { pieceTextureKey } from "../pieceAssets.js?v=20260903-gameplay99";
+import { t } from "../i18n.js?v=20260903-gameplay99";
+import { playFeedback } from "../feedback.js?v=20260903-gameplay99";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260903-gameplay99";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260903-gameplay99";
+import { AI_DIFFICULTIES, COSTS, getAIDifficulty, grantCoinsOnce, readPlayerState, recordGameResult, spendCoins } from "../playerState.js?v=20260903-gameplay99";
+import { recordCompletedGame } from "../medals.js?v=20260903-gameplay99";
+import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260903-gameplay99";
+import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260903-gameplay99";
 import {
   addDarkTopBar,
   addChessBoard,
   addLargeTextButton,
+  addMiniCoin,
   addPanel,
   createModalBackdrop,
   getChessBoardLayout,
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260903-online95";
+} from "../ui/KumaUi.js?v=20260903-gameplay99";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
@@ -238,8 +239,9 @@ export class Game extends Phaser.Scene {
       normal: "kuma_ui_btn_back",
       hover: "kuma_ui_btn_back",
       pressed: "kuma_ui_btn_back",
-    }, () => this.undoLastTurn()).setDepth(160);
+    }, () => this.requestUndoLastTurn()).setDepth(160);
     backBtn.setScaleTo(72, 72);
+    if (this.isAIMode()) this.undoCostGroup = addMiniCoin(this, 48, height - 20, COSTS.aiUndo, 160);
 
     this.drawConceptToggle(width - 67, height - 56);
   }
@@ -305,15 +307,10 @@ export class Game extends Phaser.Scene {
     view._facing = facing;
   }
 
-  undoLastTurn() {
-    if (!this.game || this._promoLayer || this._modalOpen || this._turnFlipBusy) return;
-
-    this.cancelPendingAI();
+  getUndoCount() {
+    if (!this.game || this._promoLayer || this._modalOpen || this._turnFlipBusy || this._ending) return 0;
     const history = this.game.history({ verbose: true });
-    if (!history.length) {
-      this.showLineText(t("game.undoUnavailable"), { duration: 520, stay: 420, y: this.scale.height * 0.52 });
-      return;
-    }
+    if (!history.length) return 0;
 
     let undoCount = 1;
     if (this.isAIMode()) {
@@ -322,12 +319,65 @@ export class Game extends Phaser.Scene {
         const last = history[history.length - 1];
         const previous = history[history.length - 2];
         if (!last || last.color !== aiColor || !previous || previous.color !== this.playerColor) {
-          this.showLineText(t("game.undoUnavailable"), { duration: 520, stay: 420, y: this.scale.height * 0.52 });
-          return;
+          return 0;
         }
         undoCount = 2;
       }
     }
+    return undoCount;
+  }
+
+  requestUndoLastTurn() {
+    const undoCount = this.getUndoCount();
+    if (!undoCount) {
+      this.showLineText(t("game.undoUnavailable"), { duration: 520, stay: 420, y: this.scale.height * 0.52 });
+      return;
+    }
+    if (!this.isAIMode()) {
+      this.undoLastTurn(undoCount);
+      return;
+    }
+
+    const balance = readPlayerState().coins;
+    if (balance < COSTS.aiUndo) {
+      this.showLineText(t("game.undoNotEnough", { coins: balance, cost: COSTS.aiUndo }), {
+        duration: 620,
+        stay: 700,
+        y: this.scale.height * 0.52,
+      });
+      return;
+    }
+
+    this.cancelPendingAI();
+    this.showGameConfirm({
+      title: t("game.undoTitle"),
+      message: t("game.undoConfirm", { cost: COSTS.aiUndo }),
+      confirmText: t("game.undo"),
+      cancelText: t("common.cancel"),
+      onConfirm: () => {
+        const payment = spendCoins(COSTS.aiUndo);
+        if (!payment.ok) {
+          this.showLineText(t("game.undoNotEnough", { coins: payment.coins, cost: COSTS.aiUndo }), {
+            duration: 620,
+            stay: 700,
+            y: this.scale.height * 0.52,
+          });
+          this.maybeAIMove(true);
+          return;
+        }
+        this.undoLastTurn(undoCount);
+        this.showLineText(t("game.undoPaid", { cost: COSTS.aiUndo }), {
+          duration: 620,
+          stay: 650,
+          y: this.scale.height * 0.52,
+        });
+      },
+    });
+  }
+
+  undoLastTurn(undoCount = this.getUndoCount()) {
+    if (!undoCount) return false;
+    this.cancelPendingAI();
 
     this.cancelGameOverTimers();
     for (let i = 0; i < undoCount; i++) this.game.undo();
@@ -342,6 +392,7 @@ export class Game extends Phaser.Scene {
     this.renderCaptured();
     this.applyTurnPerspective(true, this.game.turn());
     this.updateStatus();
+    return true;
   }
 
   // In PVP, perspectiveTurn controls piece orientation only. Board squares stay fixed.
@@ -1529,7 +1580,7 @@ export class Game extends Phaser.Scene {
 
       try {
         worker = new Worker(
-          new URL("../ai/challengeWorker.js?v=20260903-online95", import.meta.url),
+          new URL("../ai/challengeWorker.js?v=20260903-gameplay99", import.meta.url),
           { type: "module", name: "kuma-challenge-ai" }
         );
       } catch (error) {

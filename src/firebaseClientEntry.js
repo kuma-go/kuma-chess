@@ -29,6 +29,7 @@ import {
   normalizeOnlineRoomCode,
   ONLINE_INITIAL_FEN,
 } from "./onlineRoom.js";
+import { currentWeeklySeasonId } from "./ranking.js";
 
 const CLOUD_SCHEMA_VERSION = 1;
 const PROFILE_STATE_KEY = "kumaChessProfileState";
@@ -297,6 +298,7 @@ function onlineRoomSnapshot(snapshot) {
     round: Math.max(1, boundedCount(data.round) || 1),
     rematchRequesterUid: boundedText(data.rematchRequesterUid, 128),
     createdAtMs: timestamp(data.createdAt),
+    roundStartedAtMs: timestamp(data.roundStartedAt),
     updatedAtMs: timestamp(data.updatedAt),
     lastMoveAtMs: timestamp(data.lastMoveAt),
   });
@@ -369,6 +371,7 @@ async function joinOnlineRoom(value) {
         lastMoveAt: serverTimestamp(),
       };
       if (Number(room.schemaVersion) >= 2) update.guestAvatar = onlineAvatarSnapshot();
+      if (Number(room.schemaVersion) >= 4) update.roundStartedAt = serverTimestamp();
       transaction.update(roomRef, update);
     });
     return Object.freeze({ ok: true, code, color: "b", uid: user.uid });
@@ -554,6 +557,7 @@ async function acceptOnlineRematch(value) {
         revision: boundedCount(room.revision) + 1,
         round: Math.max(1, boundedCount(room.round)) + 1,
         rematchRequesterUid: "",
+        ...(Number(room.schemaVersion) >= 4 ? { roundStartedAt: serverTimestamp() } : {}),
         updatedAt: serverTimestamp(),
         lastMoveAt: serverTimestamp(),
       });
@@ -621,7 +625,7 @@ async function reserveNickname(nextValue, previousValue = "") {
   return Object.freeze({ ok: true, displayName });
 }
 
-function leaderboardEntrySnapshot(snapshot) {
+function leaderboardEntrySnapshot(snapshot, viewerEntryId = "") {
   const source = snapshot.data() || {};
   const avatar = source.avatar && typeof source.avatar === "object" ? source.avatar : {};
   const timestamp = source.updatedAt?.toMillis?.() ?? Number(source.updatedAtMs) ?? 0;
@@ -635,6 +639,7 @@ function leaderboardEntrySnapshot(snapshot) {
     wins: boundedCount(source.wins),
     playTimeSeconds: boundedCount(source.playTimeSeconds),
     updatedAtMs: Number.isFinite(timestamp) ? Math.max(0, timestamp) : 0,
+    isCurrentUser: Boolean(viewerEntryId && snapshot.id === viewerEntryId),
   });
 }
 
@@ -642,17 +647,25 @@ async function fetchLeaderboard(period = "weekly") {
   if (!database) throw new Error("firebase-not-ready");
   if (!activeUser) await ensureAnonymousUser();
   const normalizedPeriod = period === "all" ? "all" : "weekly";
-  const season = normalizedPeriod === "weekly" ? "weekly-current" : "all-time";
+  const season = normalizedPeriod === "weekly" ? currentWeeklySeasonId() : "all-time";
   const entriesQuery = query(
     collection(database, "leaderboards", season, "entries"),
     orderBy("score", "desc"),
     limit(10),
   );
-  const snapshot = await getDocs(entriesQuery);
+  const identityRef = doc(database, "users", activeUser.uid, "ranking", "identity");
+  const [snapshot, identitySnapshot] = await Promise.all([
+    getDocs(entriesQuery),
+    getDoc(identityRef).catch(() => null),
+  ]);
+  const viewerEntryId = identitySnapshot?.exists?.() ? boundedText(identitySnapshot.data()?.entryId, 64) : "";
+  const entries = snapshot.docs.map((entry) => leaderboardEntrySnapshot(entry, viewerEntryId));
+  const viewerIndex = entries.findIndex((entry) => entry.isCurrentUser);
   return Object.freeze({
     period: normalizedPeriod,
     season,
-    entries: Object.freeze(snapshot.docs.map(leaderboardEntrySnapshot)),
+    viewerRank: viewerIndex >= 0 ? viewerIndex + 1 : 0,
+    entries: Object.freeze(entries),
   });
 }
 

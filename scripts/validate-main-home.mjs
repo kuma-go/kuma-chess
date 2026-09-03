@@ -104,7 +104,7 @@ assert(main.includes("options.hostSession !== requestedGame?.hostSession") && ma
 assert(main.includes("event.data.hostSession !== expectedSession") && fallback.includes("event.data.hostSession !== expectedSession"), "Stale embedded errors can fail a newer game session");
 assert(main.includes('openGameLaunch("daily"') && main.includes('openGameLaunch("settings"'), "Daily/settings buttons do not use the existing game UI");
 assert(main.includes("POPUP_GAME_LAUNCHES") && fallback.includes("popupGameLaunches"), "Popup launches do not preserve the web home backdrop");
-assert(main.includes('new Set(["daily", "settings", "info", "profile", "ranking", "medals"])') && fallback.includes('new Set(["daily", "settings", "info", "profile", "ranking", "medals"])'), "Profile, ranking, and medal catalogs are not treated as web-home popups");
+assert(main.includes('new Set(["daily", "settings", "info", "profile", "medals"])') && fallback.includes('new Set(["daily", "settings", "info", "profile", "medals"])'), "Profile and medal catalogs are not treated as web-home popups");
 assert(main.includes("WEB_COPY") && main.includes("renderHomeLanguage(state.language)"), "The web home does not follow the saved language");
 assert(main.includes("const dailyLoginReward = claimDailyReward()")
   && main.includes("showHomeRewardLine(currentWebCopy().dailyLoginReward(dailyLoginReward.amount))"),
@@ -118,6 +118,7 @@ assert(css.includes(".game-wallet-open .coin-pill")
   && main.includes('classList.toggle("game-wallet-open", event.data.open === true)'),
 "The shared coin display must only rise while the profile editor is open");
 assert(html.includes('assets/kuma/ui/btn_my.png') && startScene.includes('"kuma_ui_btn_my"'), "The profile/play-info entry does not use btn_my");
+assert(!html.includes('data-launch="ranking"') && !main.includes('"ranking"') && !startScene.includes("showLeaderboardPopup") && !playInfoUi.includes("showLeaderboardPopup"), "Public ranking entry points must remain hidden until the verified service is activated");
 assert(leaderboardUi.includes("entries.slice(3, 10)") && leaderboardUi.includes("formatPlayTime(entry.playTimeSeconds"), "Leaderboard rows 4 through 10 are not rendered");
 assert(leaderboardUi.includes("copy.loadError") && leaderboardUi.includes("if (!entries.length) return;"), "Leaderboard error and empty states are not separated");
 assert(leaderboardUi.includes('texturePrefix: "kuma_ui_popup_3Patch"') && leaderboardUi.includes('"kuma_ui_btn_tab_on"'), "Leaderboard does not use the shared panel and tab resources");

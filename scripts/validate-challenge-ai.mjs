@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
 import { chooseChallengeMove } from "../src/ai/challengeEngine.js";
 import { Chess } from "../src/vendor-chess.js";
+
+const gameSceneSource = fs.readFileSync(new URL("../src/scenes/Game.js", import.meta.url), "utf8");
+assert.match(gameSceneSource, /COSTS\.aiUndo/, "AI undo must use the shared configured cost");
+assert.match(gameSceneSource, /spendCoins\(COSTS\.aiUndo\)/, "AI undo must charge coins only through player state");
+assert.match(gameSceneSource, /showGameConfirm\(/, "AI undo must require confirmation before charging");
 
 const opening = new Chess();
 const openingFen = opening.fen();

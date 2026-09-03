@@ -1,5 +1,5 @@
-const CACHE_NAME = "kuma-chess-20260903-online95";
-const MODULE_VERSION = "20260903-online95";
+const CACHE_NAME = "kuma-chess-20260903-gameplay99";
+const MODULE_VERSION = "20260903-gameplay99";
 const APP_MODULE_PATHS = [
   "./src/ai/challengeEngine.js",
   "./src/ai/challengeWorker.js",
@@ -17,6 +17,7 @@ const APP_MODULE_PATHS = [
   "./src/playerState.js",
   "./src/profileCatalog.js",
   "./src/profileState.js",
+  "./src/ranking.js",
   "./src/puzzles.js",
   "./src/puzzlesAdvancedA.js",
   "./src/puzzlesAdvancedB.js",
@@ -130,6 +131,12 @@ const CORE_FILES = [
   "./assets/kuma/ui/메달_백일의수련.png",
   "./assets/kuma/ui/메달_AI도전난이도.png",
   "./assets/kuma/ui/메달_Stockfish18Lite.png",
+  "./assets/kuma/ui/메달_주간1위.png",
+  "./assets/kuma/ui/메달_친구1위.png",
+  "./assets/kuma/ui/메달_전체3위.png",
+  "./assets/kuma/ui/메달_온라인30회.png",
+  "./assets/kuma/ui/메달_친구와20회.png",
+  "./assets/kuma/ui/메달_다시하기10회.png",
   "./assets/kuma/ui/btn_arrow_up.png",
   "./assets/kuma/ui/btn_arrow_left.png",
   "./assets/kuma/ui/btn_arrow_right.png",

@@ -1,4 +1,4 @@
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260903-online95";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260903-gameplay99";
 
 const STORAGE_KEY = "kumaChessMedalsV1";
 const BACKUP_STORAGE_KEY = "kumaChessMedalsBackupV1";
@@ -128,11 +128,10 @@ const CHALLENGE_MEDALS = [
   medal("online-challenger", "challenge", "도전장", 10,
     { ko: "도전장", en: "The Challenge", ja: "挑戦状" },
     {
-      ko: "온라인 대전을 10회 완료하세요. 현재 이용할 수 없습니다.",
-      en: "Complete 10 online games. This mode is currently unavailable.",
-      ja: "オンライン対戦を10回完了しましょう。現在は利用できません。",
-    },
-    { unavailable: true }),
+      ko: "온라인 대전을 10회 완료하세요.",
+      en: "Complete 10 online games.",
+      ja: "オンライン対戦を10回完了しましょう。",
+    }),
   medal("challenge-ai-victory", "honor", "AI도전난이도", 1,
     { ko: "최후의 도전자", en: "The Final Challenger", ja: "最後の挑戦者" },
     { ko: "도전 난이도 AI를 체크메이트하고 승리하세요.", en: "Checkmate and defeat the Challenge AI.", ja: "挑戦難易度のAIをチェックメイトして勝利しましょう。" },
@@ -187,6 +186,57 @@ const CHALLENGE_MEDALS = [
       ja: "デイリーミッションをすべて達成した日を100日記録しましょう。",
     },
     { assetFile: "메달_백일의수련.png", dailyMetric: "totalDays" }),
+];
+
+const ONLINE_AND_RANKING_MEDALS = [
+  medal("weekly-rank-first", "honor", "주간1위", 1,
+    { ko: "주간 챔피언", en: "Weekly Champion", ja: "週間チャンピオン" },
+    {
+      ko: "공식 주간 순위에서 1위를 달성하세요.",
+      en: "Reach first place in the official weekly ranking.",
+      ja: "公式週間ランキングで1位を達成しましょう。",
+    },
+    { assetFile: "메달_주간1위.png", verifiedRanking: "weekly", countsTowardCollection: false }),
+  medal("friend-rank-first", "honor", "친구1위", 1,
+    { ko: "우정의 정상", en: "Top Among Friends", ja: "友情の頂点" },
+    {
+      ko: "친구가 10명 이상일 때 친구 순위 1위를 달성하세요. 친구 기능 추가 후 획득할 수 있습니다.",
+      en: "Reach first among at least 10 friends. Available after the friends feature launches.",
+      ja: "フレンドが10人以上のとき、フレンドランキングで1位になりましょう。フレンド機能の追加後に獲得できます。",
+    },
+    { assetFile: "메달_친구1위.png", unavailable: true, countsTowardCollection: false }),
+  medal("overall-rank-top-three", "honor", "전체3위", 1,
+    { ko: "왕국의 삼대장", en: "Realm Top Three", ja: "王国の三傑" },
+    {
+      ko: "공식 전체 순위 3위 안에 진입하세요.",
+      en: "Reach the top three in the official overall ranking.",
+      ja: "公式総合ランキングで3位以内に入りましょう。",
+    },
+    { assetFile: "메달_전체3위.png", verifiedRanking: "all", countsTowardCollection: false }),
+  medal("online-veteran-30", "honor", "온라인30회", 30,
+    { ko: "온라인 베테랑", en: "Online Veteran", ja: "オンラインベテラン" },
+    {
+      ko: "온라인 대전을 30회 완료하세요.",
+      en: "Complete 30 online games.",
+      ja: "オンライン対戦を30回完了しましょう。",
+    },
+    { assetFile: "메달_온라인30회.png" }),
+  medal("friend-games-20", "honor", "친구와20회", 20,
+    { ko: "함께한 스무 판", en: "Twenty Together", ja: "共に二十局" },
+    {
+      ko: "친구와 온라인 대전을 20회 완료하세요. 친구 기능 추가 후 획득할 수 있습니다.",
+      en: "Complete 20 online games with friends. Available after the friends feature launches.",
+      ja: "フレンドとオンライン対局を20回完了しましょう。フレンド機能の追加後に獲得できます。",
+    },
+    { assetFile: "메달_친구와20회.png", unavailable: true, countsTowardCollection: false }),
+  medal("online-rematches-10", "honor", "다시하기10회", 10,
+    { ko: "끝나지 않은 승부", en: "The Match Continues", ja: "終わらない勝負" },
+    {
+      ko: "온라인 대전에서 다시하기 또는 복수하기를 10회 성사시키세요.",
+      en: "Complete 10 accepted rematches or revenge matches online.",
+      ja: "オンライン対局で再戦またはリベンジを10回成立させましょう。",
+    },
+    { assetFile: "메달_다시하기10회.png" }),
 ];
 
 const MINI_GAME_MEDALS = [
@@ -340,6 +390,7 @@ export const MEDALS = Object.freeze([
   ...KINGDOM_MEDALS,
   ...SPECIAL_KINGDOM_MEDALS,
   ...CHALLENGE_MEDALS,
+  ...ONLINE_AND_RANKING_MEDALS,
   ...MINI_GAME_MEDALS,
   ...PUZZLE_MEDALS,
   ...RANK_MEDALS,
@@ -867,6 +918,53 @@ export function recordDailyMissionDay({ currentStreak, totalCompletedDays } = {}
       count(state.progress["hundred-day-training"]),
       totalDays,
     );
+  });
+}
+
+export function recordOnlineGameCompletion({ eventId } = {}) {
+  const id = normalizeId(eventId);
+  if (!id) return { newlyUnlocked: [], state: readMedalState() };
+  return update((state) => {
+    if (!rememberId(state.processedEventIds, `online-game:${id}`)) return;
+    addProgress(state, "online-challenger");
+    addProgress(state, "online-veteran-30");
+  });
+}
+
+export function recordOnlineRematch({ eventId } = {}) {
+  const id = normalizeId(eventId);
+  if (!id) return { newlyUnlocked: [], state: readMedalState() };
+  return update((state) => {
+    if (rememberId(state.processedEventIds, `online-rematch:${id}`)) {
+      addProgress(state, "online-rematches-10");
+    }
+  });
+}
+
+export function recordFriendGameCompletion({ eventId } = {}) {
+  const id = normalizeId(eventId);
+  if (!id) return { newlyUnlocked: [], state: readMedalState() };
+  return update((state) => {
+    if (rememberId(state.processedEventIds, `friend-game:${id}`)) {
+      addProgress(state, "friend-games-20");
+    }
+  });
+}
+
+export function recordVerifiedLeaderboardPlacement({ eventId, period, rank, friendCount = 0 } = {}) {
+  const id = normalizeId(eventId);
+  const normalizedPeriod = normalizeId(period);
+  const placement = count(rank);
+  if (!id || placement < 1 || !["weekly", "all", "friends"].includes(normalizedPeriod)) {
+    return { newlyUnlocked: [], state: readMedalState() };
+  }
+  return update((state) => {
+    if (!rememberId(state.processedEventIds, `leaderboard:${normalizedPeriod}:${id}:${placement}`)) return;
+    if (normalizedPeriod === "weekly" && placement === 1) addProgress(state, "weekly-rank-first");
+    if (normalizedPeriod === "all" && placement <= 3) addProgress(state, "overall-rank-top-three");
+    if (normalizedPeriod === "friends" && placement === 1 && count(friendCount) >= 10) {
+      addProgress(state, "friend-rank-first");
+    }
   });
 }
 

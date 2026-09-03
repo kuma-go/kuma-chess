@@ -10,14 +10,14 @@ globalThis.localStorage = {
 const medals = await import(`../src/medals.js?validation=${Date.now()}`);
 const entries = medals.getMedalEntries("ko");
 
-assert.equal(entries.length, 81, "The catalog must contain all 81 medal definitions.");
+assert.equal(entries.length, 87, "The catalog must contain all 87 medal definitions.");
 for (const entry of entries) {
   assert.ok(entry.name && entry.description, `Missing Korean copy for ${entry.id}`);
   assert.ok(fs.existsSync(new URL(`../assets/kuma/ui/${entry.asset}`, import.meta.url)), `Missing asset ${entry.asset}`);
 }
 const entriesById = new Map(entries.map((entry) => [entry.id, entry]));
-assert.equal(entriesById.get("online-challenger")?.unavailable, true,
-  "The online challenge medal must remain unavailable until online play ships.");
+assert.equal(entriesById.get("online-challenger")?.unavailable, false,
+  "The online challenge medal must be obtainable now that online play has shipped.");
 assert.equal(entriesById.get("online-challenger")?.asset, "메달_도전장.webp",
   "The online challenge medal must keep its original art.");
 assert.equal(entriesById.get("challenge-ai-victory")?.unavailable, false,
@@ -34,6 +34,20 @@ assert.equal(entriesById.get("stockfish-18-lite-victory")?.category, "honor",
   "The future Stockfish medal must live in the dedicated honor category.");
 assert.ok(medals.MEDAL_CATEGORIES.some((category) => category.id === "honor"),
   "The honor medal category is missing.");
+for (const id of [
+  "weekly-rank-first",
+  "friend-rank-first",
+  "overall-rank-top-three",
+  "online-veteran-30",
+  "friend-games-20",
+  "online-rematches-10",
+]) {
+  assert.equal(entriesById.get(id)?.category, "honor", `${id} must live in the honor category.`);
+}
+assert.equal(entriesById.get("friend-rank-first")?.unavailable, true,
+  "The friends ranking medal must wait for the friends feature.");
+assert.equal(entriesById.get("friend-games-20")?.unavailable, true,
+  "The friends game medal must wait for the friends feature.");
 for (const language of ["en", "ja"]) {
   for (const entry of medals.getMedalEntries(language)) {
     assert.ok(entry.name && entry.description, `Missing ${language} copy for ${entry.id}`);
@@ -142,6 +156,29 @@ assert.equal(medals.readMedalState().progress["online-challenger"] || 0, 0,
   "Challenge AI must not advance online challenge progress.");
 assert.equal(medals.readMedalState().progress["stockfish-18-lite-victory"] || 0, 0,
   "Challenge AI must not advance Stockfish progress.");
+
+for (let index = 0; index < 30; index += 1) {
+  medals.recordOnlineGameCompletion({ eventId: `room-${index}:round:1` });
+}
+assert.ok(medals.readMedalState().unlockedAt["online-challenger"], "Ten online games did not unlock the challenge medal.");
+assert.ok(medals.readMedalState().unlockedAt["online-veteran-30"], "Thirty online games did not unlock the veteran medal.");
+const onlineProgress = medals.readMedalState().progress["online-veteran-30"];
+medals.recordOnlineGameCompletion({ eventId: "room-29:round:1" });
+assert.equal(medals.readMedalState().progress["online-veteran-30"], onlineProgress,
+  "A duplicate online round was counted twice.");
+
+for (let index = 0; index < 10; index += 1) {
+  medals.recordOnlineRematch({ eventId: `rematch-room:round:${index + 2}` });
+}
+assert.ok(medals.readMedalState().unlockedAt["online-rematches-10"], "Ten accepted rematches did not unlock the medal.");
+medals.recordFriendGameCompletion({ eventId: "future-friend-game" });
+assert.equal(medals.readMedalState().progress["friend-games-20"] || 0, 0,
+  "Friend game progress must remain disabled before the friends feature ships.");
+
+result = medals.recordVerifiedLeaderboardPlacement({ eventId: "week-2036", period: "weekly", rank: 1 });
+assert.ok(result.newlyUnlocked.includes("weekly-rank-first"), "Verified weekly first place did not unlock its medal.");
+result = medals.recordVerifiedLeaderboardPlacement({ eventId: "all-time-1", period: "all", rank: 3 });
+assert.ok(result.newlyUnlocked.includes("overall-rank-top-three"), "Verified overall top three did not unlock its medal.");
 
 for (const [index, gameId] of ["tug", "crown", "road", "road-puzzle", "siege"].entries()) {
   medals.recordMiniGameCompletion({

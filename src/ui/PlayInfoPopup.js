@@ -4,10 +4,10 @@ import {
   getPlayStats,
   getSkinUnlockState,
   readPlayerState,
-} from "../playerState.js?v=20260903-online95";
-import { readProfileState } from "../profileState.js?v=20260903-online95";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260903-online95";
-import { getMedalSummary } from "../medals.js?v=20260903-online95";
+} from "../playerState.js?v=20260903-gameplay99";
+import { readProfileState } from "../profileState.js?v=20260903-gameplay99";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260903-gameplay99";
+import { getMedalSummary } from "../medals.js?v=20260903-gameplay99";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -15,10 +15,9 @@ import {
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260903-online95";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260903-online95";
-import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260903-online95";
-import { showLeaderboardPopup } from "./LeaderboardPopup.js?v=20260903-online95";
+} from "./KumaUi.js?v=20260903-gameplay99";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260903-gameplay99";
+import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260903-gameplay99";
 
 const COPY = {
   ko: {
@@ -43,7 +42,6 @@ const COPY = {
     blackQuest: "흑 고양이 · AI 대전",
     complete: "완료",
     profileChange: "프로필 변경",
-    leaderboard: "체스 순위",
     confirm: "확인",
   },
   en: {
@@ -68,7 +66,6 @@ const COPY = {
     blackQuest: "Black Cat · AI matches",
     complete: "Complete",
     profileChange: "Edit profile",
-    leaderboard: "Chess Ranking",
     confirm: "OK",
   },
   ja: {
@@ -93,7 +90,6 @@ const COPY = {
     blackQuest: "黒ネコ · AI対戦",
     complete: "完了",
     profileChange: "プロフィール変更",
-    leaderboard: "チェスランキング",
     confirm: "確認",
   },
 };
@@ -364,24 +360,12 @@ export function showPlayInfoPopup(scene, options = {}) {
     scene.playInfoLayer = null;
     if (invokeCallback) options.onClose?.();
   };
-  const leaderboard = addLargeTextButton(scene, px - 125, py + 290, copy.leaderboard, "", () => {
-    close(false);
-    showLeaderboardPopup(scene, {
-      externalBackdrop: options.externalBackdrop,
-      onClose: () => showPlayInfoPopup(scene, options),
-    });
-  }, {
-    width: 230,
-    height: 76,
-    fontSize: language === "en" ? 20 : 23,
-    depth: 10004,
-  });
-  const confirm = addLargeTextButton(scene, px + 125, py + 290, copy.confirm, "", close, {
-    width: 210,
+  const confirm = addLargeTextButton(scene, px, py + 290, copy.confirm, "", close, {
+    width: 300,
     height: 76,
     fontSize: 25,
     dark: true,
     depth: 10004,
   });
-  layer.add([leaderboard.button, leaderboard.title, confirm.button, confirm.title]);
+  layer.add([confirm.button, confirm.title]);
 }

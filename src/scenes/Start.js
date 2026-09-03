@@ -6,11 +6,11 @@ import {
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260903-online95";
-import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260903-online95";
-import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260903-online95";
-import { setTopAdVisible } from "../adManager.js?v=20260903-online95";
-import { t } from "../i18n.js?v=20260903-online95";
+} from "../playerState.js?v=20260903-gameplay99";
+import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260903-gameplay99";
+import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260903-gameplay99";
+import { setTopAdVisible } from "../adManager.js?v=20260903-gameplay99";
+import { t } from "../i18n.js?v=20260903-gameplay99";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -23,14 +23,13 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260903-online95";
-import { playFeedback } from "../feedback.js?v=20260903-online95";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260903-online95";
-import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260903-online95";
-import { showLeaderboardPopup } from "../ui/LeaderboardPopup.js?v=20260903-online95";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-online95";
-import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260903-online95";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-online95";
+} from "../ui/KumaUi.js?v=20260903-gameplay99";
+import { playFeedback } from "../feedback.js?v=20260903-gameplay99";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260903-gameplay99";
+import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260903-gameplay99";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-gameplay99";
+import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260903-gameplay99";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-gameplay99";
 
 const BUTTONS = [
   { y: 704, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
@@ -109,7 +108,6 @@ export class Start extends Phaser.Scene {
     addSettingsButton(this, () => showSettingsPanel(this));
     this.addPlayInfoButton();
     this.addDailyMissionButton();
-    this.addLeaderboardButton();
     this.addInstallButton();
     const consumeInstallReward = () => {
       if (!this.scene.isActive() || !window.KumaInstall?.consumeVerifiedInstall?.()) return;
@@ -199,7 +197,7 @@ export class Start extends Phaser.Scene {
     const { width, height } = this.scale;
     setTopAdVisible(false);
     const launch = data.embeddedLaunch || "";
-    const usesWebBackdrop = ["info", "profile", "ranking", "settings", "daily"].includes(launch);
+    const usesWebBackdrop = ["info", "profile", "settings", "daily"].includes(launch);
     if (usesWebBackdrop) this.cameras.main.setBackgroundColor("rgba(0,0,0,0)");
     else this.add.rectangle(0, 0, width, height, 0xfff8ea).setOrigin(0).setDepth(-20);
 
@@ -218,16 +216,6 @@ export class Start extends Phaser.Scene {
       this.time.delayedCall(0, () => {
         if (!this.scene.isActive()) return;
         showProfileEditorPopup(this, {
-          externalBackdrop: true,
-          onClose: () => window.KumaEmbeddedRuntime?.returnHome(),
-        });
-      });
-      return;
-    }
-    if (launch === "ranking") {
-      this.time.delayedCall(0, () => {
-        if (!this.scene.isActive()) return;
-        showLeaderboardPopup(this, {
           externalBackdrop: true,
           onClose: () => window.KumaEmbeddedRuntime?.returnHome(),
         });
@@ -274,7 +262,6 @@ export class Start extends Phaser.Scene {
       if (launch === "road-puzzle") return this.scene.start("RoyalRoadPuzzleSelect");
       if (launch === "info") return showPlayInfoPopup(this);
       if (launch === "profile") return showProfileEditorPopup(this);
-      if (launch === "ranking") return showLeaderboardPopup(this);
       if (launch === "settings") return showSettingsPanel(this);
       if (launch === "daily") {
         return showDailyMissionPopup(this, {
@@ -545,26 +532,6 @@ export class Start extends Phaser.Scene {
     }
     if (!snapshot.hasNotice) return;
     group.add(this.add.image(25, 24, "kuma_ui_icon_new").setDisplaySize(22, 29));
-  }
-
-  addLeaderboardButton() {
-    const x = 67;
-    const y = 250;
-    const group = this.add.container(x, y).setDepth(930);
-    const button = this.add.image(0, 0, "kuma_ui_btn_leaderboard").setDisplaySize(67, 69);
-    const label = this.add.text(0, 48, t("start.ranking"), {
-      fontFamily: KUMA_FONT_SANS,
-      fontSize: "18px",
-      color: "#674725",
-      fontStyle: "800",
-    }).setOrigin(0.5);
-    const hit = this.add.circle(0, 0, 38, 0xffffff, 0.001)
-      .setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => {
-      playFeedback("ui");
-      showLeaderboardPopup(this);
-    });
-    group.add([button, label, hit]);
   }
 
   addInstallButton() {
