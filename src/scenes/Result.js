@@ -1,6 +1,6 @@
-import { createPieceView } from "../pieceStyles.js?v=20260904-guides101";
-import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260904-guides101";
-import { t } from "../i18n.js?v=20260904-guides101";
+import { createPieceView } from "../pieceStyles.js?v=20260904-mobilefix102";
+import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260904-mobilefix102";
+import { t } from "../i18n.js?v=20260904-mobilefix102";
 import {
   addDarkTopBar,
   addLargeTextButton,
@@ -9,12 +9,12 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260904-guides101";
-import { markMedalsSeen, recordOnlineRematch } from "../medals.js?v=20260904-guides101";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-guides101";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260904-guides101";
-import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260904-guides101";
-import { saveOnlineSession } from "../onlineSession.js?v=20260904-guides101";
+} from "../ui/KumaUi.js?v=20260904-mobilefix102";
+import { markMedalsSeen, recordOnlineRematch } from "../medals.js?v=20260904-mobilefix102";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-mobilefix102";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260904-mobilefix102";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260904-mobilefix102";
+import { saveOnlineSession } from "../onlineSession.js?v=20260904-mobilefix102";
 
 const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35, challenge: 100 });
 const DIFFICULTY_LABELS = Object.freeze({

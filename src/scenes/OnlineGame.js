@@ -1,12 +1,12 @@
-import { Chess } from "../vendor-chess.js?v=20260904-guides101";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-guides101";
-import { readProfileState } from "../profileState.js?v=20260904-guides101";
-import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260904-guides101";
-import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260904-guides101";
-import { playFeedback } from "../feedback.js?v=20260904-guides101";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260904-guides101";
-import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260904-guides101";
-import { recordOnlineGameCompletion } from "../medals.js?v=20260904-guides101";
+import { Chess } from "../vendor-chess.js?v=20260904-mobilefix102";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-mobilefix102";
+import { readProfileState } from "../profileState.js?v=20260904-mobilefix102";
+import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260904-mobilefix102";
+import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260904-mobilefix102";
+import { playFeedback } from "../feedback.js?v=20260904-mobilefix102";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260904-mobilefix102";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260904-mobilefix102";
+import { recordOnlineGameCompletion } from "../medals.js?v=20260904-mobilefix102";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -18,7 +18,7 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260904-guides101";
+} from "../ui/KumaUi.js?v=20260904-mobilefix102";
 
 const FILES = "abcdefgh";
 const COPY = Object.freeze({

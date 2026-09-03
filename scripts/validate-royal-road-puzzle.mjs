@@ -19,6 +19,10 @@ const puzzleSceneSource = fs.readFileSync(new URL("../src/scenes/RoyalRoadPuzzle
 assert.match(puzzleSceneSource, /fillTriangle\(/, "direct-move highlights must include directional triangles");
 assert.match(puzzleSceneSource, /GOAL_VISUAL_OFFSET_Y = -CELL \* 0\.5 \+ 6/, "goal art must sit half a cell above its logical destination");
 assert.match(puzzleSceneSource, /PLAY_VIEW\.y - GOAL_MASK_OVERFLOW_Y/, "goal art must remain visible above the board mask");
+assert.match(puzzleSceneSource, /maskShape\.fillStyle\([^\n]+\)\.fillRect\(PLAY_VIEW\.x, PLAY_VIEW\.y, PLAY_VIEW\.width, PLAY_VIEW\.height\)/, "the board mask must not expose board content above its frame");
+assert.match(puzzleSceneSource, /this\.goalOverflowRoot\.setMask\(/, "goal overflow art must use its own mask");
+assert.match(puzzleSceneSource, /this\.goalOverflowRoot\.add\(this\.goalOverflowView\)/, "only a duplicate of the goal art may render above the board");
+assert.match(puzzleSceneSource, /this\.goalOverflowRoot\.setPosition\(this\.cameraOffset\.x, this\.cameraOffset\.y\)/, "goal overflow art must follow board camera movement");
 
 assert.equal(ROYAL_ROAD_PUZZLE_STAGES.length, 24, "24 stages are required");
 assert.equal(new Set(ROYAL_ROAD_PUZZLE_STAGES.map((stage) => stage.id)).size, 24, "stage ids must be unique");

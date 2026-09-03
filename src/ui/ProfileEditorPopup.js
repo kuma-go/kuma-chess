@@ -1,16 +1,16 @@
 import {
   getProfileCosmeticCollection,
   purchaseProfileLoadout,
-} from "../playerState.js?v=20260904-guides101";
+} from "../playerState.js?v=20260904-mobilefix102";
 import {
   ensureProfileAssets,
   profileTextureKey,
-} from "../profileCatalog.js?v=20260904-guides101";
+} from "../profileCatalog.js?v=20260904-mobilefix102";
 import {
   normalizeDisplayName,
   readProfileState,
   writeProfileState,
-} from "../profileState.js?v=20260904-guides101";
+} from "../profileState.js?v=20260904-mobilefix102";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -19,9 +19,9 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260904-guides101";
-import { showConfirm } from "./ConfirmPopup.js?v=20260904-guides101";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-guides101";
+} from "./KumaUi.js?v=20260904-mobilefix102";
+import { showConfirm } from "./ConfirmPopup.js?v=20260904-mobilefix102";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-mobilefix102";
 
 const GRID_COLUMNS = 4;
 const GRID_ROW_HEIGHT = 148;

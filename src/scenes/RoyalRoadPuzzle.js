@@ -1,9 +1,9 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-guides101";
-import { createPieceView } from "../pieceStyles.js?v=20260904-guides101";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-guides101";
-import { t } from "../i18n.js?v=20260904-guides101";
-import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260904-guides101";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-guides101";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-mobilefix102";
+import { createPieceView } from "../pieceStyles.js?v=20260904-mobilefix102";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-mobilefix102";
+import { t } from "../i18n.js?v=20260904-mobilefix102";
+import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260904-mobilefix102";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-mobilefix102";
 import {
   createRoadPuzzleState,
   findRoadPuzzlePath,
@@ -14,10 +14,10 @@ import {
   roadPuzzleNeighbors,
   rotateRoadPuzzleTile,
   scoreRoadPuzzle,
-} from "../royalRoadPuzzleLogic.js?v=20260904-guides101";
-import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260904-guides101";
-import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260904-guides101";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-guides101";
+} from "../royalRoadPuzzleLogic.js?v=20260904-mobilefix102";
+import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260904-mobilefix102";
+import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260904-mobilefix102";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-mobilefix102";
 import {
   addDarkTopBar,
   addLargeTextButton,
@@ -27,7 +27,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260904-guides101";
+} from "../ui/KumaUi.js?v=20260904-mobilefix102";
 
 const VIEW = Object.freeze({ x: 18, y: 214, width: 684, height: 882 });
 const PLAY_VIEW = Object.freeze({
@@ -120,14 +120,19 @@ export class RoyalRoadPuzzle extends Phaser.Scene {
       .setStrokeStyle(2, 0xb88a48, 1).setDepth(0);
     this.boardRoot = this.add.container(0, 0).setDepth(20);
     const maskShape = this.make.graphics({ add: false });
-    maskShape.fillStyle(0xffffff, 1).fillRect(
+    maskShape.fillStyle(0xffffff, 1).fillRect(PLAY_VIEW.x, PLAY_VIEW.y, PLAY_VIEW.width, PLAY_VIEW.height);
+    this.boardRoot.setMask(maskShape.createGeometryMask());
+    this.maskShape = maskShape;
+    this.goalOverflowRoot = this.add.container(0, 0).setDepth(21);
+    const goalOverflowMaskShape = this.make.graphics({ add: false });
+    goalOverflowMaskShape.fillStyle(0xffffff, 1).fillRect(
       PLAY_VIEW.x,
       PLAY_VIEW.y - GOAL_MASK_OVERFLOW_Y,
       PLAY_VIEW.width,
-      PLAY_VIEW.height + GOAL_MASK_OVERFLOW_Y
+      GOAL_MASK_OVERFLOW_Y
     );
-    this.boardRoot.setMask(maskShape.createGeometryMask());
-    this.maskShape = maskShape;
+    this.goalOverflowRoot.setMask(goalOverflowMaskShape.createGeometryMask());
+    this.goalOverflowMaskShape = goalOverflowMaskShape;
     this.drawBoard();
     this.addBoardFrame();
     this.createHud();
@@ -144,12 +149,14 @@ export class RoyalRoadPuzzle extends Phaser.Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.maskShape?.destroy();
+      this.goalOverflowMaskShape?.destroy();
       this.pointerGesture = null;
     });
   }
 
   drawBoard() {
     this.boardRoot.removeAll(true);
+    this.goalOverflowRoot.removeAll(true);
     this.boardWidth = this.stage.width * CELL;
     this.boardHeight = this.stage.height * CELL;
     const bg = this.add.graphics();
@@ -172,6 +179,12 @@ export class RoyalRoadPuzzle extends Phaser.Scene {
       "kuma_ui_img_castle"
     ).setDisplaySize(CELL * 1.12, CELL * 1.03).setDepth(88);
     this.boardRoot.add(this.goalView);
+    this.goalOverflowView = this.add.image(
+      this.goalView.x,
+      this.goalView.y,
+      "kuma_ui_img_castle"
+    ).setDisplaySize(this.goalView.displayWidth, this.goalView.displayHeight);
+    this.goalOverflowRoot.add(this.goalOverflowView);
     this.highlightLayer = this.add.graphics().setDepth(72);
     this.boardRoot.add(this.highlightLayer);
     this.fitInitialCamera();
@@ -580,6 +593,7 @@ export class RoyalRoadPuzzle extends Phaser.Scene {
     this.cameraOffset.x = Phaser.Math.Clamp(x, minX, maxX);
     this.cameraOffset.y = Phaser.Math.Clamp(y, minY, maxY);
     if (this.boardRoot) this.boardRoot.setPosition(this.cameraOffset.x, this.cameraOffset.y);
+    if (this.goalOverflowRoot) this.goalOverflowRoot.setPosition(this.cameraOffset.x, this.cameraOffset.y);
   }
 
   followPlayer() {

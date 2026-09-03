@@ -1,25 +1,25 @@
-import { Boot } from "./scenes/Boot.js?v=20260904-guides101";
-import { Start } from "./scenes/Start.js?v=20260904-guides101";
-import { PieceSelect } from "./scenes/PieceSelect.js?v=20260904-guides101";
-import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260904-guides101";
-import { Game } from "./scenes/Game.js?v=20260904-guides101";
-import { Result } from "./scenes/Result.js?v=20260904-guides101";
-import { OnlineGame } from "./scenes/OnlineGame.js?v=20260904-guides101";
-import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260904-guides101";
-import { Puzzle } from "./scenes/Puzzle.js?v=20260904-guides101";
-import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260904-guides101";
-import { KingdomTug } from "./scenes/KingdomTug.js?v=20260904-guides101";
-import { RoyalRoad } from "./scenes/RoyalRoad.js?v=20260904-guides101";
-import { RoyalRoadPuzzleSelect } from "./scenes/RoyalRoadPuzzleSelect.js?v=20260904-guides101";
-import { RoyalRoadPuzzle } from "./scenes/RoyalRoadPuzzle.js?v=20260904-guides101";
-import { CrownClash } from "./scenes/CrownClash.js?v=20260904-guides101";
-import { KingdomSiege } from "./scenes/KingdomSiege.js?v=20260904-guides101";
-import { Demo } from "./scenes/Demo.js?v=20260904-guides101";
-import { installFeedbackUnlock } from "./feedback.js?v=20260904-guides101";
+import { Boot } from "./scenes/Boot.js?v=20260904-mobilefix102";
+import { Start } from "./scenes/Start.js?v=20260904-mobilefix102";
+import { PieceSelect } from "./scenes/PieceSelect.js?v=20260904-mobilefix102";
+import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260904-mobilefix102";
+import { Game } from "./scenes/Game.js?v=20260904-mobilefix102";
+import { Result } from "./scenes/Result.js?v=20260904-mobilefix102";
+import { OnlineGame } from "./scenes/OnlineGame.js?v=20260904-mobilefix102";
+import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260904-mobilefix102";
+import { Puzzle } from "./scenes/Puzzle.js?v=20260904-mobilefix102";
+import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260904-mobilefix102";
+import { KingdomTug } from "./scenes/KingdomTug.js?v=20260904-mobilefix102";
+import { RoyalRoad } from "./scenes/RoyalRoad.js?v=20260904-mobilefix102";
+import { RoyalRoadPuzzleSelect } from "./scenes/RoyalRoadPuzzleSelect.js?v=20260904-mobilefix102";
+import { RoyalRoadPuzzle } from "./scenes/RoyalRoadPuzzle.js?v=20260904-mobilefix102";
+import { CrownClash } from "./scenes/CrownClash.js?v=20260904-mobilefix102";
+import { KingdomSiege } from "./scenes/KingdomSiege.js?v=20260904-mobilefix102";
+import { Demo } from "./scenes/Demo.js?v=20260904-mobilefix102";
+import { installFeedbackUnlock } from "./feedback.js?v=20260904-mobilefix102";
 import {
   installMenuBgm,
   installMenuBgmSceneHooks,
-} from "./menuBgm.js?v=20260904-guides101";
+} from "./menuBgm.js?v=20260904-mobilefix102";
 
 const isEmbedded = window.parent !== window;
 const config = {

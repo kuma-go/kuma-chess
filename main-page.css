@@ -1456,6 +1456,7 @@ html[lang="ja"] #mode-dialog .mode-home { font-size: 4.5cqi; }
   max-width: 100%;
   height: auto;
   max-height: calc(100dvh - 16px);
+  border-radius: 20px;
   object-fit: contain;
 }
 .minigame-guide-dialog > button:focus-visible {
@@ -1936,6 +1937,7 @@ html[lang="ja"] .reference-section li { font-size: 2.02cqw; line-height: 1.24; }
   width: 100%;
   height: auto;
   max-width: none;
+  border-radius: 20px;
 }
 
 .modes-section { height: 270.83cqw; min-height: 0 !important; }

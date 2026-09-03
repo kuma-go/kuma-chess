@@ -57,6 +57,9 @@ assert(main.includes("showMinigameGuide(launch, mode, trigger)")
   && main.includes("startPendingMinigameGuide")
   && fallback.includes("showMinigameGuide(pendingMinigameLaunch"),
 "Mini-game guide confirmation is not connected to primary and fallback launches");
+assert(/\.minigame-guide-dialog img[\s\S]*?border-radius: 20px;/.test(css)
+  && /\.minigame-guide-list img[\s\S]*?border-radius: 20px;/.test(css),
+"Mini-game guide images must keep 20px corners in the page and launch dialog");
 assert(main.includes('modeDialog.querySelectorAll(".mode-card-art")') && main.includes("image.src = cardArt"), "Mode cards do not update when the selected minigame changes");
 assert(html.includes('class="mode-home"') && !html.includes('id="mode-dialog" class="web-dialog mode-dialog">\n      <div class="dialog-panel">\n        <button'), "Mode dialog must use the in-art main button without a close icon");
 assert(!html.includes("mode-piece"), "Legacy piece icons remain in the play selector");
