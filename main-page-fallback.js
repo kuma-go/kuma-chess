@@ -10,6 +10,8 @@
     const gameLoadingMessage = document.getElementById("game-loading-message");
     const retryGame = document.getElementById("retry-game");
     const modeDialog = document.getElementById("mode-dialog");
+    const onlineDialog = document.getElementById("online-dialog");
+    const onlineCodeInput = document.getElementById("online-code-input");
     let pendingMinigameLaunch = "";
     let gameReadyTimer = 0;
     let gameSession = 0;
@@ -18,7 +20,12 @@
     let runtimePreloadSession = "";
     let requestedGame = null;
     let ticking = false;
+    let onlineBusy = false;
+    let onlineRoomCode = "";
+    let onlinePlayerColor = "w";
+    let onlineUnsubscribe = null;
     const popupGameLaunches = new Set(["daily", "settings", "info", "profile", "medals"]);
+    const onlineSessionKey = "kumaChessOnlineSessionV1";
 
     document.documentElement.dataset.kumaActionFallback = "true";
 
@@ -67,6 +74,7 @@
         launch: requestedGame.launch,
         mode: requestedGame.mode,
         hostSession: requestedGame.hostSession,
+        payload: requestedGame.payload,
       }, window.location.origin);
       window.clearTimeout(gameReadyTimer);
       gameReadyTimer = window.setTimeout(showGameLoadError, 12000);
@@ -80,9 +88,9 @@
       gameReadyTimer = window.setTimeout(showGameLoadError, 12000);
     };
 
-    const openGameLaunch = (launch, mode = "") => {
+    const openGameLaunch = (launch, mode = "", payload = null) => {
       if (!gameOverlay || !gameFrame) return;
-      requestedGame = { launch, mode, hostSession: `fallback-${++gameSession}` };
+      requestedGame = { launch, mode, payload, hostSession: `fallback-${++gameSession}` };
       gameOverlay.classList.toggle("is-popup", popupGameLaunches.has(launch));
       gameOverlay.classList.toggle("is-content", !popupGameLaunches.has(launch));
       document.body.classList.toggle("game-popup-open", popupGameLaunches.has(launch));
@@ -107,6 +115,227 @@
       gameOverlay.classList.remove("is-popup", "is-content");
       if (notifyRuntime) {
         gameFrame?.contentWindow?.postMessage({ type: "kuma-game-suspend" }, window.location.origin);
+      }
+    };
+
+    const normalizeOnlineCode = (value) => String(value || "")
+      .toUpperCase()
+      .replace(/[^A-HJ-NP-Z2-9]/g, "")
+      .slice(0, 6);
+
+    const readOnlineSession = () => {
+      try {
+        const value = JSON.parse(window.localStorage.getItem(onlineSessionKey) || "null");
+        const code = normalizeOnlineCode(value?.code);
+        return code.length === 6 ? { code, color: value?.color === "b" ? "b" : "w" } : null;
+      } catch (_error) {
+        return null;
+      }
+    };
+
+    const saveOnlineSession = (code, color) => {
+      const value = { code: normalizeOnlineCode(code), color: color === "b" ? "b" : "w" };
+      if (value.code.length === 6) window.localStorage.setItem(onlineSessionKey, JSON.stringify(value));
+    };
+
+    const setOnlineStatus = (selector, message = "") => {
+      const element = onlineDialog?.querySelector(selector);
+      if (element) element.textContent = message;
+    };
+
+    const setOnlineView = (view) => {
+      if (onlineDialog) onlineDialog.dataset.onlineViewState = view;
+      onlineDialog?.querySelectorAll("[data-online-view]").forEach((section) => {
+        section.hidden = section.dataset.onlineView !== view;
+      });
+    };
+
+    const setOnlineBusy = (value) => {
+      onlineBusy = Boolean(value);
+      if (onlineDialog) onlineDialog.dataset.onlineBusy = String(onlineBusy);
+      onlineDialog?.querySelectorAll("button, input").forEach((control) => {
+        control.disabled = onlineBusy && !control.matches("[data-online-close]");
+      });
+    };
+
+    const stopOnlineWatch = () => {
+      onlineUnsubscribe?.();
+      onlineUnsubscribe = null;
+    };
+
+    const onlineErrorMessage = (reason) => {
+      if (reason === "room-not-found") return "초대방을 찾을 수 없습니다.";
+      if (reason === "room-unavailable") return "이미 시작했거나 종료된 방입니다.";
+      if (reason === "same-player") return "같은 기기에서는 이 방에 참가할 수 없습니다.";
+      if (reason === "invalid-code") return "6자리 초대 코드를 확인해주세요.";
+      if (["permission-denied", "unavailable", "offline", "watch-failed"].includes(reason)) {
+        return "온라인 서비스에 연결할 수 없습니다.";
+      }
+      return "방에 연결하지 못했습니다. 다시 시도해주세요.";
+    };
+
+    const launchOnlineMatch = (room) => {
+      if (!room || room.status !== "active") return;
+      stopOnlineWatch();
+      if (typeof onlineDialog?.close === "function") onlineDialog.close();
+      else onlineDialog?.removeAttribute("open");
+      openGameLaunch("online-game", "", {
+        room,
+        code: onlineRoomCode || room.code,
+        playerColor: onlinePlayerColor,
+      });
+    };
+
+    const watchOnlineRoom = (code, color) => {
+      stopOnlineWatch();
+      onlineRoomCode = normalizeOnlineCode(code);
+      onlinePlayerColor = color === "b" ? "b" : "w";
+      const cloud = window.KumaCloud;
+      if (!cloud?.watchOnlineRoom || onlineRoomCode.length !== 6) {
+        setOnlineBusy(false);
+        setOnlineStatus("[data-online-waiting-status]", "온라인 서비스에 연결할 수 없습니다.");
+        return;
+      }
+      onlineUnsubscribe = cloud.watchOnlineRoom(
+        onlineRoomCode,
+        (room) => {
+          if (!room) {
+            window.localStorage.removeItem(onlineSessionKey);
+            stopOnlineWatch();
+            setOnlineBusy(false);
+            setOnlineView("entry");
+            setOnlineStatus("[data-online-entry-status]", "초대방을 찾을 수 없습니다.");
+            return;
+          }
+          if (room.status === "active") {
+            launchOnlineMatch(room);
+            return;
+          }
+          if (room.status !== "waiting") {
+            window.localStorage.removeItem(onlineSessionKey);
+            stopOnlineWatch();
+            setOnlineBusy(false);
+            setOnlineView("entry");
+            setOnlineStatus("[data-online-entry-status]", "이미 시작했거나 종료된 방입니다.");
+            return;
+          }
+          setOnlineBusy(false);
+          setOnlineView("waiting");
+          setOnlineStatus("[data-online-waiting-status]", "");
+        },
+        (reason) => {
+          setOnlineBusy(false);
+          setOnlineStatus("[data-online-waiting-status]", onlineErrorMessage(reason));
+        },
+      );
+    };
+
+    const openOnlineDialog = () => {
+      setOnlineBusy(false);
+      setOnlineStatus("[data-online-entry-status]", "");
+      setOnlineStatus("[data-online-code-status]", "");
+      setOnlineStatus("[data-online-waiting-status]", "");
+      const session = readOnlineSession();
+      if (session) {
+        onlineRoomCode = session.code;
+        onlinePlayerColor = session.color;
+        setOnlineView("waiting");
+        const codeLabel = onlineDialog?.querySelector("[data-online-room-code]");
+        if (codeLabel) codeLabel.textContent = session.code;
+        setOnlineBusy(true);
+      } else {
+        onlineRoomCode = "";
+        onlinePlayerColor = "w";
+        setOnlineView("entry");
+      }
+      if (typeof onlineDialog?.showModal === "function") onlineDialog.showModal();
+      else onlineDialog?.setAttribute("open", "");
+      if (session) watchOnlineRoom(session.code, session.color);
+    };
+
+    const closeOnlineDialog = () => {
+      stopOnlineWatch();
+      if (typeof onlineDialog?.close === "function") onlineDialog.close();
+      else onlineDialog?.removeAttribute("open");
+    };
+
+    const createOnlineRoom = async () => {
+      if (onlineBusy) return;
+      const cloud = window.KumaCloud;
+      if (!cloud?.createOnlineRoom) {
+        setOnlineStatus("[data-online-entry-status]", "온라인 서비스에 연결할 수 없습니다.");
+        return;
+      }
+      setOnlineBusy(true);
+      setOnlineStatus("[data-online-entry-status]", "온라인 서비스에 연결 중입니다.");
+      try {
+        const result = await cloud.createOnlineRoom();
+        if (!result?.ok) {
+          setOnlineBusy(false);
+          setOnlineStatus("[data-online-entry-status]", onlineErrorMessage(result?.reason));
+          return;
+        }
+        onlineRoomCode = result.code;
+        onlinePlayerColor = result.color;
+        saveOnlineSession(result.code, result.color);
+        const codeLabel = onlineDialog?.querySelector("[data-online-room-code]");
+        if (codeLabel) codeLabel.textContent = result.code;
+        setOnlineView("waiting");
+        watchOnlineRoom(result.code, result.color);
+      } catch (_error) {
+        setOnlineBusy(false);
+        setOnlineStatus("[data-online-entry-status]", "온라인 서비스에 연결할 수 없습니다.");
+      }
+    };
+
+    const joinOnlineRoom = async () => {
+      if (onlineBusy) return;
+      const code = normalizeOnlineCode(onlineCodeInput?.value);
+      if (onlineCodeInput) onlineCodeInput.value = code;
+      if (code.length !== 6) {
+        setOnlineStatus("[data-online-code-status]", "6자리 초대 코드를 확인해주세요.");
+        return;
+      }
+      const cloud = window.KumaCloud;
+      if (!cloud?.joinOnlineRoom) {
+        setOnlineStatus("[data-online-code-status]", "온라인 서비스에 연결할 수 없습니다.");
+        return;
+      }
+      setOnlineBusy(true);
+      setOnlineStatus("[data-online-code-status]", "온라인 서비스에 연결 중입니다.");
+      try {
+        const result = await cloud.joinOnlineRoom(code);
+        if (!result?.ok) {
+          setOnlineBusy(false);
+          setOnlineStatus("[data-online-code-status]", onlineErrorMessage(result?.reason));
+          return;
+        }
+        onlineRoomCode = result.code;
+        onlinePlayerColor = result.color;
+        saveOnlineSession(result.code, result.color);
+        const codeLabel = onlineDialog?.querySelector("[data-online-room-code]");
+        if (codeLabel) codeLabel.textContent = result.code;
+        setOnlineView("waiting");
+        watchOnlineRoom(result.code, result.color);
+      } catch (_error) {
+        setOnlineBusy(false);
+        setOnlineStatus("[data-online-code-status]", "온라인 서비스에 연결할 수 없습니다.");
+      }
+    };
+
+    const cancelOnlineRoom = async () => {
+      if (onlineBusy || !onlineRoomCode) return;
+      const code = onlineRoomCode;
+      stopOnlineWatch();
+      setOnlineBusy(true);
+      setOnlineStatus("[data-online-waiting-status]", "온라인 서비스에 연결 중입니다.");
+      try {
+        await window.KumaCloud?.leaveOnlineRoom?.(code);
+      } finally {
+        window.localStorage.removeItem(onlineSessionKey);
+        onlineRoomCode = "";
+        setOnlineBusy(false);
+        setOnlineView("entry");
       }
     };
 
@@ -142,6 +371,56 @@
       else modeDialog?.removeAttribute("open");
       if (pendingMinigameLaunch) openGameLaunch(pendingMinigameLaunch, button.dataset.minigameMode || "ai");
     }));
+    document.querySelectorAll("[data-open-online]").forEach((button) => button.addEventListener("click", (event) => {
+      if (!claimFallbackClick(event)) return;
+      openOnlineDialog();
+    }));
+    onlineDialog?.querySelector("[data-online-create]")?.addEventListener("click", (event) => {
+      if (!claimFallbackClick(event)) return;
+      void createOnlineRoom();
+    });
+    onlineDialog?.querySelector("[data-online-code-open]")?.addEventListener("click", (event) => {
+      if (!claimFallbackClick(event)) return;
+      setOnlineView("code");
+      setOnlineStatus("[data-online-code-status]", "");
+      if (onlineCodeInput) onlineCodeInput.value = "";
+      window.setTimeout(() => onlineCodeInput?.focus(), 0);
+    });
+    onlineDialog?.querySelector("[data-online-back]")?.addEventListener("click", (event) => {
+      if (!claimFallbackClick(event)) return;
+      setOnlineView("entry");
+    });
+    onlineDialog?.querySelector("[data-online-close]")?.addEventListener("click", (event) => {
+      if (!claimFallbackClick(event)) return;
+      closeOnlineDialog();
+    });
+    onlineDialog?.querySelector("[data-online-copy]")?.addEventListener("click", async (event) => {
+      if (!claimFallbackClick(event)) return;
+      try {
+        await navigator.clipboard.writeText(onlineRoomCode);
+        setOnlineStatus("[data-online-waiting-status]", "초대 코드를 복사했습니다.");
+      } catch (_error) {
+        setOnlineStatus("[data-online-waiting-status]", onlineRoomCode);
+      }
+    });
+    onlineDialog?.querySelector("[data-online-cancel-room]")?.addEventListener("click", (event) => {
+      if (!claimFallbackClick(event)) return;
+      void cancelOnlineRoom();
+    });
+    onlineDialog?.querySelector(".online-code-form")?.addEventListener("submit", (event) => {
+      if (!claimFallbackClick(event)) return;
+      void joinOnlineRoom();
+    });
+    onlineCodeInput?.addEventListener("input", () => {
+      if (isPrimaryReady()) return;
+      onlineCodeInput.value = normalizeOnlineCode(onlineCodeInput.value);
+      setOnlineStatus("[data-online-code-status]", "");
+    });
+    onlineDialog?.addEventListener("click", (event) => {
+      if (event.target !== onlineDialog || !claimFallbackClick(event)) return;
+      closeOnlineDialog();
+    });
+    onlineDialog?.addEventListener("close", stopOnlineWatch);
     modeDialog?.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", (event) => {
       if (!claimFallbackClick(event)) return;
       if (typeof modeDialog.close === "function") modeDialog.close();

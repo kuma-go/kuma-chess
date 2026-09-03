@@ -17,6 +17,7 @@ import { ROYAL_ROAD_PUZZLE_STAGES } from "../src/royalRoadPuzzleStages.js";
 
 const puzzleSceneSource = fs.readFileSync(new URL("../src/scenes/RoyalRoadPuzzle.js", import.meta.url), "utf8");
 assert.match(puzzleSceneSource, /fillTriangle\(/, "direct-move highlights must include directional triangles");
+assert.match(puzzleSceneSource, /GOAL_VISUAL_OFFSET_Y = -CELL \* 0\.5 \+ 6/, "goal art must sit half a cell above its logical destination");
 
 assert.equal(ROYAL_ROAD_PUZZLE_STAGES.length, 24, "24 stages are required");
 assert.equal(new Set(ROYAL_ROAD_PUZZLE_STAGES.map((stage) => stage.id)).size, 24, "stage ids must be unique");

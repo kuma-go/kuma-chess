@@ -5,22 +5,22 @@ import {
   markMedalsSeen,
   medalTextureKey,
   syncContextMedals,
-} from "../medals.js?v=20260903-gameplay99";
+} from "../medals.js?v=20260903-onlinefix100";
 import {
   getCollectionSkinColorTotal,
   getOwnedCollectionSkinColorCount,
   readPlayerState,
-} from "../playerState.js?v=20260903-gameplay99";
-import { t } from "../i18n.js?v=20260903-gameplay99";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260903-gameplay99";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-gameplay99";
+} from "../playerState.js?v=20260903-onlinefix100";
+import { t } from "../i18n.js?v=20260903-onlinefix100";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260903-onlinefix100";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-onlinefix100";
 import {
   addLargeTextButton,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260903-gameplay99";
+} from "../ui/KumaUi.js?v=20260903-onlinefix100";
 
 const UI_ROOT = "assets/kuma/ui/";
 const UI_ASSETS = Object.freeze([

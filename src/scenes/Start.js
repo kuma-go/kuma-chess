@@ -6,11 +6,11 @@ import {
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260903-gameplay99";
-import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260903-gameplay99";
-import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260903-gameplay99";
-import { setTopAdVisible } from "../adManager.js?v=20260903-gameplay99";
-import { t } from "../i18n.js?v=20260903-gameplay99";
+} from "../playerState.js?v=20260903-onlinefix100";
+import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260903-onlinefix100";
+import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260903-onlinefix100";
+import { setTopAdVisible } from "../adManager.js?v=20260903-onlinefix100";
+import { t } from "../i18n.js?v=20260903-onlinefix100";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -23,13 +23,13 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260903-gameplay99";
-import { playFeedback } from "../feedback.js?v=20260903-gameplay99";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260903-gameplay99";
-import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260903-gameplay99";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-gameplay99";
-import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260903-gameplay99";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-gameplay99";
+} from "../ui/KumaUi.js?v=20260903-onlinefix100";
+import { playFeedback } from "../feedback.js?v=20260903-onlinefix100";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260903-onlinefix100";
+import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260903-onlinefix100";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-onlinefix100";
+import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260903-onlinefix100";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260903-onlinefix100";
 
 const BUTTONS = [
   { y: 704, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },

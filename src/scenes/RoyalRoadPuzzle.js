@@ -1,9 +1,9 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260903-gameplay99";
-import { createPieceView } from "../pieceStyles.js?v=20260903-gameplay99";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260903-gameplay99";
-import { t } from "../i18n.js?v=20260903-gameplay99";
-import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260903-gameplay99";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-gameplay99";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260903-onlinefix100";
+import { createPieceView } from "../pieceStyles.js?v=20260903-onlinefix100";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260903-onlinefix100";
+import { t } from "../i18n.js?v=20260903-onlinefix100";
+import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260903-onlinefix100";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-onlinefix100";
 import {
   createRoadPuzzleState,
   findRoadPuzzlePath,
@@ -14,10 +14,10 @@ import {
   roadPuzzleNeighbors,
   rotateRoadPuzzleTile,
   scoreRoadPuzzle,
-} from "../royalRoadPuzzleLogic.js?v=20260903-gameplay99";
-import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260903-gameplay99";
-import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260903-gameplay99";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-gameplay99";
+} from "../royalRoadPuzzleLogic.js?v=20260903-onlinefix100";
+import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260903-onlinefix100";
+import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260903-onlinefix100";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260903-onlinefix100";
 import {
   addDarkTopBar,
   addLargeTextButton,
@@ -27,7 +27,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260903-gameplay99";
+} from "../ui/KumaUi.js?v=20260903-onlinefix100";
 
 const VIEW = Object.freeze({ x: 18, y: 214, width: 684, height: 882 });
 const PLAY_VIEW = Object.freeze({
@@ -39,6 +39,7 @@ const PLAY_VIEW = Object.freeze({
 const CELL = 104;
 const TILE_H = CELL * (124 / 120);
 const KING_ANCHOR_Y = -CELL * 0.48;
+const GOAL_VISUAL_OFFSET_Y = -CELL * 0.5 + 6;
 const TAP_THRESHOLD = 10;
 const TEXTURE_BY_KIND = Object.freeze({
   straight: "kuma_ui_tile_down_up",
@@ -161,7 +162,7 @@ export class RoyalRoadPuzzle extends Phaser.Scene {
     }
     this.goalView = this.add.image(
       this.stage.goal.x * CELL + CELL / 2,
-      this.stage.goal.y * CELL + CELL / 2 + 6,
+      this.stage.goal.y * CELL + CELL / 2 + GOAL_VISUAL_OFFSET_Y,
       "kuma_ui_img_castle"
     ).setDisplaySize(CELL * 1.12, CELL * 1.03).setDepth(88);
     this.boardRoot.add(this.goalView);

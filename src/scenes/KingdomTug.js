@@ -1,9 +1,9 @@
-import { ensurePieceSetsLoaded, pieceTextureKey } from "../pieceAssets.js?v=20260903-gameplay99";
-import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260903-gameplay99";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260903-gameplay99";
-import { t } from "../i18n.js?v=20260903-gameplay99";
-import { recordMiniGameCompletion } from "../medals.js?v=20260903-gameplay99";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-gameplay99";
+import { ensurePieceSetsLoaded, pieceTextureKey } from "../pieceAssets.js?v=20260903-onlinefix100";
+import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260903-onlinefix100";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260903-onlinefix100";
+import { t } from "../i18n.js?v=20260903-onlinefix100";
+import { recordMiniGameCompletion } from "../medals.js?v=20260903-onlinefix100";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260903-onlinefix100";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -13,7 +13,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260903-gameplay99";
+} from "../ui/KumaUi.js?v=20260903-onlinefix100";
 
 const AI_POWER = Object.freeze({ easy: 0.58, normal: 0.88, hard: 1 });
 const AI_ERROR = Object.freeze({ easy: 90, normal: 28, hard: 7 });

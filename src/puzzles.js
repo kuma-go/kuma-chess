@@ -3,9 +3,9 @@ import {
   isPuzzleCleared,
   markPuzzleCleared,
   PUZZLE_PROGRESS_KEY,
-} from "./playerState.js?v=20260903-gameplay99";
-import { ADVANCED_PUZZLES_A } from "./puzzlesAdvancedA.js?v=20260903-gameplay99";
-import { ADVANCED_PUZZLES_B } from "./puzzlesAdvancedB.js?v=20260903-gameplay99";
+} from "./playerState.js?v=20260903-onlinefix100";
+import { ADVANCED_PUZZLES_A } from "./puzzlesAdvancedA.js?v=20260903-onlinefix100";
+import { ADVANCED_PUZZLES_B } from "./puzzlesAdvancedB.js?v=20260903-onlinefix100";
 
 export {
   getClearedPuzzleIds,
