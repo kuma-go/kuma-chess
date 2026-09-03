@@ -1,16 +1,16 @@
 import {
   getDailyMissionSnapshot,
   markDailyMissionsSeen,
-} from "../dailyMissions.js?v=20260903-onlinefix100";
-import { readPlayerState } from "../playerState.js?v=20260903-onlinefix100";
+} from "../dailyMissions.js?v=20260904-guides101";
+import { readPlayerState } from "../playerState.js?v=20260904-guides101";
 import {
   addMiniCoin,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260903-onlinefix100";
-import { playFeedback } from "../feedback.js?v=20260903-onlinefix100";
+} from "./KumaUi.js?v=20260904-guides101";
+import { playFeedback } from "../feedback.js?v=20260904-guides101";
 
 const COPY = Object.freeze({
   ko: {

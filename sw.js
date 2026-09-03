@@ -1,5 +1,5 @@
-const CACHE_NAME = "kuma-chess-20260903-onlinefix100";
-const MODULE_VERSION = "20260903-onlinefix100";
+const CACHE_NAME = "kuma-chess-20260904-guides101";
+const MODULE_VERSION = "20260904-guides101";
 const APP_MODULE_PATHS = [
   "./src/ai/challengeEngine.js",
   "./src/ai/challengeWorker.js",
@@ -197,6 +197,11 @@ const CORE_FILES = [
   "./assets/kuma/web/coin_big.png",
   "./assets/kuma/web/icon_new.png",
   "./assets/kuma/web/img_bottom.png",
+  "./assets/kuma/web/guide_tug.webp",
+  "./assets/kuma/web/guide_road.webp",
+  "./assets/kuma/web/guide_crown.webp",
+  "./assets/kuma/web/guide_siege.webp",
+  "./assets/kuma/web/guide_road_puzzle.webp",
   "./assets/kuma/web/image%20437.png",
   "./assets/kuma/web/image%20438.png",
   "./assets/kuma/web/image%20439.png",

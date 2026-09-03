@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
     <link rel="preload" href="./assets/kuma/web/main_img_B.png" as="image" fetchpriority="high" />
     <link rel="preload" href="./assets/kuma/web/main_logo_B.png" as="image" fetchpriority="high" />
-    <link rel="stylesheet" href="./main-page.css?v=20260903-onlinefix100" />
+    <link rel="stylesheet" href="./main-page.css?v=20260904-guides101" />
   </head>
   <body data-kuma-shell="web">
     <aside class="ad-rail ad-rail-left" data-ad-position="left" aria-label="왼쪽 광고" hidden></aside>
@@ -138,7 +138,7 @@
         <div class="directory-grid">
           <a href="#story"><img src="./assets/kuma/web/image%20462.png" alt="" /><span><strong>쿠마체스 이야기</strong><small>쿠마체스 소개 및 여정</small></span><b>›</b></a>
           <a href="#guide"><img src="./assets/kuma/web/image%20458.png" alt="" /><span><strong>게임 방법</strong><small>체스 게임 방법과 룰 설명</small></span><b>›</b></a>
-          <a href="#minigames"><img src="./assets/kuma/web/image%20461.png" alt="" /><span><strong>미니게임 소개</strong><small>미니게임 소개와 게임 방법</small></span><b>›</b></a>
+          <a href="#minigame-guide"><img src="./assets/kuma/web/image%20461.png" alt="" /><span><strong>미니게임 소개</strong><small>미니게임 소개와 게임 방법</small></span><b>›</b></a>
           <a href="#modes"><img src="./assets/kuma/web/image%20459.png" alt="" /><span><strong>체스 모드 소개</strong><small>쿠마체스 다양한 모드 안내</small></span><b>›</b></a>
           <a href="#collection"><img src="./assets/kuma/web/image%20463.png" alt="" /><span><strong>기물 소개</strong><small>쿠마체스만의 기물 디자인</small></span><b>›</b></a>
           <a href="#rewards"><img src="./assets/kuma/web/image%20460.png" alt="" /><span><strong>업적과 보상</strong><small>도전하고 보상을 획득하세요</small></span><b>›</b></a>
@@ -204,6 +204,21 @@
       </section>
 
       <aside class="inline-ad" data-ad-position="inline-2" aria-label="광고" hidden></aside>
+
+      <section id="minigame-guide" class="page-section reference-section minigame-guide-section">
+        <div class="section-rule" aria-hidden="true"><img src="./assets/kuma/ui/img_partition.png" alt="" /></div>
+        <header class="minigame-guide-header">
+          <h2>미니게임 설명</h2>
+          <p>각 미니게임의 목표와 조작 방법을 확인해보세요.</p>
+        </header>
+        <div class="minigame-guide-list">
+          <img data-minigame-guide-art="tug" src="./assets/kuma/web/guide_tug.webp" alt="왕국 힘겨루기 게임 방법" width="1122" height="1402" loading="lazy" decoding="async" />
+          <img data-minigame-guide-art="road" src="./assets/kuma/web/guide_road.webp" alt="왕국의 길 게임 방법" width="1122" height="1402" loading="lazy" decoding="async" />
+          <img data-minigame-guide-art="crown" src="./assets/kuma/web/guide_crown.webp" alt="왕관 쟁탈전 게임 방법" width="1122" height="1402" loading="lazy" decoding="async" />
+          <img data-minigame-guide-art="siege" src="./assets/kuma/web/guide_siege.webp" alt="왕국 공성전 게임 방법" width="1122" height="1402" loading="lazy" decoding="async" />
+          <img data-minigame-guide-art="road-puzzle" src="./assets/kuma/web/guide_road_puzzle.webp" alt="왕국의 길 퍼즐 게임 방법" width="1122" height="1402" loading="lazy" decoding="async" />
+        </div>
+      </section>
 
       <section id="modes" class="page-section reference-section modes-section">
         <div class="section-rule" aria-hidden="true"><img src="./assets/kuma/ui/img_partition.png" alt="" /></div>
@@ -274,7 +289,7 @@
         <p id="game-loading-message">게임을 준비하고 있습니다.</p>
         <button id="retry-game" type="button" hidden>다시 불러오기</button>
       </div>
-      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260903-onlinefix100"></iframe>
+      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260904-guides101"></iframe>
     </div>
 
     <dialog id="mode-dialog" class="web-dialog mode-dialog">
@@ -297,6 +312,12 @@
         </div>
         <button class="mode-home" type="button" data-close-dialog>메인 화면</button>
       </div>
+    </dialog>
+
+    <dialog id="minigame-guide-dialog" class="minigame-guide-dialog" aria-label="미니게임 방법">
+      <button type="button" data-start-minigame-guide aria-label="게임 시작">
+        <img id="minigame-guide-dialog-image" src="./assets/kuma/web/guide_tug.webp" alt="왕국 힘겨루기 게임 방법" width="1122" height="1402" decoding="async" />
+      </button>
     </dialog>
 
     <dialog id="online-dialog" class="web-dialog online-dialog">
@@ -351,9 +372,9 @@
     </dialog>
 
     <script src="./ads-config.js"></script>
-    <script src="./app-init.js?v=20260903-onlinefix100"></script>
-    <script type="module" src="./firebase-client.js?v=20260903-onlinefix100"></script>
-    <script type="module" src="./main-page.js?v=20260903-onlinefix100"></script>
-    <script defer src="./main-page-fallback.js?v=20260903-onlinefix100"></script>
+    <script src="./app-init.js?v=20260904-guides101"></script>
+    <script type="module" src="./firebase-client.js?v=20260904-guides101"></script>
+    <script type="module" src="./main-page.js?v=20260904-guides101"></script>
+    <script defer src="./main-page-fallback.js?v=20260904-guides101"></script>
   </body>
 </html>

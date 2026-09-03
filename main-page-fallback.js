@@ -10,9 +10,12 @@
     const gameLoadingMessage = document.getElementById("game-loading-message");
     const retryGame = document.getElementById("retry-game");
     const modeDialog = document.getElementById("mode-dialog");
+    const minigameGuideDialog = document.getElementById("minigame-guide-dialog");
+    const minigameGuideDialogImage = document.getElementById("minigame-guide-dialog-image");
     const onlineDialog = document.getElementById("online-dialog");
     const onlineCodeInput = document.getElementById("online-code-input");
     let pendingMinigameLaunch = "";
+    let pendingMinigameGuide = null;
     let gameReadyTimer = 0;
     let gameSession = 0;
     let gameRuntimeReady = false;
@@ -26,6 +29,13 @@
     let onlineUnsubscribe = null;
     const popupGameLaunches = new Set(["daily", "settings", "info", "profile", "medals"]);
     const onlineSessionKey = "kumaChessOnlineSessionV1";
+    const minigameGuideArt = Object.freeze({
+      tug: "./assets/kuma/web/guide_tug.webp",
+      road: "./assets/kuma/web/guide_road.webp",
+      crown: "./assets/kuma/web/guide_crown.webp",
+      siege: "./assets/kuma/web/guide_siege.webp",
+      "road-puzzle": "./assets/kuma/web/guide_road_puzzle.webp",
+    });
 
     document.documentElement.dataset.kumaActionFallback = "true";
 
@@ -100,6 +110,28 @@
       document.body.classList.add("game-open");
       if (gameRuntimeReady) dispatchRequestedGame();
       else preloadGameRuntime();
+    };
+
+    const showMinigameGuide = (launch, mode = "") => {
+      const art = minigameGuideArt[launch];
+      if (!art || !minigameGuideDialog || !minigameGuideDialogImage) {
+        openGameLaunch(launch, mode);
+        return;
+      }
+      pendingMinigameGuide = { launch, mode };
+      minigameGuideDialogImage.src = art;
+      minigameGuideDialogImage.alt = `${launch} 미니게임 방법`;
+      if (typeof minigameGuideDialog.showModal === "function") minigameGuideDialog.showModal();
+      else minigameGuideDialog.setAttribute("open", "");
+    };
+
+    const startPendingMinigameGuide = () => {
+      const pending = pendingMinigameGuide;
+      if (!pending) return;
+      pendingMinigameGuide = null;
+      if (typeof minigameGuideDialog?.close === "function") minigameGuideDialog.close();
+      else minigameGuideDialog?.removeAttribute("open");
+      openGameLaunch(pending.launch, pending.mode);
     };
 
     const hideGame = (notifyRuntime = true) => {
@@ -347,7 +379,9 @@
 
     document.querySelectorAll("[data-open-game]").forEach((button) => button.addEventListener("click", (event) => {
       if (!claimFallbackClick(event)) return;
-      openGameLaunch(button.dataset.launch || "");
+      const launch = button.dataset.launch || "";
+      if (minigameGuideArt[launch]) showMinigameGuide(launch);
+      else openGameLaunch(launch);
     }));
     document.querySelectorAll("[data-open-settings]").forEach((button) => button.addEventListener("click", (event) => {
       if (!claimFallbackClick(event)) return;
@@ -369,8 +403,21 @@
       if (!claimFallbackClick(event)) return;
       if (typeof modeDialog?.close === "function") modeDialog.close();
       else modeDialog?.removeAttribute("open");
-      if (pendingMinigameLaunch) openGameLaunch(pendingMinigameLaunch, button.dataset.minigameMode || "ai");
+      if (pendingMinigameLaunch) showMinigameGuide(pendingMinigameLaunch, button.dataset.minigameMode || "ai");
     }));
+    minigameGuideDialog?.querySelector("[data-start-minigame-guide]")?.addEventListener("click", (event) => {
+      if (!claimFallbackClick(event)) return;
+      startPendingMinigameGuide();
+    });
+    minigameGuideDialog?.addEventListener("click", (event) => {
+      if (event.target !== minigameGuideDialog || !claimFallbackClick(event)) return;
+      startPendingMinigameGuide();
+    });
+    minigameGuideDialog?.addEventListener("cancel", (event) => {
+      if (isPrimaryReady()) return;
+      event.preventDefault();
+      startPendingMinigameGuide();
+    });
     document.querySelectorAll("[data-open-online]").forEach((button) => button.addEventListener("click", (event) => {
       if (!claimFallbackClick(event)) return;
       openOnlineDialog();

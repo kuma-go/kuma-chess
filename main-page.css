@@ -1425,6 +1425,44 @@ html[lang="ja"] #mode-dialog .mode-choice-grid small { font-size: 2.45cqi; }
 html[lang="en"] #mode-dialog .mode-home { font-size: 4.2cqi; }
 html[lang="ja"] #mode-dialog .mode-home { font-size: 4.5cqi; }
 
+.minigame-guide-dialog {
+  width: min(700px, calc(var(--content-width) - 16px), calc(100vw - 16px));
+  max-width: none;
+  max-height: calc(100dvh - 16px);
+  margin: auto;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+.minigame-guide-dialog::backdrop {
+  background: rgba(40, 29, 19, .62);
+  backdrop-filter: blur(7px);
+}
+.minigame-guide-dialog > button {
+  display: grid;
+  width: 100%;
+  max-height: calc(100dvh - 16px);
+  margin: 0;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.minigame-guide-dialog img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 16px);
+  object-fit: contain;
+}
+.minigame-guide-dialog > button:focus-visible {
+  outline: 3px solid #d9a968;
+  outline-offset: -3px;
+}
+
 #online-dialog { width: min(600px, calc(var(--content-width) - 24px), calc(100vw - 24px)); }
 #online-dialog [data-online-view][hidden] { display: none; }
 #online-dialog[data-online-view-state="entry"] {
@@ -1880,6 +1918,25 @@ html[lang="ja"] .reference-section li { font-size: 2.02cqw; line-height: 1.24; }
 .draw-rule > div { top: 72.5cqw; }
 .tip-art { top: 874.72cqw; left: 6.48cqw; width: 87.04cqw; height: 14.44cqw; border-radius: 1.85cqw; }
 .tip-copy { top: 891.2cqw; }
+
+.minigame-guide-section {
+  min-height: 0 !important;
+  padding: 11.11cqw 6.48cqw 9.26cqw;
+}
+.minigame-guide-header { text-align: center; }
+.minigame-guide-header h2 { font-size: 4.17cqw; }
+.minigame-guide-header p { margin-top: 1.3cqw; color: #8b6a43; }
+.minigame-guide-list {
+  display: grid;
+  gap: 4.63cqw;
+  margin-top: 4.63cqw;
+}
+.minigame-guide-list img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: none;
+}
 
 .modes-section { height: 270.83cqw; min-height: 0 !important; }
 .modes-section > h2 { position: absolute; top: 10.93cqw; left: 6.48cqw; }

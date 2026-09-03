@@ -245,6 +245,16 @@ const CONTENT_TARGETS = Object.freeze([
     ja: "多く取ることより、キングを守り複数の駒を連携させることが大切です。<br />序盤はポーン、ナイト、ビショップを展開し、キャスリングでキングを守りましょう。<br />指す前に考えてください。<br />「自分のキングは安全か？」<br />「相手は何を攻撃しているか？」<br />この2点だけでも対局が安定します。",
   },
   {
+    selector: "#minigame-guide .minigame-guide-header h2",
+    en: "Mini-Game Guides",
+    ja: "ミニゲームの遊び方",
+  },
+  {
+    selector: "#minigame-guide .minigame-guide-header p",
+    en: "See the goal and controls for each mini-game.",
+    ja: "各ミニゲームの目的と操作方法を確認できます。",
+  },
+  {
     selector: "#modes > h2",
     en: "Game Modes",
     ja: "ゲームモード",
@@ -422,6 +432,11 @@ const CONTENT_TARGETS = Object.freeze([
 ]);
 
 const ATTRIBUTE_TARGETS = Object.freeze([
+  { selector: '[data-minigame-guide-art="tug"]', attribute: "alt", en: "How to play Kingdom Push Battle", ja: "王国押し合いの遊び方" },
+  { selector: '[data-minigame-guide-art="road"]', attribute: "alt", en: "How to play Royal Road", ja: "王国の道の遊び方" },
+  { selector: '[data-minigame-guide-art="crown"]', attribute: "alt", en: "How to play Crown Clash", ja: "王冠争奪戦の遊び方" },
+  { selector: '[data-minigame-guide-art="siege"]', attribute: "alt", en: "How to play Kingdom Siege", ja: "王国攻城戦の遊び方" },
+  { selector: '[data-minigame-guide-art="road-puzzle"]', attribute: "alt", en: "How to play Royal Road Puzzle", ja: "王国の道パズルの遊び方" },
   { selector: "#modes .mode-puzzle .reference-hit-area", attribute: "aria-label", en: "Start Puzzle", ja: "パズル開始" },
   { selector: "#modes .mode-ai .reference-hit-area", attribute: "aria-label", en: "Start AI Match", ja: "AI対戦開始" },
   { selector: "#modes .mode-pvp .reference-hit-area", attribute: "aria-label", en: "Start Face-to-Face Match", ja: "対面対戦開始" },

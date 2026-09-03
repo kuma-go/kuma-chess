@@ -43,6 +43,20 @@ assert((html.match(/class="mode-card-art"/g) || []).length === 2, "Mode selector
 for (const [launch, image] of Object.entries({ tug: 440, crown: 438, road: 441, "road-puzzle": 437, siege: 439 })) {
   assert(main.includes(`${launch.includes("-") ? `"${launch}"` : launch}: "./assets/kuma/web/image%204${String(image).slice(-2)}.png"`), `${launch} is missing its matching mode card`);
 }
+const minigameGuides = ["guide_tug.webp", "guide_road.webp", "guide_crown.webp", "guide_siege.webp", "guide_road_puzzle.webp"];
+for (const guide of minigameGuides) {
+  assert(fs.existsSync(path.join(root, "assets/kuma/web", guide)), `${guide} is missing`);
+  assert(html.includes(`./assets/kuma/web/${guide}`), `${guide} is not shown on the main page`);
+  assert(worker.includes(`"./assets/kuma/web/${guide}"`), `${guide} is missing from the offline cache`);
+}
+assert(html.indexOf('id="minigame-guide"') > html.indexOf('id="guide"')
+  && html.indexOf('id="minigame-guide"') < html.indexOf('id="modes"'),
+"Mini-game guides must sit between the chess guide and game modes");
+assert(html.includes('id="minigame-guide-dialog"') && html.includes("data-start-minigame-guide"), "The pre-game guide dialog is missing");
+assert(main.includes("showMinigameGuide(launch, mode, trigger)")
+  && main.includes("startPendingMinigameGuide")
+  && fallback.includes("showMinigameGuide(pendingMinigameLaunch"),
+"Mini-game guide confirmation is not connected to primary and fallback launches");
 assert(main.includes('modeDialog.querySelectorAll(".mode-card-art")') && main.includes("image.src = cardArt"), "Mode cards do not update when the selected minigame changes");
 assert(html.includes('class="mode-home"') && !html.includes('id="mode-dialog" class="web-dialog mode-dialog">\n      <div class="dialog-panel">\n        <button'), "Mode dialog must use the in-art main button without a close icon");
 assert(!html.includes("mode-piece"), "Legacy piece icons remain in the play selector");

@@ -3,22 +3,22 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260903-onlinefix100";
+} from "./src/playerState.js?v=20260904-guides101";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260903-onlinefix100";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260903-onlinefix100";
-import { readProfileState } from "./src/profileState.js?v=20260903-onlinefix100";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260903-onlinefix100";
+} from "./src/dailyMissions.js?v=20260904-guides101";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260904-guides101";
+import { readProfileState } from "./src/profileState.js?v=20260904-guides101";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260904-guides101";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260903-onlinefix100";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260903-onlinefix100";
-import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260903-onlinefix100";
-import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260903-onlinefix100";
+} from "./src/menuBgm.js?v=20260904-guides101";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260904-guides101";
+import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260904-guides101";
+import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260904-guides101";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -28,12 +28,14 @@ const gameLoading = document.getElementById("game-loading");
 const gameLoadingMessage = document.getElementById("game-loading-message");
 const retryGame = document.getElementById("retry-game");
 const modeDialog = document.getElementById("mode-dialog");
+const minigameGuideDialog = document.getElementById("minigame-guide-dialog");
+const minigameGuideDialogImage = document.getElementById("minigame-guide-dialog-image");
 const onlineDialog = document.getElementById("online-dialog");
 const onlineCodeInput = document.getElementById("online-code-input");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "medals"]);
-const ASSET_RETRY_VERSION = "20260903-onlinefix100";
+const ASSET_RETRY_VERSION = "20260904-guides101";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 
@@ -92,6 +94,8 @@ const WEB_COPY = Object.freeze({
     modeAi: ["AI 대전", "AI와 실력을 겨뤄보세요."],
     modePvp: ["마주보기 모드", "한 기기에서 함께 플레이"],
     modeHome: "메인 화면",
+    guideDialogAria: "미니게임 방법",
+    guideStartAria: "게임 시작",
     onlineDialog: Object.freeze({
       title: "온라인 플레이",
       summary: "초대 코드를 공유해 친구와 대국하세요.",
@@ -170,6 +174,8 @@ const WEB_COPY = Object.freeze({
     modeAi: ["VS AI", "Test your skills against the AI."],
     modePvp: ["Face-to-Face", "Play together on one device"],
     modeHome: "Main Menu",
+    guideDialogAria: "Mini-game guide",
+    guideStartAria: "Start game",
     onlineDialog: Object.freeze({
       title: "Online Play",
       summary: "Share an invite code and play a friend.",
@@ -248,6 +254,8 @@ const WEB_COPY = Object.freeze({
     modeAi: ["AI対戦", "AIと腕を競いましょう。"],
     modePvp: ["対面モード", "1台の端末で一緒にプレイ"],
     modeHome: "メイン画面",
+    guideDialogAria: "ミニゲームの遊び方",
+    guideStartAria: "ゲーム開始",
     onlineDialog: Object.freeze({
       title: "オンライン対戦",
       summary: "招待コードを共有して友だちと対局します。",
@@ -284,6 +292,7 @@ let runtimePreloadSession = "";
 let requestedGame = null;
 let renderingHomeState = false;
 let pendingMinigameLaunch = "";
+let pendingMinigameGuide = null;
 let activeWebLanguage = "ko";
 let onlineBusy = false;
 let onlineRoomCode = "";
@@ -297,6 +306,14 @@ const MINIGAME_MODE_CARD_ART = Object.freeze({
   road: "./assets/kuma/web/image%20441.png",
   "road-puzzle": "./assets/kuma/web/image%20437.png",
   siege: "./assets/kuma/web/image%20439.png",
+});
+
+const MINIGAME_GUIDE_ART = Object.freeze({
+  tug: "./assets/kuma/web/guide_tug.webp",
+  road: "./assets/kuma/web/guide_road.webp",
+  crown: "./assets/kuma/web/guide_crown.webp",
+  siege: "./assets/kuma/web/guide_siege.webp",
+  "road-puzzle": "./assets/kuma/web/guide_road_puzzle.webp",
 });
 
 function setText(selector, value) {
@@ -376,6 +393,12 @@ function renderHomeLanguage(language) {
   setText("#mode-dialog .mode-home", copy.modeHome);
   document.querySelector("#mode-dialog .mode-home")?.setAttribute("aria-label", copy.modeHome);
   if (!pendingMinigameLaunch) setText("#mode-dialog-title", copy.modeDefault);
+  minigameGuideDialog?.setAttribute("aria-label", copy.guideDialogAria);
+  minigameGuideDialog?.querySelector("[data-start-minigame-guide]")?.setAttribute("aria-label", copy.guideStartAria);
+  if (pendingMinigameGuide && minigameGuideDialogImage) {
+    const title = copy.minigames[pendingMinigameGuide.launch]?.[0] || copy.modeDefault;
+    minigameGuideDialogImage.alt = `${title} ${copy.guideDialogAria}`;
+  }
 
   const online = copy.onlineDialog;
   setText("#online-dialog [data-online-title]", online.title);
@@ -701,7 +724,33 @@ function openGameLaunch(launch, trigger, mode = "", payload = null) {
 
 function openGame(event) {
   event?.preventDefault?.();
-  openGameLaunch(event?.currentTarget?.dataset?.launch || "", event?.currentTarget);
+  const launch = event?.currentTarget?.dataset?.launch || "";
+  if (MINIGAME_GUIDE_ART[launch]) {
+    showMinigameGuide(launch, "", event?.currentTarget);
+    return;
+  }
+  openGameLaunch(launch, event?.currentTarget);
+}
+
+function showMinigameGuide(launch, mode = "", trigger = null) {
+  const art = MINIGAME_GUIDE_ART[launch];
+  if (!art || !minigameGuideDialog || !minigameGuideDialogImage) {
+    openGameLaunch(launch, trigger, mode);
+    return;
+  }
+  pendingMinigameGuide = { launch, mode, trigger };
+  minigameGuideDialogImage.src = art;
+  const title = currentWebCopy().minigames[launch]?.[0] || currentWebCopy().modeDefault;
+  minigameGuideDialogImage.alt = `${title} ${currentWebCopy().guideDialogAria}`;
+  openDialog(minigameGuideDialog, trigger);
+}
+
+function startPendingMinigameGuide() {
+  const pending = pendingMinigameGuide;
+  if (!pending) return;
+  pendingMinigameGuide = null;
+  closeDialog(minigameGuideDialog);
+  openGameLaunch(pending.launch, pending.trigger, pending.mode);
 }
 
 function openMinigameMode(event) {
@@ -724,7 +773,7 @@ function chooseMinigameMode(event) {
   const trigger = modeDialog?.returnFocusTarget;
   const mode = event.currentTarget.dataset.minigameMode;
   closeDialog(modeDialog);
-  if (launch && ["ai", "pvp"].includes(mode)) openGameLaunch(launch, trigger, mode);
+  if (launch && ["ai", "pvp"].includes(mode)) showMinigameGuide(launch, mode, trigger);
 }
 
 function onlineErrorMessage(reason) {
@@ -1044,6 +1093,14 @@ function bindEvents() {
   document.querySelectorAll("[data-open-game]").forEach((button) => button.addEventListener("click", openGame));
   document.querySelectorAll("[data-open-minigame]").forEach((button) => button.addEventListener("click", openMinigameMode));
   document.querySelectorAll("[data-minigame-mode]").forEach((button) => button.addEventListener("click", chooseMinigameMode));
+  minigameGuideDialog?.querySelector("[data-start-minigame-guide]")?.addEventListener("click", startPendingMinigameGuide);
+  minigameGuideDialog?.addEventListener("click", (event) => {
+    if (event.target === minigameGuideDialog) startPendingMinigameGuide();
+  });
+  minigameGuideDialog?.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    startPendingMinigameGuide();
+  });
   document.querySelectorAll("[data-open-online]").forEach((button) => button.addEventListener("click", openOnlineDialog));
   onlineDialog?.querySelector("[data-online-create]")?.addEventListener("click", () => void createOnlineRoom());
   onlineDialog?.querySelector("[data-online-code-open]")?.addEventListener("click", showOnlineCodeEntry);
@@ -1168,6 +1225,10 @@ if (validInitialLaunches.has(initialLaunch)) {
       document.getElementById("mode-dialog-title").textContent = currentWebCopy().minigames[initialLaunch]?.[0]
         || currentWebCopy().modeDefault;
       openDialog(modeDialog, null);
+      return;
+    }
+    if (MINIGAME_GUIDE_ART[initialLaunch]) {
+      showMinigameGuide(initialLaunch, initialMode, null);
       return;
     }
     openGameLaunch(initialLaunch, null, initialMode);

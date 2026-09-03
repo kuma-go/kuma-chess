@@ -1,5 +1,5 @@
-import { updatePlayerState, readPlayerState } from "./playerState.js?v=20260903-onlinefix100";
-import { recordDailyMissionDay } from "./medals.js?v=20260903-onlinefix100";
+import { updatePlayerState, readPlayerState } from "./playerState.js?v=20260904-guides101";
+import { recordDailyMissionDay } from "./medals.js?v=20260904-guides101";
 
 const STATE_VERSION = 2;
 const EVENT_ID_LIMIT = 160;
