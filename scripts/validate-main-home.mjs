@@ -47,8 +47,8 @@ const minigameGuides = ["guide_tug.webp", "guide_road.webp", "guide_crown.webp",
 for (const guide of minigameGuides) {
   assert(fs.existsSync(path.join(root, "assets/kuma/web", guide)), `${guide} is missing`);
   assert(html.includes(`./assets/kuma/web/${guide}`), `${guide} is not shown on the main page`);
-  assert(worker.includes(`"./assets/kuma/web/${guide}"`), `${guide} is missing from the offline cache`);
 }
+assert(worker.includes("cache.put(event.request, copy)"), "Viewed guide images must enter the runtime cache");
 assert(html.indexOf('id="minigame-guide"') > html.indexOf('id="guide"')
   && html.indexOf('id="minigame-guide"') < html.indexOf('id="modes"'),
 "Mini-game guides must sit between the chess guide and game modes");
@@ -80,6 +80,8 @@ const playVersion = play.match(/src\/main\.js\?v=([^"']+)/)?.[1];
 const workerVersion = worker.match(/MODULE_VERSION = "([^"]+)"/)?.[1];
 assert(shellVersion && [frameVersion, playVersion, workerVersion].every((version) => version === shellVersion), "Web shell, game frame, and service worker versions are inconsistent");
 assert([...gameMain.matchAll(/\?v=([^"']+)/g)].every((match) => match[1] === shellVersion), "Game module imports use a stale version");
+assert(worker.includes("cache.addAll(INSTALL_FILES)") && worker.includes("INSTALL_ASSET_FILES"), "Service worker install must use the reduced mobile precache");
+assert(!worker.match(/const INSTALL_ASSET_FILES = new Set\(\[[\s\S]*?\]\);/)?.[0].includes("guide_tug.webp"), "Large guide art must load through the runtime cache, not block service worker activation");
 
 assert(pngSize("assets/kuma/web/icon_ai.png").join("x") === "44x84", "AI icon dimensions changed");
 assert(pngSize("assets/kuma/web/icon_pvp.png").join("x") === "69x63", "PVP icon dimensions changed");

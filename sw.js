@@ -1,5 +1,5 @@
-const CACHE_NAME = "kuma-chess-20260904-mobilefix102";
-const MODULE_VERSION = "20260904-mobilefix102";
+const CACHE_NAME = "kuma-chess-20260904-pwarefresh103";
+const MODULE_VERSION = "20260904-pwarefresh103";
 const APP_MODULE_PATHS = [
   "./src/ai/challengeEngine.js",
   "./src/ai/challengeWorker.js",
@@ -251,10 +251,33 @@ const CORE_FILES = [
   ...APP_MODULE_PATHS.map((path) => `${path}?v=${MODULE_VERSION}`)
 ];
 
+const INSTALL_ASSET_FILES = new Set([
+  "./assets/kuma/web/Pattern.png",
+  "./assets/kuma/web/main_img_B.png",
+  "./assets/kuma/web/main_logo_B.png",
+  "./assets/kuma/web/main_btn_group.png",
+  "./assets/kuma/web/icon_ai.png",
+  "./assets/kuma/web/icon_pvp.png",
+  "./assets/kuma/web/btn_main_puzzle.png",
+  "./assets/kuma/web/btn_main_online.png",
+  "./assets/kuma/web/title_bg.png",
+  "./assets/kuma/web/btn_daily.png",
+  "./assets/kuma/web/btn_daily_new.png",
+  "./assets/kuma/web/btn_seting.png",
+  "./assets/kuma/web/btn_medal.png",
+  "./assets/kuma/web/coin_bg.png",
+  "./assets/kuma/web/coin_big.png",
+  "./assets/kuma/web/icon_new.png",
+  "./assets/kuma/web/img_bottom.png",
+]);
+const INSTALL_FILES = CORE_FILES.filter((path) => (
+  !path.startsWith("./assets/kuma/") || INSTALL_ASSET_FILES.has(path)
+));
+
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(CORE_FILES);
+    await cache.addAll(INSTALL_FILES);
     await self.skipWaiting();
   })());
 });
