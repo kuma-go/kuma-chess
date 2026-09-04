@@ -1,4 +1,4 @@
-import { playFeedback } from "../feedback.js?v=20260904-accountcsp109";
+import { playFeedback } from "../feedback.js?v=20260904-accountbridge110";
 
 /**
  * SpriteButton

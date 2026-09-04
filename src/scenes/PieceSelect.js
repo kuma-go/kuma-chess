@@ -1,5 +1,5 @@
-import { createPieceView } from "../pieceStyles.js?v=20260904-accountcsp109";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-accountcsp109";
+import { createPieceView } from "../pieceStyles.js?v=20260904-accountbridge110";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-accountbridge110";
 import {
   getGoldBearProgress,
   getPieceUnlockNotices,
@@ -9,9 +9,9 @@ import {
   SKIN_SHOP,
   unlockGoldBearPiece,
   unlockSkin,
-} from "../playerState.js?v=20260904-accountcsp109";
-import { skinName, t } from "../i18n.js?v=20260904-accountcsp109";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260904-accountcsp109";
+} from "../playerState.js?v=20260904-accountbridge110";
+import { skinName, t } from "../i18n.js?v=20260904-accountbridge110";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260904-accountbridge110";
 import {
   addBackButton,
   addCoinPill,
@@ -29,8 +29,8 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260904-accountcsp109";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260904-accountcsp109";
+} from "../ui/KumaUi.js?v=20260904-accountbridge110";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260904-accountbridge110";
 
 const SHOP = SKIN_SHOP;
 const COMPACT_SHOP = SHOP.length > 9;

@@ -474,6 +474,19 @@ body.game-open { overflow: hidden; }
 }
 .game-overlay iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; opacity: 0; transition: opacity 180ms ease; }
 .game-overlay.is-ready iframe { opacity: 1; }
+.google-account-bridge {
+  position: absolute;
+  z-index: 4;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  opacity: .001;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.google-account-bridge:disabled { pointer-events: none; }
 .game-loading { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; justify-items: center; gap: 16px; color: #5a3c1d; background: transparent; }
 .game-loading::before { content: ""; position: absolute; top: 50%; left: 50%; width: min(320px, calc(100vw - 40px)); height: 210px; border: 1px solid rgba(183,128,42,.34); border-radius: 6px; background: rgba(255,248,234,.92); box-shadow: 0 12px 36px rgba(58,38,17,.2); transform: translate(-50%, -50%); }
 .game-loading > * { position: relative; z-index: 1; }

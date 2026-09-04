@@ -1,25 +1,25 @@
-import { Boot } from "./scenes/Boot.js?v=20260904-accountcsp109";
-import { Start } from "./scenes/Start.js?v=20260904-accountcsp109";
-import { PieceSelect } from "./scenes/PieceSelect.js?v=20260904-accountcsp109";
-import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260904-accountcsp109";
-import { Game } from "./scenes/Game.js?v=20260904-accountcsp109";
-import { Result } from "./scenes/Result.js?v=20260904-accountcsp109";
-import { OnlineGame } from "./scenes/OnlineGame.js?v=20260904-accountcsp109";
-import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260904-accountcsp109";
-import { Puzzle } from "./scenes/Puzzle.js?v=20260904-accountcsp109";
-import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260904-accountcsp109";
-import { KingdomTug } from "./scenes/KingdomTug.js?v=20260904-accountcsp109";
-import { RoyalRoad } from "./scenes/RoyalRoad.js?v=20260904-accountcsp109";
-import { RoyalRoadPuzzleSelect } from "./scenes/RoyalRoadPuzzleSelect.js?v=20260904-accountcsp109";
-import { RoyalRoadPuzzle } from "./scenes/RoyalRoadPuzzle.js?v=20260904-accountcsp109";
-import { CrownClash } from "./scenes/CrownClash.js?v=20260904-accountcsp109";
-import { KingdomSiege } from "./scenes/KingdomSiege.js?v=20260904-accountcsp109";
-import { Demo } from "./scenes/Demo.js?v=20260904-accountcsp109";
-import { installFeedbackUnlock } from "./feedback.js?v=20260904-accountcsp109";
+import { Boot } from "./scenes/Boot.js?v=20260904-accountbridge110";
+import { Start } from "./scenes/Start.js?v=20260904-accountbridge110";
+import { PieceSelect } from "./scenes/PieceSelect.js?v=20260904-accountbridge110";
+import { PieceSelectAI } from "./scenes/PieceSelectAI.js?v=20260904-accountbridge110";
+import { Game } from "./scenes/Game.js?v=20260904-accountbridge110";
+import { Result } from "./scenes/Result.js?v=20260904-accountbridge110";
+import { OnlineGame } from "./scenes/OnlineGame.js?v=20260904-accountbridge110";
+import { PuzzleSelect } from "./scenes/PuzzleSelect.js?v=20260904-accountbridge110";
+import { Puzzle } from "./scenes/Puzzle.js?v=20260904-accountbridge110";
+import { MedalCatalog } from "./scenes/MedalCatalog.js?v=20260904-accountbridge110";
+import { KingdomTug } from "./scenes/KingdomTug.js?v=20260904-accountbridge110";
+import { RoyalRoad } from "./scenes/RoyalRoad.js?v=20260904-accountbridge110";
+import { RoyalRoadPuzzleSelect } from "./scenes/RoyalRoadPuzzleSelect.js?v=20260904-accountbridge110";
+import { RoyalRoadPuzzle } from "./scenes/RoyalRoadPuzzle.js?v=20260904-accountbridge110";
+import { CrownClash } from "./scenes/CrownClash.js?v=20260904-accountbridge110";
+import { KingdomSiege } from "./scenes/KingdomSiege.js?v=20260904-accountbridge110";
+import { Demo } from "./scenes/Demo.js?v=20260904-accountbridge110";
+import { installFeedbackUnlock } from "./feedback.js?v=20260904-accountbridge110";
 import {
   installMenuBgm,
   installMenuBgmSceneHooks,
-} from "./menuBgm.js?v=20260904-accountcsp109";
+} from "./menuBgm.js?v=20260904-accountbridge110";
 
 const isEmbedded = window.parent !== window;
 const config = {

@@ -58,6 +58,8 @@ if (!rules.includes("match /onlineRooms/{code}")
 
 const client = read("src/firebaseClientEntry.js");
 const index = read("index.html");
+const mainPage = read("main-page.js");
+const profileEditor = read("src/ui/ProfileEditorPopup.js");
 const responseHeaders = read("_headers");
 for (const [file, policy] of [["index.html", index], ["_headers", responseHeaders]]) {
   if (!policy.includes("script-src 'self' https://apis.google.com")) {
@@ -85,6 +87,13 @@ if (client.includes("linkWithRedirect") || client.includes("getRedirectResult"))
 }
 if (client.includes('"auth/internal-error"].includes')) {
   failures.push("src/firebaseClientEntry.js: internal SDK failures must not be mislabeled as popup blocking");
+}
+if (!index.includes('id="google-account-bridge"')
+  || !mainPage.includes("connectGoogleAccountFromTopWindow")
+  || !mainPage.includes('type: "kuma-profile-google-action"')
+  || !profileEditor.includes('type: "kuma-profile-editor-state"')
+  || !profileEditor.includes("onGoogleAccountAction")) {
+  failures.push("Google linking must preserve a top-window user gesture while the profile editor is embedded");
 }
 if (client.includes("getAnalytics") || client.includes("firebase/analytics")) {
   failures.push("src/firebaseClientEntry.js: Analytics requires a separate consent decision");

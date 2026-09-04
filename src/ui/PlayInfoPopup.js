@@ -4,10 +4,10 @@ import {
   getPlayStats,
   getSkinUnlockState,
   readPlayerState,
-} from "../playerState.js?v=20260904-accountcsp109";
-import { readProfileState } from "../profileState.js?v=20260904-accountcsp109";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260904-accountcsp109";
-import { getMedalSummary } from "../medals.js?v=20260904-accountcsp109";
+} from "../playerState.js?v=20260904-accountbridge110";
+import { readProfileState } from "../profileState.js?v=20260904-accountbridge110";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260904-accountbridge110";
+import { getMedalSummary } from "../medals.js?v=20260904-accountbridge110";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -15,9 +15,9 @@ import {
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260904-accountcsp109";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-accountcsp109";
-import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260904-accountcsp109";
+} from "./KumaUi.js?v=20260904-accountbridge110";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-accountbridge110";
+import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260904-accountbridge110";
 
 const COPY = {
   ko: {

@@ -1,16 +1,16 @@
 import {
   getProfileCosmeticCollection,
   purchaseProfileLoadout,
-} from "../playerState.js?v=20260904-accountcsp109";
+} from "../playerState.js?v=20260904-accountbridge110";
 import {
   ensureProfileAssets,
   profileTextureKey,
-} from "../profileCatalog.js?v=20260904-accountcsp109";
+} from "../profileCatalog.js?v=20260904-accountbridge110";
 import {
   normalizeDisplayName,
   readProfileState,
   writeProfileState,
-} from "../profileState.js?v=20260904-accountcsp109";
+} from "../profileState.js?v=20260904-accountbridge110";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -19,9 +19,9 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260904-accountcsp109";
-import { showConfirm } from "./ConfirmPopup.js?v=20260904-accountcsp109";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-accountcsp109";
+} from "./KumaUi.js?v=20260904-accountbridge110";
+import { showConfirm } from "./ConfirmPopup.js?v=20260904-accountbridge110";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-accountbridge110";
 
 const GRID_COLUMNS = 4;
 const GRID_ROW_HEIGHT = 148;
@@ -263,9 +263,6 @@ function showNicknameDialog(initialValue, copy, onSave) {
 
 export function showProfileEditorPopup(scene, options = {}) {
   if (scene.profileEditorLayer) return;
-  if (window.parent && window.parent !== window) {
-    window.parent.postMessage({ type: "kuma-profile-editor-state", open: true }, window.location.origin);
-  }
   const profile = readProfileState();
   const copy = COPY[profile.language] || COPY.ko;
   const draft = { ...profile, avatar: { ...profile.avatar } };
@@ -340,7 +337,29 @@ export function showProfileEditorPopup(scene, options = {}) {
     { size: profile.language === "en" ? 11 : 12, color: initialAccount.googleLinked ? KUMA_COLORS.teal : "#a48769", weight: "700" },
   );
   let accountBusy = false;
+  const postGoogleButtonState = (enabled) => {
+    if (!window.parent || window.parent === window) return;
+    window.parent.postMessage({
+      type: "kuma-profile-editor-state",
+      open: true,
+      googleButton: {
+        x: px + 125 - 138,
+        y: panelTop + 352 - 27,
+        width: 276,
+        height: 54,
+        sceneWidth: scene.scale.width,
+        sceneHeight: scene.scale.height,
+        enabled,
+      },
+    }, window.location.origin);
+  };
+  const setAccountBusy = (busy) => {
+    accountBusy = busy;
+    accountButton.setEnabled(!busy && !cloudApi()?.getAccountState?.().googleLinked);
+    accountButton.title.setText(busy ? copy.googleConnecting : copy.connectGoogle);
+  };
   const showGoogleRestoreConfirm = (api) => {
+    postGoogleButtonState(false);
     showConfirm(scene, {
       title: copy.googleRestoreTitle,
       message: copy.googleRestoreMessage,
@@ -356,34 +375,24 @@ export function showProfileEditorPopup(scene, options = {}) {
         accountBusy = false;
         accountButton.setEnabled(true);
         accountButton.title.setText(copy.connectGoogle);
+        postGoogleButtonState(true);
         showRewardLine(scene, copy.googleFailed, { y: scene.scale.height * 0.52, tone: "failure", showCoin: false, depth: 13000 });
       },
+      onCancel: () => postGoogleButtonState(true),
     });
   };
-  const accountButton = addOutlinedTextButton(scene, px + 125, panelTop + 352, copy.connectGoogle, async () => {
-    if (accountBusy) return;
-    const api = cloudApi();
-    if (!api?.connectGoogleAccount) {
-      showRewardLine(scene, copy.googleFailed, { y: scene.scale.height * 0.52, tone: "failure", showCoin: false, depth: 13000 });
-      return;
-    }
-    if (api.getAccountState?.().canRestoreGoogle) {
-      showGoogleRestoreConfirm(api);
-      return;
-    }
-    accountBusy = true;
-    accountButton.setEnabled(false);
-    accountButton.title.setText(copy.googleConnecting);
-    const result = await api.connectGoogleAccount().catch(() => ({ ok: false, reason: "failed" }));
+  const handleGoogleResult = (result, api = cloudApi()) => {
+    if (disposed || !layer.scene) return;
     if (result?.ok) {
       accountStatus.setText(copy.accountLinked).setColor(KUMA_COLORS.teal);
       accountButton.title.setText(copy.accountLinked);
+      accountButton.setEnabled(false);
+      postGoogleButtonState(false);
       showRewardLine(scene, copy.googleConnected, { y: scene.scale.height * 0.52, showCoin: false, depth: 13000 });
       return;
     }
-    accountBusy = false;
-    accountButton.setEnabled(true);
-    accountButton.title.setText(copy.connectGoogle);
+    setAccountBusy(false);
+    postGoogleButtonState(true);
     if (result?.reason === "account-exists" && result?.canRestore) {
       showGoogleRestoreConfirm(api);
       return;
@@ -403,13 +412,44 @@ export function showProfileEditorPopup(scene, options = {}) {
       bandHeight: message.includes("\n") ? 112 : 84,
       fontSize: message.includes("\n") ? 25 : 29,
     });
-  }, {
+  };
+  const connectGoogleDirectly = async () => {
+    if (accountBusy) return;
+    const api = cloudApi();
+    if (!api?.connectGoogleAccount) {
+      handleGoogleResult({ ok: false, reason: "offline" }, api);
+      return;
+    }
+    if (api.getAccountState?.().canRestoreGoogle) {
+      showGoogleRestoreConfirm(api);
+      return;
+    }
+    setAccountBusy(true);
+    const result = await api.connectGoogleAccount().catch(() => ({ ok: false, reason: "failed" }));
+    handleGoogleResult(result, api);
+  };
+  const accountButton = addOutlinedTextButton(scene, px + 125, panelTop + 352, copy.connectGoogle, connectGoogleDirectly, {
     width: 276,
     height: 54,
     fontSize: profile.language === "en" ? 15 : 17,
     depth: 11004,
     enabled: !initialAccount.googleLinked,
   });
+  const onGoogleAccountAction = (event) => {
+    if (event.origin !== window.location.origin || event.source !== window.parent) return;
+    if (event.data?.type !== "kuma-profile-google-action") return;
+    if (event.data.action === "start") {
+      setAccountBusy(true);
+      return;
+    }
+    if (event.data.action === "restore-confirm") {
+      showGoogleRestoreConfirm(cloudApi());
+      return;
+    }
+    if (event.data.action === "result") handleGoogleResult(event.data.result || { ok: false, reason: "failed" });
+  };
+  window.addEventListener("message", onGoogleAccountAction);
+  postGoogleButtonState(!initialAccount.googleLinked);
   if (initialAccount.googleLinked) accountButton.title.setText(copy.accountLinked);
   else if (initialAccount.canRestoreGoogle) accountButton.title.setText(copy.googleRestore);
   layer.add([accountButton.button, accountButton.title]);
@@ -674,6 +714,7 @@ export function showProfileEditorPopup(scene, options = {}) {
     scene.input.off("pointerdown", onPointerDown);
     scene.input.off("pointermove", onPointerMove);
     scene.input.off("pointerup", onPointerUp);
+    window.removeEventListener("message", onGoogleAccountAction);
     if (listLayer.scene) listLayer.clearMask(false);
     listMask?.destroy();
     maskShape?.destroy();

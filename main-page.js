@@ -3,22 +3,22 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260904-accountcsp109";
+} from "./src/playerState.js?v=20260904-accountbridge110";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260904-accountcsp109";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260904-accountcsp109";
-import { readProfileState } from "./src/profileState.js?v=20260904-accountcsp109";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260904-accountcsp109";
+} from "./src/dailyMissions.js?v=20260904-accountbridge110";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260904-accountbridge110";
+import { readProfileState } from "./src/profileState.js?v=20260904-accountbridge110";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260904-accountbridge110";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260904-accountcsp109";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260904-accountcsp109";
-import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260904-accountcsp109";
-import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260904-accountcsp109";
+} from "./src/menuBgm.js?v=20260904-accountbridge110";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260904-accountbridge110";
+import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260904-accountbridge110";
+import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260904-accountbridge110";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -27,6 +27,7 @@ const gameFrame = document.getElementById("game-frame");
 const gameLoading = document.getElementById("game-loading");
 const gameLoadingMessage = document.getElementById("game-loading-message");
 const retryGame = document.getElementById("retry-game");
+const googleAccountBridge = document.getElementById("google-account-bridge");
 const modeDialog = document.getElementById("mode-dialog");
 const minigameGuideDialog = document.getElementById("minigame-guide-dialog");
 const minigameGuideDialogImage = document.getElementById("minigame-guide-dialog-image");
@@ -35,7 +36,7 @@ const onlineCodeInput = document.getElementById("online-code-input");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "medals"]);
-const ASSET_RETRY_VERSION = "20260904-accountcsp109";
+const ASSET_RETRY_VERSION = "20260904-accountbridge110";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 
@@ -299,6 +300,8 @@ let onlineRoomCode = "";
 let onlinePlayerColor = "w";
 let onlineUnsubscribe = null;
 let onlineTrigger = null;
+let googleAccountBridgeBounds = null;
+let googleAccountBridgeBusy = false;
 
 const MINIGAME_MODE_CARD_ART = Object.freeze({
   tug: "./assets/kuma/web/image%20440.png",
@@ -632,6 +635,73 @@ function requestScrollSync() {
   requestAnimationFrame(syncScrollControls);
 }
 
+function syncGoogleAccountBridge() {
+  if (!googleAccountBridge || !gameFrame || !gameOverlay || gameOverlay.hidden
+    || !googleAccountBridgeBounds?.enabled) {
+    if (googleAccountBridge) googleAccountBridge.hidden = true;
+    return;
+  }
+  try {
+    const canvas = gameFrame.contentDocument?.querySelector("canvas");
+    if (!canvas) {
+      googleAccountBridge.hidden = true;
+      return;
+    }
+    const canvasRect = canvas.getBoundingClientRect();
+    const frameRect = gameFrame.getBoundingClientRect();
+    const overlayRect = gameOverlay.getBoundingClientRect();
+    const scaleX = canvasRect.width / googleAccountBridgeBounds.sceneWidth;
+    const scaleY = canvasRect.height / googleAccountBridgeBounds.sceneHeight;
+    googleAccountBridge.style.left = `${frameRect.left - overlayRect.left + canvasRect.left + googleAccountBridgeBounds.x * scaleX}px`;
+    googleAccountBridge.style.top = `${frameRect.top - overlayRect.top + canvasRect.top + googleAccountBridgeBounds.y * scaleY}px`;
+    googleAccountBridge.style.width = `${googleAccountBridgeBounds.width * scaleX}px`;
+    googleAccountBridge.style.height = `${googleAccountBridgeBounds.height * scaleY}px`;
+    googleAccountBridge.disabled = googleAccountBridgeBusy;
+    googleAccountBridge.hidden = false;
+  } catch (_error) {
+    googleAccountBridge.hidden = true;
+  }
+}
+
+function postGoogleAccountAction(action, result = null) {
+  gameFrame?.contentWindow?.postMessage({
+    type: "kuma-profile-google-action",
+    action,
+    result,
+  }, window.location.origin);
+}
+
+async function connectGoogleAccountFromTopWindow() {
+  if (googleAccountBridgeBusy) return;
+  const api = window.KumaCloud;
+  if (!api?.connectGoogleAccount) {
+    const result = Object.freeze({ ok: false, reason: "offline" });
+    googleAccountBridge.dataset.status = result.reason;
+    postGoogleAccountAction("result", result);
+    return;
+  }
+  if (api.getAccountState?.().canRestoreGoogle) {
+    googleAccountBridge.dataset.status = "restore-confirm";
+    postGoogleAccountAction("restore-confirm");
+    return;
+  }
+  googleAccountBridgeBusy = true;
+  googleAccountBridge.disabled = true;
+  googleAccountBridge.dataset.status = "connecting";
+  postGoogleAccountAction("start");
+  const result = await api.connectGoogleAccount().catch((error) => ({
+    ok: false,
+    reason: error?.code || "failed",
+  }));
+  googleAccountBridgeBusy = false;
+  googleAccountBridge.dataset.status = result?.ok ? "connected" : (result?.reason || "failed");
+  postGoogleAccountAction("result", result);
+  if (result?.ok) {
+    googleAccountBridgeBounds = { ...googleAccountBridgeBounds, enabled: false };
+  }
+  syncGoogleAccountBridge();
+}
+
 function scrollToSection(selector) {
   const target = document.querySelector(selector);
   if (!target) return;
@@ -647,6 +717,7 @@ function markGameReady() {
   window.clearTimeout(gameReadyTimer);
   gameOverlay?.classList.remove("is-failed");
   gameOverlay?.classList.add("is-ready");
+  syncGoogleAccountBridge();
 }
 
 function resetGameLoading() {
@@ -1011,6 +1082,9 @@ function hideGame(options = {}) {
   document.body.classList.remove("game-open");
   document.body.classList.remove("game-popup-open");
   document.body.classList.remove("game-wallet-open");
+  googleAccountBridgeBounds = null;
+  googleAccountBridgeBusy = false;
+  if (googleAccountBridge) googleAccountBridge.hidden = true;
   window.dispatchEvent(new CustomEvent("kuma-game-closed"));
   window.clearTimeout(gameReadyTimer);
   requestedGame = null;
@@ -1126,6 +1200,7 @@ function bindEvents() {
   onlineDialog?.addEventListener("close", stopOnlineWatch);
   installButton?.addEventListener("click", requestInstall);
   retryGame?.addEventListener("click", loadPendingGame);
+  googleAccountBridge?.addEventListener("click", () => void connectGoogleAccountFromTopWindow());
   window.addEventListener("message", (event) => {
     if (event.origin !== window.location.origin || event.source !== gameFrame?.contentWindow) return;
     if (event.data?.type === "kuma-game-home") {
@@ -1151,6 +1226,10 @@ function bindEvents() {
     }
     if (event.data?.type === "kuma-profile-editor-state") {
       document.body.classList.toggle("game-wallet-open", event.data.open === true);
+      googleAccountBridgeBounds = event.data.open === true && event.data.googleButton
+        ? event.data.googleButton
+        : null;
+      window.requestAnimationFrame(syncGoogleAccountBridge);
       return;
     }
     if (event.data?.type !== "kuma-game-error") return;
@@ -1165,7 +1244,10 @@ function bindEvents() {
     if (event.key === "Escape" && gameOverlay && !gameOverlay.hidden) hideGame();
   });
   window.addEventListener("scroll", requestScrollSync, { passive: true });
-  window.addEventListener("resize", requestScrollSync, { passive: true });
+  window.addEventListener("resize", () => {
+    requestScrollSync();
+    syncGoogleAccountBridge();
+  }, { passive: true });
   const refreshHomeState = () => {
     renderHomeState();
     setMenuBgmVolume(readProfileState(readPlayerState()).bgmVolume);

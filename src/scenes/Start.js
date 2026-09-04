@@ -6,11 +6,11 @@ import {
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260904-accountcsp109";
-import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260904-accountcsp109";
-import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260904-accountcsp109";
-import { setTopAdVisible } from "../adManager.js?v=20260904-accountcsp109";
-import { t } from "../i18n.js?v=20260904-accountcsp109";
+} from "../playerState.js?v=20260904-accountbridge110";
+import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260904-accountbridge110";
+import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260904-accountbridge110";
+import { setTopAdVisible } from "../adManager.js?v=20260904-accountbridge110";
+import { t } from "../i18n.js?v=20260904-accountbridge110";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -23,13 +23,13 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260904-accountcsp109";
-import { playFeedback } from "../feedback.js?v=20260904-accountcsp109";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260904-accountcsp109";
-import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260904-accountcsp109";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-accountcsp109";
-import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260904-accountcsp109";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260904-accountcsp109";
+} from "../ui/KumaUi.js?v=20260904-accountbridge110";
+import { playFeedback } from "../feedback.js?v=20260904-accountbridge110";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260904-accountbridge110";
+import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260904-accountbridge110";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-accountbridge110";
+import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260904-accountbridge110";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260904-accountbridge110";
 
 const BUTTONS = [
   { y: 704, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },
