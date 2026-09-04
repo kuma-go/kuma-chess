@@ -1,16 +1,16 @@
 import {
   getProfileCosmeticCollection,
   purchaseProfileLoadout,
-} from "../playerState.js?v=20260904-accountfix104";
+} from "../playerState.js?v=20260904-accountredirect106";
 import {
   ensureProfileAssets,
   profileTextureKey,
-} from "../profileCatalog.js?v=20260904-accountfix104";
+} from "../profileCatalog.js?v=20260904-accountredirect106";
 import {
   normalizeDisplayName,
   readProfileState,
   writeProfileState,
-} from "../profileState.js?v=20260904-accountfix104";
+} from "../profileState.js?v=20260904-accountredirect106";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -19,9 +19,9 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260904-accountfix104";
-import { showConfirm } from "./ConfirmPopup.js?v=20260904-accountfix104";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-accountfix104";
+} from "./KumaUi.js?v=20260904-accountredirect106";
+import { showConfirm } from "./ConfirmPopup.js?v=20260904-accountredirect106";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-accountredirect106";
 
 const GRID_COLUMNS = 4;
 const GRID_ROW_HEIGHT = 148;
@@ -44,7 +44,7 @@ const COPY = {
     account: "계정 보호", accountLocal: "현재 기기에만 저장됨", accountLinked: "Google 계정에 백업됨",
     connectGoogle: "Google 계정 연결", googleConnected: "Google 계정 연결이 완료되었습니다.",
     googleRestoreTitle: "계정 기록 불러오기", googleRestoreMessage: "이 Google 계정에 저장된 기록이 있습니다. 현재 기기의 기록 대신 계정 기록을 불러올까요?",
-    googleRestore: "불러오기", googleConnecting: "Google 계정에 연결하고 있습니다.",
+    googleRestore: "불러오기", googleConnecting: "Google 계정에 연결하고 있습니다.", googleRedirecting: "Google 로그인으로 이동합니다.",
     googleProviderDisabled: "Firebase에서 Google 로그인을 먼저 활성화해야 합니다.",
     googlePopupBlocked: "로그인 창을 열 수 없습니다. 브라우저의 팝업 차단을 확인해주세요.",
     googleCancelled: "Google 계정 연결을 취소했습니다.", googleFailed: "Google 계정에 연결할 수 없습니다.",
@@ -65,7 +65,7 @@ const COPY = {
     account: "Account protection", accountLocal: "Saved on this device only", accountLinked: "Backed up to Google",
     connectGoogle: "Connect Google", googleConnected: "Your Google account is connected.",
     googleRestoreTitle: "Restore account data", googleRestoreMessage: "This Google account has saved progress. Replace this device's current progress with the account backup?",
-    googleRestore: "Restore", googleConnecting: "Connecting to your Google account...",
+    googleRestore: "Restore", googleConnecting: "Connecting to your Google account...", googleRedirecting: "Opening Google sign-in...",
     googleProviderDisabled: "Google sign-in must first be enabled in Firebase.",
     googlePopupBlocked: "The sign-in window was blocked. Check your browser popup settings.",
     googleCancelled: "Google account connection was cancelled.", googleFailed: "Could not connect your Google account.",
@@ -86,7 +86,7 @@ const COPY = {
     account: "アカウント保護", accountLocal: "この端末のみに保存", accountLinked: "Googleアカウントにバックアップ済み",
     connectGoogle: "Googleに接続", googleConnected: "Googleアカウントに接続しました。",
     googleRestoreTitle: "アカウント記録を復元", googleRestoreMessage: "このGoogleアカウントには保存済みの記録があります。現在の端末記録をアカウント記録に置き換えますか？",
-    googleRestore: "復元", googleConnecting: "Googleアカウントに接続しています。",
+    googleRestore: "復元", googleConnecting: "Googleアカウントに接続しています。", googleRedirecting: "Googleログインに移動します。",
     googleProviderDisabled: "FirebaseでGoogleログインを有効にしてください。",
     googlePopupBlocked: "ログイン画面を開けません。ポップアップ設定を確認してください。",
     googleCancelled: "Googleアカウント接続をキャンセルしました。", googleFailed: "Googleアカウントに接続できません。",
@@ -340,6 +340,26 @@ export function showProfileEditorPopup(scene, options = {}) {
     { size: profile.language === "en" ? 11 : 12, color: initialAccount.googleLinked ? KUMA_COLORS.teal : "#a48769", weight: "700" },
   );
   let accountBusy = false;
+  const showGoogleRestoreConfirm = (api) => {
+    showConfirm(scene, {
+      title: copy.googleRestoreTitle,
+      message: copy.googleRestoreMessage,
+      confirmText: copy.googleRestore,
+      cancelText: copy.cancel,
+      depth: 12000,
+      onConfirm: async () => {
+        accountBusy = true;
+        accountButton.setEnabled(false);
+        accountButton.title.setText(copy.googleConnecting);
+        const restored = await api.restoreExistingGoogleAccount?.().catch(() => ({ ok: false }));
+        if (restored?.ok) return;
+        accountBusy = false;
+        accountButton.setEnabled(true);
+        accountButton.title.setText(copy.connectGoogle);
+        showRewardLine(scene, copy.googleFailed, { y: scene.scale.height * 0.52, tone: "failure", showCoin: false, depth: 13000 });
+      },
+    });
+  };
   const accountButton = addOutlinedTextButton(scene, px + 125, panelTop + 366, copy.connectGoogle, async () => {
     if (accountBusy) return;
     const api = cloudApi();
@@ -347,10 +367,18 @@ export function showProfileEditorPopup(scene, options = {}) {
       showRewardLine(scene, copy.googleFailed, { y: scene.scale.height * 0.52, tone: "failure", showCoin: false, depth: 13000 });
       return;
     }
+    if (api.getAccountState?.().canRestoreGoogle) {
+      showGoogleRestoreConfirm(api);
+      return;
+    }
     accountBusy = true;
     accountButton.setEnabled(false);
     accountButton.title.setText(copy.googleConnecting);
     const result = await api.connectGoogleAccount().catch(() => ({ ok: false, reason: "failed" }));
+    if (result?.redirecting) {
+      accountButton.title.setText(copy.googleRedirecting);
+      return;
+    }
     if (result?.ok) {
       accountStatus.setText(copy.accountLinked).setColor(KUMA_COLORS.teal);
       accountButton.title.setText(copy.accountLinked);
@@ -361,24 +389,7 @@ export function showProfileEditorPopup(scene, options = {}) {
     accountButton.setEnabled(true);
     accountButton.title.setText(copy.connectGoogle);
     if (result?.reason === "account-exists" && result?.canRestore) {
-      showConfirm(scene, {
-        title: copy.googleRestoreTitle,
-        message: copy.googleRestoreMessage,
-        confirmText: copy.googleRestore,
-        cancelText: copy.cancel,
-        depth: 12000,
-        onConfirm: async () => {
-          accountBusy = true;
-          accountButton.setEnabled(false);
-          accountButton.title.setText(copy.googleConnecting);
-          const restored = await api.restoreExistingGoogleAccount?.().catch(() => ({ ok: false }));
-          if (restored?.ok) return;
-          accountBusy = false;
-          accountButton.setEnabled(true);
-          accountButton.title.setText(copy.connectGoogle);
-          showRewardLine(scene, copy.googleFailed, { y: scene.scale.height * 0.52, tone: "failure", showCoin: false, depth: 13000 });
-        },
-      });
+      showGoogleRestoreConfirm(api);
       return;
     }
     const message = result?.reason === "provider-disabled"
@@ -397,6 +408,7 @@ export function showProfileEditorPopup(scene, options = {}) {
     enabled: !initialAccount.googleLinked,
   });
   if (initialAccount.googleLinked) accountButton.title.setText(copy.accountLinked);
+  else if (initialAccount.canRestoreGoogle) accountButton.title.setText(copy.googleRestore);
   layer.add([accountButton.button, accountButton.title]);
 
   const tabY = panelTop + 424;

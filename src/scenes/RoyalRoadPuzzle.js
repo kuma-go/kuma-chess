@@ -1,9 +1,9 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-accountfix104";
-import { createPieceView } from "../pieceStyles.js?v=20260904-accountfix104";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-accountfix104";
-import { t } from "../i18n.js?v=20260904-accountfix104";
-import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260904-accountfix104";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-accountfix104";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-accountredirect106";
+import { createPieceView } from "../pieceStyles.js?v=20260904-accountredirect106";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-accountredirect106";
+import { t } from "../i18n.js?v=20260904-accountredirect106";
+import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260904-accountredirect106";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-accountredirect106";
 import {
   createRoadPuzzleState,
   findRoadPuzzlePath,
@@ -14,10 +14,10 @@ import {
   roadPuzzleNeighbors,
   rotateRoadPuzzleTile,
   scoreRoadPuzzle,
-} from "../royalRoadPuzzleLogic.js?v=20260904-accountfix104";
-import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260904-accountfix104";
-import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260904-accountfix104";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-accountfix104";
+} from "../royalRoadPuzzleLogic.js?v=20260904-accountredirect106";
+import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260904-accountredirect106";
+import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260904-accountredirect106";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-accountredirect106";
 import {
   addDarkTopBar,
   addLargeTextButton,
@@ -27,7 +27,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260904-accountfix104";
+} from "../ui/KumaUi.js?v=20260904-accountredirect106";
 
 const VIEW = Object.freeze({ x: 18, y: 214, width: 684, height: 882 });
 const PLAY_VIEW = Object.freeze({

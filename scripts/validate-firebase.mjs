@@ -65,6 +65,9 @@ if (!client.includes("fullBackupPayload")
 }
 if (!client.includes("GoogleAuthProvider")
   || !client.includes("linkWithPopup")
+  || !client.includes("linkWithRedirect")
+  || !client.includes("getRedirectResult")
+  || !client.includes("preferGoogleRedirect")
   || !client.includes("signInWithCredential")
   || !client.includes("connectGoogleAccount")
   || !client.includes("restoreExistingGoogleAccount")) {

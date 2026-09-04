@@ -1,16 +1,16 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-accountfix104";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-accountfix104";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-accountfix104";
-import { t } from "../i18n.js?v=20260904-accountfix104";
-import { recordMiniGameCompletion } from "../medals.js?v=20260904-accountfix104";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-accountfix104";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-accountredirect106";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-accountredirect106";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-accountredirect106";
+import { t } from "../i18n.js?v=20260904-accountredirect106";
+import { recordMiniGameCompletion } from "../medals.js?v=20260904-accountredirect106";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-accountredirect106";
 import {
   createCrownClashState,
   crownLegalMoves,
   moveCrownPiece,
   resolveCrownTurnIfStuck,
   rollCrownDice,
-} from "../crownClashLogic.js?v=20260904-accountfix104";
+} from "../crownClashLogic.js?v=20260904-accountredirect106";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -19,7 +19,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260904-accountfix104";
+} from "../ui/KumaUi.js?v=20260904-accountredirect106";
 
 const BOARD_OUTER_TOP = 250;
 const BOARD_OUTER_WIDTH = 712;

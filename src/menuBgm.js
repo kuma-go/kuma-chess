@@ -1,5 +1,5 @@
-import { readPlayerState } from "./playerState.js?v=20260904-accountfix104";
-import { recordAmbientMedalEvent } from "./medals.js?v=20260904-accountfix104";
+import { readPlayerState } from "./playerState.js?v=20260904-accountredirect106";
+import { recordAmbientMedalEvent } from "./medals.js?v=20260904-accountredirect106";
 
 const TRACKS = Object.freeze([
   Object.freeze({
