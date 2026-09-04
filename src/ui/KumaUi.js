@@ -1,13 +1,13 @@
-import { getPieceUnlockNotices, readPlayerState, redeemHiddenRewardCoupon, writePlayerState } from "../playerState.js?v=20260904-accountpopup108";
-import { t } from "../i18n.js?v=20260904-accountpopup108";
-import { SpriteButton } from "./SpriteButton.js?v=20260904-accountpopup108";
-import { setMenuBgmVolume } from "../menuBgm.js?v=20260904-accountpopup108";
+import { getPieceUnlockNotices, readPlayerState, redeemHiddenRewardCoupon, writePlayerState } from "../playerState.js?v=20260904-accountcsp109";
+import { t } from "../i18n.js?v=20260904-accountcsp109";
+import { SpriteButton } from "./SpriteButton.js?v=20260904-accountcsp109";
+import { setMenuBgmVolume } from "../menuBgm.js?v=20260904-accountcsp109";
 import {
   isVibrationSupported,
   playFeedback,
   primeAudioFromGesture,
   vibrateFeedback,
-} from "../feedback.js?v=20260904-accountpopup108";
+} from "../feedback.js?v=20260904-accountcsp109";
 
 export const KUMA_FONT_SANS = '"Pretendard", "Apple SD Gothic Neo", sans-serif';
 export const KUMA_FONT_SERIF = '"Noto Serif KR", "Noto Serif", Georgia, serif';
@@ -439,6 +439,7 @@ export function showRewardLine(scene, message, options = {}) {
   const customIcon = options.icon || null;
   const hasIcon = showCoin || Boolean(customIcon);
   const particleScale = options.particleScale ?? 1;
+  const bandHeight = options.bandHeight ?? 84;
   const tone = options.tone ?? "success";
   const isFailure = tone === "failure";
   playFeedback(options.feedbackType || (isFailure ? "error" : showCoin ? "reward" : "success"));
@@ -460,9 +461,9 @@ export function showRewardLine(scene, message, options = {}) {
   const particleCount = options.particleCount ?? (isFailure ? 8 : 22);
   const group = scene.add.container(width / 2, y).setDepth(depth);
 
-  const band = scene.add.rectangle(0, 0, width, 84, palette.band, 0.94).setScale(0.04, 1);
-  const edgeTop = scene.add.rectangle(0, -42, width, 3, palette.edge, 1).setScale(0.04, 1);
-  const edgeBottom = scene.add.rectangle(0, 42, width, 3, palette.edge, 1).setScale(0.04, 1);
+  const band = scene.add.rectangle(0, 0, width, bandHeight, palette.band, 0.94).setScale(0.04, 1);
+  const edgeTop = scene.add.rectangle(0, -bandHeight / 2, width, 3, palette.edge, 1).setScale(0.04, 1);
+  const edgeBottom = scene.add.rectangle(0, bandHeight / 2, width, 3, palette.edge, 1).setScale(0.04, 1);
   const coin = scene.add.image(-170, 0, "kuma_ui_coin_nomal")
     .setDisplaySize(46, 46)
     .setAlpha(0)
@@ -470,9 +471,10 @@ export function showRewardLine(scene, message, options = {}) {
   if (customIcon) customIcon.setPosition(-188, 0).setAlpha(0).setScale(0.72);
   const label = scene.add.text(hasIcon ? 16 : 0, 0, message, {
     fontFamily: KUMA_FONT_SANS,
-    fontSize: "29px",
+    fontSize: `${options.fontSize ?? 29}px`,
     color: palette.text,
     fontStyle: "900",
+    align: "center",
     stroke: palette.stroke,
     strokeThickness: 3,
   }).setOrigin(0.5).setAlpha(0).setScale(0.82);
@@ -731,7 +733,7 @@ export function showSettingsPanel(scene, options = {}) {
         : t("settings.couponInvalid", {}, pending.language);
       const unlockNotices = result.ok && !result.alreadyUnlocked ? getPieceUnlockNotices() : [];
       if (unlockNotices.length) {
-        import("./PieceUnlockLine.js?v=20260904-accountpopup108").then(({ showPieceUnlockNoticeSequence }) => {
+        import("./PieceUnlockLine.js?v=20260904-accountcsp109").then(({ showPieceUnlockNoticeSequence }) => {
           showPieceUnlockNoticeSequence(scene, unlockNotices, { depth: 10100 });
         });
       } else {

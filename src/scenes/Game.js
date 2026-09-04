@@ -1,14 +1,14 @@
-import { Chess } from "../vendor-chess.js?v=20260904-accountpopup108";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-accountpopup108";
-import { pieceTextureKey } from "../pieceAssets.js?v=20260904-accountpopup108";
-import { t } from "../i18n.js?v=20260904-accountpopup108";
-import { playFeedback } from "../feedback.js?v=20260904-accountpopup108";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260904-accountpopup108";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260904-accountpopup108";
-import { AI_DIFFICULTIES, COSTS, getAIDifficulty, grantCoinsOnce, readPlayerState, recordGameResult, spendCoins } from "../playerState.js?v=20260904-accountpopup108";
-import { recordCompletedGame } from "../medals.js?v=20260904-accountpopup108";
-import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260904-accountpopup108";
-import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260904-accountpopup108";
+import { Chess } from "../vendor-chess.js?v=20260904-accountcsp109";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-accountcsp109";
+import { pieceTextureKey } from "../pieceAssets.js?v=20260904-accountcsp109";
+import { t } from "../i18n.js?v=20260904-accountcsp109";
+import { playFeedback } from "../feedback.js?v=20260904-accountcsp109";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260904-accountcsp109";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260904-accountcsp109";
+import { AI_DIFFICULTIES, COSTS, getAIDifficulty, grantCoinsOnce, readPlayerState, recordGameResult, spendCoins } from "../playerState.js?v=20260904-accountcsp109";
+import { recordCompletedGame } from "../medals.js?v=20260904-accountcsp109";
+import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260904-accountcsp109";
+import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260904-accountcsp109";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -20,7 +20,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260904-accountpopup108";
+} from "../ui/KumaUi.js?v=20260904-accountcsp109";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
@@ -1582,7 +1582,7 @@ export class Game extends Phaser.Scene {
 
       try {
         worker = new Worker(
-          new URL("../ai/challengeWorker.js?v=20260904-accountpopup108", import.meta.url),
+          new URL("../ai/challengeWorker.js?v=20260904-accountcsp109", import.meta.url),
           { type: "module", name: "kuma-challenge-ai" }
         );
       } catch (error) {

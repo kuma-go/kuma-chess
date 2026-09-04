@@ -57,6 +57,16 @@ if (!rules.includes("match /onlineRooms/{code}")
 }
 
 const client = read("src/firebaseClientEntry.js");
+const index = read("index.html");
+const responseHeaders = read("_headers");
+for (const [file, policy] of [["index.html", index], ["_headers", responseHeaders]]) {
+  if (!policy.includes("script-src 'self' https://apis.google.com")) {
+    failures.push(`${file}: Firebase popup authentication must allow the Google API loader`);
+  }
+  if (!policy.includes("frame-src 'self' https://kuma-chess.firebaseapp.com")) {
+    failures.push(`${file}: Firebase popup authentication must allow its helper iframe`);
+  }
+}
 if (!client.includes("fullBackupPayload")
   || !client.includes("restoreRegisteredBackup")
   || !client.includes("activeUser.isAnonymous ? null : fullBackupPayload()")
@@ -72,6 +82,9 @@ if (!client.includes("GoogleAuthProvider")
 }
 if (client.includes("linkWithRedirect") || client.includes("getRedirectResult")) {
   failures.push("src/firebaseClientEntry.js: cross-origin redirect auth is incompatible with the current GitHub Pages hosting");
+}
+if (client.includes('"auth/internal-error"].includes')) {
+  failures.push("src/firebaseClientEntry.js: internal SDK failures must not be mislabeled as popup blocking");
 }
 if (client.includes("getAnalytics") || client.includes("firebase/analytics")) {
   failures.push("src/firebaseClientEntry.js: Analytics requires a separate consent decision");

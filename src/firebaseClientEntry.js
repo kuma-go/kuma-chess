@@ -366,7 +366,7 @@ async function requireActiveUser() {
 
 function googleConnectReason(error) {
   if (["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(error?.code)) return "cancelled";
-  if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment", "auth/internal-error"].includes(error?.code)) {
+  if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(error?.code)) {
     return "popup-blocked";
   }
   if (error?.code === "auth/operation-not-allowed") return "provider-disabled";
@@ -401,7 +401,7 @@ async function connectGoogleAccount() {
     if (captureGoogleAccountConflict(error)) {
       return Object.freeze({ ok: false, reason: "account-exists", canRestore: true });
     }
-    console.warn("[KUMA CHESS] Google account connection failed.", error?.code || error);
+    console.warn("[KUMA CHESS] Google account connection failed.", error);
     return Object.freeze({ ok: false, reason: googleConnectReason(error) });
   }
 }

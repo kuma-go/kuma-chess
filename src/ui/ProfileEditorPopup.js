@@ -1,16 +1,16 @@
 import {
   getProfileCosmeticCollection,
   purchaseProfileLoadout,
-} from "../playerState.js?v=20260904-accountpopup108";
+} from "../playerState.js?v=20260904-accountcsp109";
 import {
   ensureProfileAssets,
   profileTextureKey,
-} from "../profileCatalog.js?v=20260904-accountpopup108";
+} from "../profileCatalog.js?v=20260904-accountcsp109";
 import {
   normalizeDisplayName,
   readProfileState,
   writeProfileState,
-} from "../profileState.js?v=20260904-accountpopup108";
+} from "../profileState.js?v=20260904-accountcsp109";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -19,9 +19,9 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260904-accountpopup108";
-import { showConfirm } from "./ConfirmPopup.js?v=20260904-accountpopup108";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-accountpopup108";
+} from "./KumaUi.js?v=20260904-accountcsp109";
+import { showConfirm } from "./ConfirmPopup.js?v=20260904-accountcsp109";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-accountcsp109";
 
 const GRID_COLUMNS = 4;
 const GRID_ROW_HEIGHT = 148;
@@ -46,7 +46,7 @@ const COPY = {
     googleRestoreTitle: "계정 기록 불러오기", googleRestoreMessage: "이 Google 계정에 저장된 기록이 있습니다. 현재 기기의 기록 대신 계정 기록을 불러올까요?",
     googleRestore: "불러오기", googleConnecting: "Google 계정에 연결하고 있습니다.",
     googleProviderDisabled: "Firebase에서 Google 로그인을 먼저 활성화해야 합니다.",
-    googlePopupBlocked: "로그인 창을 열 수 없습니다. Chrome 또는 Safari에서 열어 다시 시도해주세요.",
+    googlePopupBlocked: "로그인 창을 열 수 없습니다.\nChrome 또는 Safari에서 다시 시도해주세요.",
     googleCancelled: "Google 계정 연결을 취소했습니다.", googleFailed: "Google 계정에 연결할 수 없습니다.",
   },
   en: {
@@ -67,7 +67,7 @@ const COPY = {
     googleRestoreTitle: "Restore account data", googleRestoreMessage: "This Google account has saved progress. Replace this device's current progress with the account backup?",
     googleRestore: "Restore", googleConnecting: "Connecting to your Google account...",
     googleProviderDisabled: "Google sign-in must first be enabled in Firebase.",
-    googlePopupBlocked: "The sign-in window could not open. Try again in Chrome or Safari.",
+    googlePopupBlocked: "The sign-in window could not open.\nTry again in Chrome or Safari.",
     googleCancelled: "Google account connection was cancelled.", googleFailed: "Could not connect your Google account.",
   },
   ja: {
@@ -88,7 +88,7 @@ const COPY = {
     googleRestoreTitle: "アカウント記録を復元", googleRestoreMessage: "このGoogleアカウントには保存済みの記録があります。現在の端末記録をアカウント記録に置き換えますか？",
     googleRestore: "復元", googleConnecting: "Googleアカウントに接続しています。",
     googleProviderDisabled: "FirebaseでGoogleログインを有効にしてください。",
-    googlePopupBlocked: "ログイン画面を開けません。ChromeまたはSafariで再試行してください。",
+    googlePopupBlocked: "ログイン画面を開けません。\nChromeまたはSafariで再試行してください。",
     googleCancelled: "Googleアカウント接続をキャンセルしました。", googleFailed: "Googleアカウントに接続できません。",
   },
 };
@@ -395,7 +395,14 @@ export function showProfileEditorPopup(scene, options = {}) {
         : result?.reason === "cancelled"
           ? copy.googleCancelled
           : copy.googleFailed;
-    showRewardLine(scene, message, { y: scene.scale.height * 0.52, tone: "failure", showCoin: false, depth: 13000 });
+    showRewardLine(scene, message, {
+      y: scene.scale.height * 0.52,
+      tone: "failure",
+      showCoin: false,
+      depth: 13000,
+      bandHeight: message.includes("\n") ? 112 : 84,
+      fontSize: message.includes("\n") ? 25 : 29,
+    });
   }, {
     width: 276,
     height: 54,

@@ -1,5 +1,5 @@
-import { updatePlayerState, readPlayerState } from "./playerState.js?v=20260904-accountpopup108";
-import { recordDailyMissionDay } from "./medals.js?v=20260904-accountpopup108";
+import { updatePlayerState, readPlayerState } from "./playerState.js?v=20260904-accountcsp109";
+import { recordDailyMissionDay } from "./medals.js?v=20260904-accountcsp109";
 
 const STATE_VERSION = 2;
 const EVENT_ID_LIMIT = 160;
