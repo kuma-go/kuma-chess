@@ -4,15 +4,15 @@ import {
   readProfileState,
   stripProfileFields,
   writeProfileState,
-} from "./profileState.js?v=20260904-accountredirect106";
+} from "./profileState.js?v=20260904-accountpopup108";
 import {
   FREE_PROFILE_FRAME_IDS,
   FREE_PROFILE_PORTRAIT_IDS,
   PROFILE_FRAMES,
   PROFILE_PORTRAITS,
   getProfileCosmetic,
-} from "./profileCatalog.js?v=20260904-accountredirect106";
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260904-accountredirect106";
+} from "./profileCatalog.js?v=20260904-accountpopup108";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260904-accountpopup108";
 
 export const PLAYER_STATE_KEY = "kumaChessPlayerState";
 export const PUZZLE_PROGRESS_KEY = "kumaChessPuzzleClears";

@@ -1,6 +1,6 @@
-import { getPuzzleUnlockCount, REWARDS } from "../playerState.js?v=20260904-accountredirect106";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260904-accountredirect106";
-import { puzzleTags, puzzleText, t } from "../i18n.js?v=20260904-accountredirect106";
+import { getPuzzleUnlockCount, REWARDS } from "../playerState.js?v=20260904-accountpopup108";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260904-accountpopup108";
+import { puzzleTags, puzzleText, t } from "../i18n.js?v=20260904-accountpopup108";
 import {
   addBackButton,
   addCoinPill,
@@ -13,7 +13,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260904-accountredirect106";
+} from "../ui/KumaUi.js?v=20260904-accountpopup108";
 
 const CARD_HEIGHT = 98;
 const CARD_GAP = 113;

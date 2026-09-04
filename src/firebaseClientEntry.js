@@ -2,11 +2,9 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   browserLocalPersistence,
   getAuth,
-  getRedirectResult,
   GoogleAuthProvider,
   indexedDBLocalPersistence,
   linkWithPopup,
-  linkWithRedirect,
   onAuthStateChanged,
   setPersistence,
   signInAnonymously,
@@ -44,7 +42,6 @@ const MEDAL_STATE_KEY = "kumaChessMedalsV1";
 const ROAD_PUZZLE_STATE_KEY = "kumaChessRoyalRoadPuzzleV1";
 const CLOUD_OWNER_UID_KEY = "kumaChessCloudOwnerUidV1";
 const PRE_RESTORE_BACKUP_KEY = "kumaChessPreGoogleRestoreBackupV1";
-const GOOGLE_REDIRECT_PENDING_KEY = "kumaChessGoogleRedirectPendingV1";
 const CLOUD_BACKUP_SCHEMA_VERSION = 1;
 const CLOUD_BACKUP_FIELDS = Object.freeze([
   Object.freeze({ name: "profile", primary: PROFILE_STATE_KEY, backup: "kumaChessProfileStateBackupV1", fallback: "{}" }),
@@ -369,38 +366,13 @@ async function requireActiveUser() {
 
 function googleConnectReason(error) {
   if (["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(error?.code)) return "cancelled";
-  if (error?.code === "auth/popup-blocked") return "popup-blocked";
+  if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment", "auth/internal-error"].includes(error?.code)) {
+    return "popup-blocked";
+  }
   if (error?.code === "auth/operation-not-allowed") return "provider-disabled";
   if (error?.code === "auth/unauthorized-domain") return "unauthorized-domain";
   if (error?.code === "auth/network-request-failed") return "offline";
   return error?.code || "google-link-failed";
-}
-
-function preferGoogleRedirect() {
-  const mobileUserAgent = /Android|iPhone|iPad|iPod/i.test(window.navigator?.userAgent || "");
-  const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches
-    || window.navigator?.standalone === true;
-  const compactTouchScreen = window.matchMedia?.("(max-width: 760px) and (pointer: coarse)")?.matches;
-  return Boolean(mobileUserAgent || standalone || compactTouchScreen);
-}
-
-function rememberGoogleRedirect() {
-  try {
-    window.localStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, JSON.stringify({
-      uid: activeUser?.uid || "",
-      startedAtMs: Date.now(),
-    }));
-  } catch (_error) {
-    // Firebase keeps its own redirect state when local storage is unavailable.
-  }
-}
-
-function clearGoogleRedirect() {
-  try {
-    window.localStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
-  } catch (_error) {
-    // A stale marker is harmless when local storage is unavailable.
-  }
 }
 
 function captureGoogleAccountConflict(error) {
@@ -411,37 +383,6 @@ function captureGoogleAccountConflict(error) {
   return Boolean(pendingGoogleCredential);
 }
 
-async function beginGoogleRedirect(provider) {
-  rememberGoogleRedirect();
-  try {
-    await linkWithRedirect(activeUser, provider);
-    return Object.freeze({ ok: true, redirecting: true });
-  } catch (error) {
-    clearGoogleRedirect();
-    throw error;
-  }
-}
-
-async function consumeGoogleRedirectResult() {
-  try {
-    const result = await getRedirectResult(auth);
-    clearGoogleRedirect();
-    if (!result?.user) return;
-    activeUser = result.user;
-    rememberCloudOwner(activeUser.uid);
-    lastBackupSignature = "";
-    emitCloudState("ready", { lastSyncedAt: Date.now(), googleLinked: true });
-  } catch (error) {
-    clearGoogleRedirect();
-    if (captureGoogleAccountConflict(error)) {
-      emitCloudState("google-link-conflict", { error: "account-exists" });
-      return;
-    }
-    console.warn("[KUMA CHESS] Google redirect result failed.", error?.code || error);
-    emitCloudState("google-link-failed", { error: googleConnectReason(error) });
-  }
-}
-
 async function connectGoogleAccount() {
   if (!auth || !database || !activeUser) return Object.freeze({ ok: false, reason: "offline" });
   if (accountState().googleLinked) return Object.freeze({ ok: true, linked: true, unchanged: true });
@@ -449,7 +390,6 @@ async function connectGoogleAccount() {
   provider.setCustomParameters({ prompt: "select_account" });
   pendingGoogleCredential = null;
   try {
-    if (preferGoogleRedirect()) return await beginGoogleRedirect(provider);
     const credential = await linkWithPopup(activeUser, provider);
     activeUser = credential.user;
     rememberCloudOwner(activeUser.uid);
@@ -460,14 +400,6 @@ async function connectGoogleAccount() {
   } catch (error) {
     if (captureGoogleAccountConflict(error)) {
       return Object.freeze({ ok: false, reason: "account-exists", canRestore: true });
-    }
-    if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment", "auth/internal-error"].includes(error?.code)) {
-      try {
-        return await beginGoogleRedirect(provider);
-      } catch (redirectError) {
-        console.warn("[KUMA CHESS] Google redirect fallback failed.", redirectError?.code || redirectError);
-        return Object.freeze({ ok: false, reason: googleConnectReason(redirectError) });
-      }
     }
     console.warn("[KUMA CHESS] Google account connection failed.", error?.code || error);
     return Object.freeze({ ok: false, reason: googleConnectReason(error) });
@@ -940,7 +872,6 @@ async function initializeCloud() {
     }
     await auth.authStateReady();
     activeUser = auth.currentUser;
-    await consumeGoogleRedirectResult();
     bindSyncEvents();
     onAuthStateChanged(auth, async (user) => {
       if (!user) {

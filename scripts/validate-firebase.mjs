@@ -65,13 +65,13 @@ if (!client.includes("fullBackupPayload")
 }
 if (!client.includes("GoogleAuthProvider")
   || !client.includes("linkWithPopup")
-  || !client.includes("linkWithRedirect")
-  || !client.includes("getRedirectResult")
-  || !client.includes("preferGoogleRedirect")
   || !client.includes("signInWithCredential")
   || !client.includes("connectGoogleAccount")
   || !client.includes("restoreExistingGoogleAccount")) {
-  failures.push("src/firebaseClientEntry.js: Google account upgrade and existing-account restore flow is missing");
+  failures.push("src/firebaseClientEntry.js: popup-based Google account upgrade and existing-account restore flow is missing");
+}
+if (client.includes("linkWithRedirect") || client.includes("getRedirectResult")) {
+  failures.push("src/firebaseClientEntry.js: cross-origin redirect auth is incompatible with the current GitHub Pages hosting");
 }
 if (client.includes("getAnalytics") || client.includes("firebase/analytics")) {
   failures.push("src/firebaseClientEntry.js: Analytics requires a separate consent decision");

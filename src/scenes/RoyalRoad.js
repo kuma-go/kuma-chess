@@ -1,9 +1,9 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-accountredirect106";
-import { createPieceView } from "../pieceStyles.js?v=20260904-accountredirect106";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-accountredirect106";
-import { t } from "../i18n.js?v=20260904-accountredirect106";
-import { recordMiniGameCompletion } from "../medals.js?v=20260904-accountredirect106";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-accountredirect106";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-accountpopup108";
+import { createPieceView } from "../pieceStyles.js?v=20260904-accountpopup108";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-accountpopup108";
+import { t } from "../i18n.js?v=20260904-accountpopup108";
+import { recordMiniGameCompletion } from "../medals.js?v=20260904-accountpopup108";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-accountpopup108";
 import {
   advanceRoadKing,
   applyRoadClockEffect,
@@ -22,14 +22,14 @@ import {
   roadRemainingTiles,
   roadVisualTileId,
   roadWinner,
-} from "../royalRoadLogic.js?v=20260904-accountredirect106";
+} from "../royalRoadLogic.js?v=20260904-accountpopup108";
 import {
   addDarkTopBar,
   addScreenBg,
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260904-accountredirect106";
+} from "../ui/KumaUi.js?v=20260904-accountpopup108";
 
 const BOARD_TOP = 350;
 const BOARD_VIEW_HEIGHT = 672;
