@@ -1,16 +1,16 @@
-import { Chess } from "../vendor-chess.js?v=20260904-pwarefresh103";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-pwarefresh103";
-import { playFeedback } from "../feedback.js?v=20260904-pwarefresh103";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260904-pwarefresh103";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260904-pwarefresh103";
+import { Chess } from "../vendor-chess.js?v=20260904-accountfix104";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-accountfix104";
+import { playFeedback } from "../feedback.js?v=20260904-accountfix104";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260904-accountfix104";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260904-accountfix104";
 import {
   markMedalsSeen,
   recordPuzzleCompletion,
   recordPuzzleHint,
-} from "../medals.js?v=20260904-pwarefresh103";
-import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260904-pwarefresh103";
-import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260904-pwarefresh103";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260904-pwarefresh103";
+} from "../medals.js?v=20260904-accountfix104";
+import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260904-accountfix104";
+import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260904-accountfix104";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260904-accountfix104";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -23,9 +23,9 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260904-pwarefresh103";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-pwarefresh103";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260904-pwarefresh103";
+} from "../ui/KumaUi.js?v=20260904-accountfix104";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-accountfix104";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260904-accountfix104";
 
 const FILES = "abcdefgh";
 

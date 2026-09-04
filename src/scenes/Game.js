@@ -1,14 +1,14 @@
-import { Chess } from "../vendor-chess.js?v=20260904-pwarefresh103";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-pwarefresh103";
-import { pieceTextureKey } from "../pieceAssets.js?v=20260904-pwarefresh103";
-import { t } from "../i18n.js?v=20260904-pwarefresh103";
-import { playFeedback } from "../feedback.js?v=20260904-pwarefresh103";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260904-pwarefresh103";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260904-pwarefresh103";
-import { AI_DIFFICULTIES, COSTS, getAIDifficulty, grantCoinsOnce, readPlayerState, recordGameResult, spendCoins } from "../playerState.js?v=20260904-pwarefresh103";
-import { recordCompletedGame } from "../medals.js?v=20260904-pwarefresh103";
-import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260904-pwarefresh103";
-import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260904-pwarefresh103";
+import { Chess } from "../vendor-chess.js?v=20260904-accountfix104";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260904-accountfix104";
+import { pieceTextureKey } from "../pieceAssets.js?v=20260904-accountfix104";
+import { t } from "../i18n.js?v=20260904-accountfix104";
+import { playFeedback } from "../feedback.js?v=20260904-accountfix104";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260904-accountfix104";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260904-accountfix104";
+import { AI_DIFFICULTIES, COSTS, getAIDifficulty, grantCoinsOnce, readPlayerState, recordGameResult, spendCoins } from "../playerState.js?v=20260904-accountfix104";
+import { recordCompletedGame } from "../medals.js?v=20260904-accountfix104";
+import { recordDailyGameCompletion } from "../dailyMissions.js?v=20260904-accountfix104";
+import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260904-accountfix104";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -20,7 +20,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
-} from "../ui/KumaUi.js?v=20260904-pwarefresh103";
+} from "../ui/KumaUi.js?v=20260904-accountfix104";
 
 const FILES = "abcdefgh";
 const AI_DIFFICULTY_IDS = new Set(Object.keys(AI_DIFFICULTIES));
@@ -84,6 +84,7 @@ export class Game extends Phaser.Scene {
     this._challengeSearch = null;
     this._challengeRequestId = 0;
     this._challengeSearchStats = null;
+    this._aiFailureCount = 0;
     this._gameOverTimers = [];
     this._modalOpen = false;
     this.gameSessionId = "";
@@ -111,6 +112,7 @@ export class Game extends Phaser.Scene {
     this._modalOpen = false;
     this._resultRecorded = false;
     this._rewardResolved = false;
+    this._aiFailureCount = 0;
 
     this._lineFxLayer = null;
     this._lastCheckKey = null;
@@ -1580,7 +1582,7 @@ export class Game extends Phaser.Scene {
 
       try {
         worker = new Worker(
-          new URL("../ai/challengeWorker.js?v=20260904-pwarefresh103", import.meta.url),
+          new URL("../ai/challengeWorker.js?v=20260904-accountfix104", import.meta.url),
           { type: "module", name: "kuma-challenge-ai" }
         );
       } catch (error) {
@@ -1609,7 +1611,7 @@ isViewFlipped() {
     if (this.isAIMode()) return this.playerColor === "b";
     return false;
   }
-maybeAIMove(force = false) {
+  maybeAIMove(force = false) {
     if (!this.isAIMode()) return;
     if (this._promoLayer) return;
     if (this._modalOpen) return;
@@ -1690,6 +1692,26 @@ maybeAIMove(force = false) {
         };
         if (moved?.to) this.playImpactEffect(moved.to, !!moved.captured, afterImpact);
         else afterImpact();
+        this._aiFailureCount = 0;
+      } catch (error) {
+        console.warn("[KUMA CHESS] AI turn recovered after an internal error.", error);
+        if (token !== this._aiToken || !this.scene.isActive() || this._ending) return;
+        this._aiFailureCount += 1;
+        try {
+          this.clearSelection();
+          this.renderAll();
+          this.renderCaptured();
+          this.updateStatus();
+        } catch (renderError) {
+          console.warn("[KUMA CHESS] AI recovery render failed.", renderError);
+        }
+        if (!this.game?.isGameOver?.()
+          && this.game?.turn?.() === aiColor
+          && this._aiFailureCount <= 2) {
+          this.time.delayedCall(220, () => {
+            if (this.scene.isActive() && !this._ending) this.maybeAIMove(true);
+          });
+        }
       } finally {
         if (token === this._aiToken) this._aiBusy = false;
       }

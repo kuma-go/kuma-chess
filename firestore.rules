@@ -276,6 +276,42 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      match /sync/backup {
+        allow read: if owns(uid)
+          && request.auth.token.firebase.sign_in_provider != 'anonymous';
+        allow create, update: if owns(uid)
+          && request.auth.token.firebase.sign_in_provider != 'anonymous'
+          && request.resource.data.keys().hasAll([
+            'schemaVersion', 'source', 'payload', 'savedAtMs', 'updatedAt'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'schemaVersion', 'source', 'payload', 'savedAtMs', 'updatedAt'
+          ])
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.source == 'local-unverified'
+          && request.resource.data.payload is map
+          && request.resource.data.payload.keys().hasAll([
+            'profile', 'player', 'puzzles', 'medals', 'roadPuzzle'
+          ])
+          && request.resource.data.payload.keys().hasOnly([
+            'profile', 'player', 'puzzles', 'medals', 'roadPuzzle'
+          ])
+          && request.resource.data.payload.profile is string
+          && request.resource.data.payload.profile.size() <= 20000
+          && request.resource.data.payload.player is string
+          && request.resource.data.payload.player.size() <= 300000
+          && request.resource.data.payload.puzzles is string
+          && request.resource.data.payload.puzzles.size() <= 20000
+          && request.resource.data.payload.medals is string
+          && request.resource.data.payload.medals.size() <= 300000
+          && request.resource.data.payload.roadPuzzle is string
+          && request.resource.data.payload.roadPuzzle.size() <= 100000
+          && request.resource.data.savedAtMs is int
+          && request.resource.data.savedAtMs > 0
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if false;
+      }
+
       match /ranking/identity {
         allow read: if owns(uid);
         allow write: if false;

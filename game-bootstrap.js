@@ -39,10 +39,19 @@
         return;
       }
     }
+    const hasCanvas = Boolean(document.querySelector("#game-container canvas"));
+    if (hasCanvas) {
+      console.warn("[KUMA CHESS] A non-fatal game resource/runtime error was contained.", event.message || source);
+      return;
+    }
     notifyError(event.message || `resource-load-failed:${source}`);
   }, true);
 
   window.addEventListener("unhandledrejection", (event) => {
+    if (document.querySelector("#game-container canvas")) {
+      console.warn("[KUMA CHESS] A non-fatal game promise error was contained.", event.reason);
+      return;
+    }
     notifyError(event.reason?.message || event.reason || "unhandled-promise-rejection");
   });
 

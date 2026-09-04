@@ -8,6 +8,8 @@ const gameSceneSource = fs.readFileSync(new URL("../src/scenes/Game.js", import.
 assert.match(gameSceneSource, /COSTS\.aiUndo/, "AI undo must use the shared configured cost");
 assert.match(gameSceneSource, /spendCoins\(COSTS\.aiUndo\)/, "AI undo must charge coins only through player state");
 assert.match(gameSceneSource, /showGameConfirm\(/, "AI undo must require confirmation before charging");
+assert.match(gameSceneSource, /AI turn recovered after an internal error/, "AI turns must contain asynchronous engine and rendering failures");
+assert.match(gameSceneSource, /this\._aiFailureCount <= 2/, "AI recovery retries must be bounded");
 
 const opening = new Chess();
 const openingFen = opening.fen();

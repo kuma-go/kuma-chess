@@ -1,10 +1,10 @@
-import { t as translate } from "../i18n.js?v=20260904-pwarefresh103";
+import { t as translate } from "../i18n.js?v=20260904-accountfix104";
 import {
   addLargeTextButton,
   addPanel,
   createModalBackdrop,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260904-pwarefresh103";
+} from "./KumaUi.js?v=20260904-accountfix104";
 
 /**
  * 공용 Confirm Popup

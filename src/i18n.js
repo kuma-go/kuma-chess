@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260904-pwarefresh103";
+import { readPlayerState } from "./playerState.js?v=20260904-accountfix104";
 
 const TEXT = {
   ko: {

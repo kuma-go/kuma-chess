@@ -1,9 +1,9 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-pwarefresh103";
-import { createPieceView } from "../pieceStyles.js?v=20260904-pwarefresh103";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-pwarefresh103";
-import { t } from "../i18n.js?v=20260904-pwarefresh103";
-import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260904-pwarefresh103";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-pwarefresh103";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260904-accountfix104";
+import { createPieceView } from "../pieceStyles.js?v=20260904-accountfix104";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260904-accountfix104";
+import { t } from "../i18n.js?v=20260904-accountfix104";
+import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260904-accountfix104";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260904-accountfix104";
 import {
   createRoadPuzzleState,
   findRoadPuzzlePath,
@@ -14,10 +14,10 @@ import {
   roadPuzzleNeighbors,
   rotateRoadPuzzleTile,
   scoreRoadPuzzle,
-} from "../royalRoadPuzzleLogic.js?v=20260904-pwarefresh103";
-import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260904-pwarefresh103";
-import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260904-pwarefresh103";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-pwarefresh103";
+} from "../royalRoadPuzzleLogic.js?v=20260904-accountfix104";
+import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260904-accountfix104";
+import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260904-accountfix104";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260904-accountfix104";
 import {
   addDarkTopBar,
   addLargeTextButton,
@@ -27,7 +27,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260904-pwarefresh103";
+} from "../ui/KumaUi.js?v=20260904-accountfix104";
 
 const VIEW = Object.freeze({ x: 18, y: 214, width: 684, height: 882 });
 const PLAY_VIEW = Object.freeze({
@@ -39,8 +39,8 @@ const PLAY_VIEW = Object.freeze({
 const CELL = 104;
 const TILE_H = CELL * (124 / 120);
 const KING_ANCHOR_Y = -CELL * 0.48;
-const GOAL_VISUAL_OFFSET_Y = -CELL * 0.5 + 6;
-const GOAL_MASK_OVERFLOW_Y = CELL * 0.58;
+const GOAL_VISUAL_OFFSET_Y = -CELL * 0.31;
+const GOAL_MASK_OVERFLOW_Y = PLAY_VIEW.y - VIEW.y;
 const TAP_THRESHOLD = 10;
 const TEXTURE_BY_KIND = Object.freeze({
   straight: "kuma_ui_tile_down_up",
@@ -127,7 +127,7 @@ export class RoyalRoadPuzzle extends Phaser.Scene {
     const goalOverflowMaskShape = this.make.graphics({ add: false });
     goalOverflowMaskShape.fillStyle(0xffffff, 1).fillRect(
       PLAY_VIEW.x,
-      PLAY_VIEW.y - GOAL_MASK_OVERFLOW_Y,
+      VIEW.y,
       PLAY_VIEW.width,
       GOAL_MASK_OVERFLOW_Y
     );

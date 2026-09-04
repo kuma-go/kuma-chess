@@ -2,10 +2,13 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   browserLocalPersistence,
   getAuth,
+  GoogleAuthProvider,
   indexedDBLocalPersistence,
+  linkWithPopup,
   onAuthStateChanged,
   setPersistence,
   signInAnonymously,
+  signInWithCredential,
 } from "firebase/auth";
 import {
   collection,
@@ -36,6 +39,17 @@ const PROFILE_STATE_KEY = "kumaChessProfileState";
 const PLAYER_STATE_KEY = "kumaChessPlayerState";
 const PUZZLE_PROGRESS_KEY = "kumaChessPuzzleClears";
 const MEDAL_STATE_KEY = "kumaChessMedalsV1";
+const ROAD_PUZZLE_STATE_KEY = "kumaChessRoyalRoadPuzzleV1";
+const CLOUD_OWNER_UID_KEY = "kumaChessCloudOwnerUidV1";
+const PRE_RESTORE_BACKUP_KEY = "kumaChessPreGoogleRestoreBackupV1";
+const CLOUD_BACKUP_SCHEMA_VERSION = 1;
+const CLOUD_BACKUP_FIELDS = Object.freeze([
+  Object.freeze({ name: "profile", primary: PROFILE_STATE_KEY, backup: "kumaChessProfileStateBackupV1", fallback: "{}" }),
+  Object.freeze({ name: "player", primary: PLAYER_STATE_KEY, backup: "kumaChessPlayerStateBackupV1", fallback: "{}" }),
+  Object.freeze({ name: "puzzles", primary: PUZZLE_PROGRESS_KEY, backup: "kumaChessPuzzleClearsBackupV1", fallback: "[]" }),
+  Object.freeze({ name: "medals", primary: MEDAL_STATE_KEY, backup: "kumaChessMedalsBackupV1", fallback: "{}" }),
+  Object.freeze({ name: "roadPuzzle", primary: ROAD_PUZZLE_STATE_KEY, backup: "kumaChessRoyalRoadPuzzleBackupV1", fallback: "{}" }),
+]);
 const CLOUD_EVENT = "kuma-cloud-state-changed";
 const SYNC_DELAY_MS = 900;
 const RESULT_KEYS = Object.freeze(["wins", "losses", "draws", "played"]);
@@ -52,14 +66,26 @@ let syncInFlight = false;
 let syncRequested = false;
 let lastProfileSignature = "";
 let lastProgressSignature = "";
+let lastBackupSignature = "";
 let profileAvatarV2Supported = true;
+let pendingGoogleCredential = null;
 let cloudState = Object.freeze({ status: "idle", uid: "", error: "" });
+
+function accountState() {
+  const providers = activeUser?.providerData?.map((item) => item?.providerId).filter(Boolean) || [];
+  return Object.freeze({
+    ready: Boolean(activeUser),
+    isAnonymous: activeUser?.isAnonymous !== false,
+    googleLinked: providers.includes("google.com"),
+  });
+}
 
 function emitCloudState(status, details = {}) {
   cloudState = Object.freeze({
     status,
     uid: activeUser?.uid || "",
     error: "",
+    account: accountState(),
     ...details,
   });
   document.documentElement.dataset.kumaCloudStatus = status;
@@ -73,6 +99,73 @@ function readStoredJson(key, fallback) {
   } catch (_error) {
     return fallback;
   }
+}
+
+function readStoredSerialized(primary, backup, fallback) {
+  for (const key of [primary, backup]) {
+    try {
+      const raw = window.localStorage.getItem(key) || "";
+      if (!raw) continue;
+      JSON.parse(raw);
+      return raw;
+    } catch (_error) {
+      // Try the mirrored local copy before falling back.
+    }
+  }
+  return fallback;
+}
+
+function fullBackupPayload() {
+  return Object.fromEntries(CLOUD_BACKUP_FIELDS.map((field) => [
+    field.name,
+    readStoredSerialized(field.primary, field.backup, field.fallback),
+  ]));
+}
+
+function rememberCloudOwner(uid) {
+  try {
+    window.localStorage.setItem(CLOUD_OWNER_UID_KEY, String(uid || ""));
+  } catch (_error) {
+    // Authentication remains usable when local storage is unavailable.
+  }
+}
+
+function currentCloudOwner() {
+  try {
+    return window.localStorage.getItem(CLOUD_OWNER_UID_KEY) || "";
+  } catch (_error) {
+    return "";
+  }
+}
+
+function restoreBackupPayload(payload) {
+  if (!payload || typeof payload !== "object") return false;
+  const restored = [];
+  for (const field of CLOUD_BACKUP_FIELDS) {
+    const raw = payload[field.name];
+    if (typeof raw !== "string" || !raw) continue;
+    try {
+      JSON.parse(raw);
+      window.localStorage.setItem(field.primary, raw);
+      window.localStorage.setItem(field.backup, raw);
+      restored.push(field.name);
+    } catch (_error) {
+      // Ignore a damaged field while restoring the remaining valid state.
+    }
+  }
+  return restored.length > 0;
+}
+
+async function restoreRegisteredBackup(user) {
+  if (!user || user.isAnonymous || currentCloudOwner() === user.uid) return false;
+  const backupRef = doc(database, "users", user.uid, "sync", "backup");
+  const snapshot = await getDoc(backupRef);
+  const data = snapshot.exists() ? snapshot.data() || {} : {};
+  const restored = data.schemaVersion === CLOUD_BACKUP_SCHEMA_VERSION
+    && data.source === "local-unverified"
+    && restoreBackupPayload(data.payload);
+  rememberCloudOwner(user.uid);
+  return Boolean(restored);
 }
 
 function boundedText(value, limit) {
@@ -198,8 +291,10 @@ async function writeChangedSnapshots() {
   try {
     const profile = profileSnapshot();
     const progress = progressSnapshot();
+    const backupPayload = activeUser.isAnonymous ? null : fullBackupPayload();
     const profileSignature = JSON.stringify(profile);
     const progressSignature = JSON.stringify(progress);
+    const backupSignature = backupPayload ? JSON.stringify(backupPayload) : "";
     const writes = [];
     if (profileSignature !== lastProfileSignature) {
       writes.push(writeProfileDocument(profile));
@@ -210,9 +305,19 @@ async function writeChangedSnapshots() {
         updatedAt: serverTimestamp(),
       }));
     }
+    if (backupPayload && backupSignature !== lastBackupSignature) {
+      writes.push(setDoc(doc(database, "users", activeUser.uid, "sync", "backup"), {
+        schemaVersion: CLOUD_BACKUP_SCHEMA_VERSION,
+        source: "local-unverified",
+        payload: backupPayload,
+        savedAtMs: Date.now(),
+        updatedAt: serverTimestamp(),
+      }));
+    }
     await Promise.all(writes);
     lastProfileSignature = profileSignature;
     lastProgressSignature = progressSignature;
+    lastBackupSignature = backupSignature;
     emitCloudState("ready", { lastSyncedAt: Date.now() });
   } catch (error) {
     console.warn("[KUMA CHESS] Cloud sync is unavailable; local play remains active.", error);
@@ -256,6 +361,62 @@ async function requireActiveUser() {
   activeUser = credential?.user || auth?.currentUser || null;
   if (!activeUser) throw Object.assign(new Error("authentication-required"), { code: "authentication-required" });
   return activeUser;
+}
+
+function googleConnectReason(error) {
+  if (["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(error?.code)) return "cancelled";
+  if (error?.code === "auth/popup-blocked") return "popup-blocked";
+  if (error?.code === "auth/operation-not-allowed") return "provider-disabled";
+  if (error?.code === "auth/unauthorized-domain") return "unauthorized-domain";
+  if (error?.code === "auth/network-request-failed") return "offline";
+  return error?.code || "google-link-failed";
+}
+
+async function connectGoogleAccount() {
+  if (!auth || !database || !activeUser) return Object.freeze({ ok: false, reason: "offline" });
+  if (accountState().googleLinked) return Object.freeze({ ok: true, linked: true, unchanged: true });
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  pendingGoogleCredential = null;
+  try {
+    const credential = await linkWithPopup(activeUser, provider);
+    activeUser = credential.user;
+    rememberCloudOwner(activeUser.uid);
+    lastBackupSignature = "";
+    scheduleSync(0);
+    emitCloudState("ready", { lastSyncedAt: Date.now() });
+    return Object.freeze({ ok: true, linked: true });
+  } catch (error) {
+    if (["auth/credential-already-in-use", "auth/account-exists-with-different-credential"].includes(error?.code)) {
+      pendingGoogleCredential = GoogleAuthProvider.credentialFromError(error);
+      if (pendingGoogleCredential) {
+        return Object.freeze({ ok: false, reason: "account-exists", canRestore: true });
+      }
+    }
+    return Object.freeze({ ok: false, reason: googleConnectReason(error) });
+  }
+}
+
+async function restoreExistingGoogleAccount() {
+  if (!auth || !pendingGoogleCredential) return Object.freeze({ ok: false, reason: "restart-link" });
+  const credential = pendingGoogleCredential;
+  pendingGoogleCredential = null;
+  try {
+    try {
+      window.localStorage.setItem(PRE_RESTORE_BACKUP_KEY, JSON.stringify({
+        savedAtMs: Date.now(),
+        payload: fullBackupPayload(),
+      }));
+    } catch (_error) {
+      // The cloud restore can continue when the extra local safety copy is unavailable.
+    }
+    const result = await signInWithCredential(auth, credential);
+    activeUser = result.user;
+    emitCloudState("restoring");
+    return Object.freeze({ ok: true, switchingAccount: true });
+  } catch (error) {
+    return Object.freeze({ ok: false, reason: googleConnectReason(error) });
+  }
 }
 
 function onlineDisplayName() {
@@ -673,7 +834,13 @@ function bindSyncEvents() {
   window.addEventListener("kuma-state-changed", () => scheduleSync());
   window.addEventListener("kuma-profile-changed", () => scheduleSync());
   window.addEventListener("storage", (event) => {
-    if ([PROFILE_STATE_KEY, PLAYER_STATE_KEY, PUZZLE_PROGRESS_KEY, MEDAL_STATE_KEY].includes(event.key)) {
+    if ([
+      PROFILE_STATE_KEY,
+      PLAYER_STATE_KEY,
+      PUZZLE_PROGRESS_KEY,
+      MEDAL_STATE_KEY,
+      ROAD_PUZZLE_STATE_KEY,
+    ].includes(event.key)) {
       scheduleSync();
     }
   });
@@ -710,8 +877,17 @@ async function initializeCloud() {
       profileAvatarV2Supported = true;
       lastProfileSignature = "";
       lastProgressSignature = "";
+      lastBackupSignature = "";
       try {
         await registerUser(user);
+        if (user.isAnonymous) {
+          rememberCloudOwner(user.uid);
+        } else if (await restoreRegisteredBackup(user)) {
+          emitCloudState("restored");
+          window.dispatchEvent(new CustomEvent("kuma-cloud-backup-restored"));
+          window.setTimeout(() => window.location.reload(), 120);
+          return;
+        }
         const nickname = await reserveNickname(profileSnapshot().displayName);
         if (!nickname.ok) {
           emitCloudState(nickname.reason === "duplicate" ? "nickname-conflict" : "offline", {
@@ -736,6 +912,9 @@ async function initializeCloud() {
 
 window.KumaCloud = Object.freeze({
   getState: () => cloudState,
+  getAccountState: () => accountState(),
+  connectGoogleAccount: () => connectGoogleAccount(),
+  restoreExistingGoogleAccount: () => restoreExistingGoogleAccount(),
   syncNow: () => scheduleSync(0),
   getLeaderboard: (period) => fetchLeaderboard(period),
   reserveNickname: (nextValue, previousValue) => reserveNickname(nextValue, previousValue),

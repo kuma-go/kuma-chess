@@ -163,6 +163,7 @@ assert(gameMain.includes('event.key !== "Escape"') && gameMain.includes("returnT
 assert(bootstrap.includes("kuma-game-error") && bootstrap.includes("game-canvas-timeout"), "Game frame failures are not reported to the web shell");
 assert(bootstrap.includes("window.location.replace(shellUrl.href)") && bootstrap.includes('shellUrl.searchParams.set("fromGame", "1")'), "Top-level game navigation can remain on an empty pattern shell");
 assert(bootstrap.includes("game-canvas-removed") && main.includes("showGameLoadError(true)") && fallback.includes("showGameLoadError(true)"), "A removed game canvas can leave only the pattern visible");
+assert(bootstrap.includes("A non-fatal game promise error was contained") && bootstrap.includes('document.querySelector("#game-container canvas")'), "A recoverable in-game promise error can still replace an active canvas with the fatal loading screen");
 assert(css.includes('background-image: url("./assets/kuma/web/Pattern.png")') && css.includes(".game-overlay iframe") && css.includes("background: transparent"), "Embedded screens do not preserve the web side pattern");
 assert(play.includes("#ambient-background") && play.includes("display: none") && play.includes("background: transparent"), "The game frame still covers the web side pattern");
 assert(worker.includes('"./main-page-fallback.js"'), "Scroll fallback is not cached");

@@ -38,6 +38,12 @@ if (!rules.includes("match /ranking/identity") || !rules.includes("match /rankin
 if (!rules.includes("validAccountType(request.resource.data.accountType)")) {
   failures.push("firestore.rules: account type is not bound to the authentication provider");
 }
+if (!rules.includes("match /sync/backup")
+  || !rules.includes("request.auth.token.firebase.sign_in_provider != 'anonymous'")
+  || !rules.includes("request.resource.data.source == 'local-unverified'")
+  || !rules.includes("request.resource.data.payload.player.size() <= 300000")) {
+  failures.push("firestore.rules: registered recovery backups are not owner-only, bounded, and unverified");
+}
 if (!rules.includes("match /nicknameClaims/{displayName}")
   || !rules.includes("request.resource.data.displayName == displayName")
   || !rules.includes("nicknameClaims/$(request.resource.data.displayName)")) {
@@ -51,17 +57,18 @@ if (!rules.includes("match /onlineRooms/{code}")
 }
 
 const client = read("src/firebaseClientEntry.js");
-for (const forbiddenField of [
-  "coins",
-  "rewardClaims",
-  "specialPieces",
-  "unlockedSkinColors",
-  "ownedProfilePortraits",
-  "ownedProfileFrames",
-]) {
-  if (new RegExp(`\\b${forbiddenField}\\b`).test(client)) {
-    failures.push(`src/firebaseClientEntry.js: authoritative field ${forbiddenField} must not be uploaded`);
-  }
+if (!client.includes("fullBackupPayload")
+  || !client.includes("restoreRegisteredBackup")
+  || !client.includes("activeUser.isAnonymous ? null : fullBackupPayload()")
+  || !client.includes('source: "local-unverified"')) {
+  failures.push("src/firebaseClientEntry.js: registered local recovery backup or restore flow is missing");
+}
+if (!client.includes("GoogleAuthProvider")
+  || !client.includes("linkWithPopup")
+  || !client.includes("signInWithCredential")
+  || !client.includes("connectGoogleAccount")
+  || !client.includes("restoreExistingGoogleAccount")) {
+  failures.push("src/firebaseClientEntry.js: Google account upgrade and existing-account restore flow is missing");
 }
 if (client.includes("getAnalytics") || client.includes("firebase/analytics")) {
   failures.push("src/firebaseClientEntry.js: Analytics requires a separate consent decision");
@@ -110,5 +117,5 @@ if (failures.length) {
   console.error(failures.join("\n"));
   process.exitCode = 1;
 } else {
-  console.log("Firebase validation passed: client sync is owner-scoped, unverified, and excludes authoritative economy fields.");
+  console.log("Firebase validation passed: Google linking and owner-scoped unverified recovery are bounded and separated from authoritative ledgers.");
 }
