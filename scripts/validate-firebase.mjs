@@ -60,6 +60,7 @@ const client = read("src/firebaseClientEntry.js");
 const index = read("index.html");
 const mainPage = read("main-page.js");
 const profileEditor = read("src/ui/ProfileEditorPopup.js");
+const playInfo = read("src/ui/PlayInfoPopup.js");
 const responseHeaders = read("_headers");
 for (const [file, policy] of [["index.html", index], ["_headers", responseHeaders]]) {
   if (!policy.includes("script-src 'self' https://apis.google.com")) {
@@ -90,10 +91,12 @@ if (client.includes('"auth/internal-error"].includes')) {
 }
 if (!index.includes('id="google-account-bridge"')
   || !mainPage.includes("connectGoogleAccountFromTopWindow")
-  || !mainPage.includes('type: "kuma-profile-google-action"')
+  || !mainPage.includes('type: "kuma-google-account-action"')
   || !profileEditor.includes('type: "kuma-profile-editor-state"')
-  || !profileEditor.includes("onGoogleAccountAction")) {
-  failures.push("Google linking must preserve a top-window user gesture while the profile editor is embedded");
+  || !playInfo.includes('type: "kuma-google-account-bridge-state"')
+  || !playInfo.includes("onGoogleAccountAction")
+  || !playInfo.includes('result?.reason === "unauthorized-domain"')) {
+  failures.push("Google linking must live in Play Info, preserve a top-window gesture, and explain unauthorized domains");
 }
 if (client.includes("getAnalytics") || client.includes("firebase/analytics")) {
   failures.push("src/firebaseClientEntry.js: Analytics requires a separate consent decision");

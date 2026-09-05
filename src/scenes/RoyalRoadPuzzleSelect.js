@@ -1,9 +1,9 @@
-import { t } from "../i18n.js?v=20260904-accountbridge110";
-import { ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260904-accountbridge110";
+import { t } from "../i18n.js?v=20260906-accountinfo111";
+import { ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260906-accountinfo111";
 import {
   getRoyalRoadPuzzleUnlockCount,
   readRoyalRoadPuzzleProgress,
-} from "../royalRoadPuzzleProgress.js?v=20260904-accountbridge110";
+} from "../royalRoadPuzzleProgress.js?v=20260906-accountinfo111";
 import {
   addBackButton,
   addCoinPill,
@@ -13,8 +13,8 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260904-accountbridge110";
-import { playFeedback } from "../feedback.js?v=20260904-accountbridge110";
+} from "../ui/KumaUi.js?v=20260906-accountinfo111";
+import { playFeedback } from "../feedback.js?v=20260906-accountinfo111";
 
 const VIEW_TOP = 176;
 const VIEW_BOTTOM = 1140;

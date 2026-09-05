@@ -3,22 +3,22 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260904-accountbridge110";
+} from "./src/playerState.js?v=20260906-accountinfo111";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260904-accountbridge110";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260904-accountbridge110";
-import { readProfileState } from "./src/profileState.js?v=20260904-accountbridge110";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260904-accountbridge110";
+} from "./src/dailyMissions.js?v=20260906-accountinfo111";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260906-accountinfo111";
+import { readProfileState } from "./src/profileState.js?v=20260906-accountinfo111";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260906-accountinfo111";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260904-accountbridge110";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260904-accountbridge110";
-import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260904-accountbridge110";
-import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260904-accountbridge110";
+} from "./src/menuBgm.js?v=20260906-accountinfo111";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260906-accountinfo111";
+import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260906-accountinfo111";
+import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260906-accountinfo111";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -36,7 +36,7 @@ const onlineCodeInput = document.getElementById("online-code-input");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "medals"]);
-const ASSET_RETRY_VERSION = "20260904-accountbridge110";
+const ASSET_RETRY_VERSION = "20260906-accountinfo111";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 
@@ -665,7 +665,7 @@ function syncGoogleAccountBridge() {
 
 function postGoogleAccountAction(action, result = null) {
   gameFrame?.contentWindow?.postMessage({
-    type: "kuma-profile-google-action",
+    type: "kuma-google-account-action",
     action,
     result,
   }, window.location.origin);
@@ -1226,6 +1226,9 @@ function bindEvents() {
     }
     if (event.data?.type === "kuma-profile-editor-state") {
       document.body.classList.toggle("game-wallet-open", event.data.open === true);
+      return;
+    }
+    if (event.data?.type === "kuma-google-account-bridge-state") {
       googleAccountBridgeBounds = event.data.open === true && event.data.googleButton
         ? event.data.googleButton
         : null;

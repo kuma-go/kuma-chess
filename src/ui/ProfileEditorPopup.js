@@ -1,16 +1,16 @@
 import {
   getProfileCosmeticCollection,
   purchaseProfileLoadout,
-} from "../playerState.js?v=20260904-accountbridge110";
+} from "../playerState.js?v=20260906-accountinfo111";
 import {
   ensureProfileAssets,
   profileTextureKey,
-} from "../profileCatalog.js?v=20260904-accountbridge110";
+} from "../profileCatalog.js?v=20260906-accountinfo111";
 import {
   normalizeDisplayName,
   readProfileState,
   writeProfileState,
-} from "../profileState.js?v=20260904-accountbridge110";
+} from "../profileState.js?v=20260906-accountinfo111";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -19,13 +19,12 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260904-accountbridge110";
-import { showConfirm } from "./ConfirmPopup.js?v=20260904-accountbridge110";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260904-accountbridge110";
+} from "./KumaUi.js?v=20260906-accountinfo111";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260906-accountinfo111";
 
 const GRID_COLUMNS = 4;
 const GRID_ROW_HEIGHT = 148;
-const LIST_HEIGHT = 470;
+const LIST_HEIGHT = 544;
 
 const COPY = {
   ko: {
@@ -41,13 +40,6 @@ const COPY = {
     nameTaken: "이미 사용 중인 닉네임입니다.", nameUnavailable: "서버 연결 후 닉네임을 변경할 수 있습니다.",
     nameChanged: "닉네임이 변경되었습니다.", profileChanged: "프로필이 변경되었습니다.",
     profilePurchased: "프로필 항목 {count}개를 구매하고 적용했습니다.", save: "저장",
-    account: "계정 보호", accountLocal: "현재 기기에만 저장됨", accountLinked: "Google 계정에 백업됨",
-    connectGoogle: "Google 계정 연결", googleConnected: "Google 계정 연결이 완료되었습니다.",
-    googleRestoreTitle: "계정 기록 불러오기", googleRestoreMessage: "이 Google 계정에 저장된 기록이 있습니다. 현재 기기의 기록 대신 계정 기록을 불러올까요?",
-    googleRestore: "불러오기", googleConnecting: "Google 계정에 연결하고 있습니다.",
-    googleProviderDisabled: "Firebase에서 Google 로그인을 먼저 활성화해야 합니다.",
-    googlePopupBlocked: "로그인 창을 열 수 없습니다.\nChrome 또는 Safari에서 다시 시도해주세요.",
-    googleCancelled: "Google 계정 연결을 취소했습니다.", googleFailed: "Google 계정에 연결할 수 없습니다.",
   },
   en: {
     title: "Edit Profile", nickname: "Nickname", editName: "Change nickname",
@@ -62,13 +54,6 @@ const COPY = {
     nameTaken: "That nickname is already in use.", nameUnavailable: "Connect to the server to change your nickname.",
     nameChanged: "Nickname changed.", profileChanged: "Profile updated.",
     profilePurchased: "Purchased and applied {count} profile item(s).", save: "Save",
-    account: "Account protection", accountLocal: "Saved on this device only", accountLinked: "Backed up to Google",
-    connectGoogle: "Connect Google", googleConnected: "Your Google account is connected.",
-    googleRestoreTitle: "Restore account data", googleRestoreMessage: "This Google account has saved progress. Replace this device's current progress with the account backup?",
-    googleRestore: "Restore", googleConnecting: "Connecting to your Google account...",
-    googleProviderDisabled: "Google sign-in must first be enabled in Firebase.",
-    googlePopupBlocked: "The sign-in window could not open.\nTry again in Chrome or Safari.",
-    googleCancelled: "Google account connection was cancelled.", googleFailed: "Could not connect your Google account.",
   },
   ja: {
     title: "プロフィール変更", nickname: "ニックネーム", editName: "名前を変更",
@@ -83,13 +68,6 @@ const COPY = {
     nameTaken: "そのニックネームは使用されています。", nameUnavailable: "サーバー接続後に変更できます。",
     nameChanged: "ニックネームを変更しました。", profileChanged: "プロフィールを変更しました。",
     profilePurchased: "プロフィール項目{count}個を購入して適用しました。", save: "保存",
-    account: "アカウント保護", accountLocal: "この端末のみに保存", accountLinked: "Googleアカウントにバックアップ済み",
-    connectGoogle: "Googleに接続", googleConnected: "Googleアカウントに接続しました。",
-    googleRestoreTitle: "アカウント記録を復元", googleRestoreMessage: "このGoogleアカウントには保存済みの記録があります。現在の端末記録をアカウント記録に置き換えますか？",
-    googleRestore: "復元", googleConnecting: "Googleアカウントに接続しています。",
-    googleProviderDisabled: "FirebaseでGoogleログインを有効にしてください。",
-    googlePopupBlocked: "ログイン画面を開けません。\nChromeまたはSafariで再試行してください。",
-    googleCancelled: "Googleアカウント接続をキャンセルしました。", googleFailed: "Googleアカウントに接続できません。",
   },
 };
 
@@ -323,141 +301,14 @@ export function showProfileEditorPopup(scene, options = {}) {
   addText(scene, layer, px - 70, panelTop + 307, copy.nameUnique, {
     size: profile.language === "en" ? 12 : 13, color: "#a48769", weight: "600",
   });
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: "kuma-profile-editor-state", open: true }, window.location.origin);
+  }
 
-  const initialAccount = cloudApi()?.getAccountState?.() || {};
-  addText(scene, layer, px - 245, panelTop + 341, copy.account, {
-    size: 15, color: "#8e765f", weight: "800",
-  });
-  const accountStatus = addText(
-    scene,
-    layer,
-    px - 245,
-    panelTop + 364,
-    initialAccount.googleLinked ? copy.accountLinked : copy.accountLocal,
-    { size: profile.language === "en" ? 11 : 12, color: initialAccount.googleLinked ? KUMA_COLORS.teal : "#a48769", weight: "700" },
-  );
-  let accountBusy = false;
-  const postGoogleButtonState = (enabled) => {
-    if (!window.parent || window.parent === window) return;
-    window.parent.postMessage({
-      type: "kuma-profile-editor-state",
-      open: true,
-      googleButton: {
-        x: px + 125 - 138,
-        y: panelTop + 352 - 27,
-        width: 276,
-        height: 54,
-        sceneWidth: scene.scale.width,
-        sceneHeight: scene.scale.height,
-        enabled,
-      },
-    }, window.location.origin);
-  };
-  const setAccountBusy = (busy) => {
-    accountBusy = busy;
-    accountButton.setEnabled(!busy && !cloudApi()?.getAccountState?.().googleLinked);
-    accountButton.title.setText(busy ? copy.googleConnecting : copy.connectGoogle);
-  };
-  const showGoogleRestoreConfirm = (api) => {
-    postGoogleButtonState(false);
-    showConfirm(scene, {
-      title: copy.googleRestoreTitle,
-      message: copy.googleRestoreMessage,
-      confirmText: copy.googleRestore,
-      cancelText: copy.cancel,
-      depth: 12000,
-      onConfirm: async () => {
-        accountBusy = true;
-        accountButton.setEnabled(false);
-        accountButton.title.setText(copy.googleConnecting);
-        const restored = await api.restoreExistingGoogleAccount?.().catch(() => ({ ok: false }));
-        if (restored?.ok) return;
-        accountBusy = false;
-        accountButton.setEnabled(true);
-        accountButton.title.setText(copy.connectGoogle);
-        postGoogleButtonState(true);
-        showRewardLine(scene, copy.googleFailed, { y: scene.scale.height * 0.52, tone: "failure", showCoin: false, depth: 13000 });
-      },
-      onCancel: () => postGoogleButtonState(true),
-    });
-  };
-  const handleGoogleResult = (result, api = cloudApi()) => {
-    if (disposed || !layer.scene) return;
-    if (result?.ok) {
-      accountStatus.setText(copy.accountLinked).setColor(KUMA_COLORS.teal);
-      accountButton.title.setText(copy.accountLinked);
-      accountButton.setEnabled(false);
-      postGoogleButtonState(false);
-      showRewardLine(scene, copy.googleConnected, { y: scene.scale.height * 0.52, showCoin: false, depth: 13000 });
-      return;
-    }
-    setAccountBusy(false);
-    postGoogleButtonState(true);
-    if (result?.reason === "account-exists" && result?.canRestore) {
-      showGoogleRestoreConfirm(api);
-      return;
-    }
-    const message = result?.reason === "provider-disabled"
-      ? copy.googleProviderDisabled
-      : result?.reason === "popup-blocked"
-        ? copy.googlePopupBlocked
-        : result?.reason === "cancelled"
-          ? copy.googleCancelled
-          : copy.googleFailed;
-    showRewardLine(scene, message, {
-      y: scene.scale.height * 0.52,
-      tone: "failure",
-      showCoin: false,
-      depth: 13000,
-      bandHeight: message.includes("\n") ? 112 : 84,
-      fontSize: message.includes("\n") ? 25 : 29,
-    });
-  };
-  const connectGoogleDirectly = async () => {
-    if (accountBusy) return;
-    const api = cloudApi();
-    if (!api?.connectGoogleAccount) {
-      handleGoogleResult({ ok: false, reason: "offline" }, api);
-      return;
-    }
-    if (api.getAccountState?.().canRestoreGoogle) {
-      showGoogleRestoreConfirm(api);
-      return;
-    }
-    setAccountBusy(true);
-    const result = await api.connectGoogleAccount().catch(() => ({ ok: false, reason: "failed" }));
-    handleGoogleResult(result, api);
-  };
-  const accountButton = addOutlinedTextButton(scene, px + 125, panelTop + 352, copy.connectGoogle, connectGoogleDirectly, {
-    width: 276,
-    height: 54,
-    fontSize: profile.language === "en" ? 15 : 17,
-    depth: 11004,
-    enabled: !initialAccount.googleLinked,
-  });
-  const onGoogleAccountAction = (event) => {
-    if (event.origin !== window.location.origin || event.source !== window.parent) return;
-    if (event.data?.type !== "kuma-profile-google-action") return;
-    if (event.data.action === "start") {
-      setAccountBusy(true);
-      return;
-    }
-    if (event.data.action === "restore-confirm") {
-      showGoogleRestoreConfirm(cloudApi());
-      return;
-    }
-    if (event.data.action === "result") handleGoogleResult(event.data.result || { ok: false, reason: "failed" });
-  };
-  window.addEventListener("message", onGoogleAccountAction);
-  postGoogleButtonState(!initialAccount.googleLinked);
-  if (initialAccount.googleLinked) accountButton.title.setText(copy.accountLinked);
-  else if (initialAccount.canRestoreGoogle) accountButton.title.setText(copy.googleRestore);
-  layer.add([accountButton.button, accountButton.title]);
-
-  const tabY = panelTop + 424;
+  const tabY = panelTop + 350;
   const tabContainer = scene.add.container(0, 0).setDepth(11004);
   layer.add(tabContainer);
-  const listTop = panelTop + 480;
+  const listTop = panelTop + 406;
   const listWidth = Math.min(568, panelW - 76);
   const listHit = scene.add.rectangle(px, listTop + LIST_HEIGHT / 2, listWidth, LIST_HEIGHT, 0xffffff, 0.001)
     .setDepth(11003).setInteractive({ useHandCursor: true });
@@ -714,7 +565,6 @@ export function showProfileEditorPopup(scene, options = {}) {
     scene.input.off("pointerdown", onPointerDown);
     scene.input.off("pointermove", onPointerMove);
     scene.input.off("pointerup", onPointerUp);
-    window.removeEventListener("message", onGoogleAccountAction);
     if (listLayer.scene) listLayer.clearMask(false);
     listMask?.destroy();
     maskShape?.destroy();
