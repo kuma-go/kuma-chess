@@ -155,6 +155,37 @@
       .replace(/[^A-HJ-NP-Z2-9]/g, "")
       .slice(0, 6);
 
+    const onlineInviteShareData = () => {
+      const code = normalizeOnlineCode(onlineRoomCode);
+      if (code.length !== 6) return null;
+      const url = new URL("./", window.location.href);
+      url.searchParams.set("invite", code);
+      return {
+        title: "KUMA CHESS 온라인 대전",
+        text: `KUMA CHESS에서 함께 대국해요!\n초대 코드: ${code}`,
+        url: url.href,
+      };
+    };
+
+    const shareOnlineInvite = async () => {
+      const shareData = onlineInviteShareData();
+      if (!shareData) return;
+      if (typeof navigator.share === "function") {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (error) {
+          if (error?.name === "AbortError") return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+        setOnlineStatus("[data-online-waiting-status]", "초대 링크를 복사했습니다.");
+      } catch (_error) {
+        setOnlineStatus("[data-online-waiting-status]", shareData.url);
+      }
+    };
+
     const readOnlineSession = () => {
       try {
         const value = JSON.parse(window.localStorage.getItem(onlineSessionKey) || "null");
@@ -283,6 +314,26 @@
       if (typeof onlineDialog?.showModal === "function") onlineDialog.showModal();
       else onlineDialog?.setAttribute("open", "");
       if (session) watchOnlineRoom(session.code, session.color);
+    };
+
+    const openOnlineInviteDialog = (code) => {
+      const inviteCode = normalizeOnlineCode(code);
+      if (inviteCode.length !== 6) return;
+      if (readOnlineSession()) {
+        openOnlineDialog();
+        return;
+      }
+      onlineRoomCode = "";
+      onlinePlayerColor = "w";
+      setOnlineBusy(false);
+      setOnlineStatus("[data-online-entry-status]", "");
+      setOnlineStatus("[data-online-code-status]", "");
+      setOnlineStatus("[data-online-waiting-status]", "");
+      setOnlineView("code");
+      if (onlineCodeInput) onlineCodeInput.value = inviteCode;
+      if (typeof onlineDialog?.showModal === "function") onlineDialog.showModal();
+      else onlineDialog?.setAttribute("open", "");
+      window.setTimeout(() => onlineCodeInput?.focus(), 0);
     };
 
     const closeOnlineDialog = () => {
@@ -450,6 +501,10 @@
         setOnlineStatus("[data-online-waiting-status]", onlineRoomCode);
       }
     });
+    onlineDialog?.querySelector("[data-online-share]")?.addEventListener("click", (event) => {
+      if (!claimFallbackClick(event)) return;
+      void shareOnlineInvite();
+    });
     onlineDialog?.querySelector("[data-online-cancel-room]")?.addEventListener("click", (event) => {
       if (!claimFallbackClick(event)) return;
       void cancelOnlineRoom();
@@ -513,6 +568,14 @@
       if (!claimFallbackClick(event)) return;
       loadPendingGame();
     });
+
+    const initialUrl = new URL(window.location.href);
+    const initialInviteCode = normalizeOnlineCode(initialUrl.searchParams.get("invite"));
+    if (initialUrl.searchParams.has("invite")) {
+      initialUrl.searchParams.delete("invite");
+      window.history.replaceState(null, "", `${initialUrl.pathname}${initialUrl.search}${initialUrl.hash}`);
+    }
+    if (initialInviteCode.length === 6) window.setTimeout(() => openOnlineInviteDialog(initialInviteCode), 0);
 
     const sync = () => {
       ticking = false;

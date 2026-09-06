@@ -4,10 +4,10 @@ import {
   getPlayStats,
   getSkinUnlockState,
   readPlayerState,
-} from "../playerState.js?v=20260906-accountinfo111";
-import { readProfileState } from "../profileState.js?v=20260906-accountinfo111";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260906-accountinfo111";
-import { getMedalSummary } from "../medals.js?v=20260906-accountinfo111";
+} from "../playerState.js?v=20260906-inviteshare112";
+import { readProfileState } from "../profileState.js?v=20260906-inviteshare112";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260906-inviteshare112";
+import { getMedalSummary } from "../medals.js?v=20260906-inviteshare112";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -16,10 +16,10 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260906-accountinfo111";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260906-accountinfo111";
-import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260906-accountinfo111";
-import { showConfirm } from "./ConfirmPopup.js?v=20260906-accountinfo111";
+} from "./KumaUi.js?v=20260906-inviteshare112";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260906-inviteshare112";
+import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260906-inviteshare112";
+import { showConfirm } from "./ConfirmPopup.js?v=20260906-inviteshare112";
 
 const COPY = {
   ko: {

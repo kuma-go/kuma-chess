@@ -3,22 +3,22 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260906-accountinfo111";
+} from "./src/playerState.js?v=20260906-inviteshare112";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260906-accountinfo111";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260906-accountinfo111";
-import { readProfileState } from "./src/profileState.js?v=20260906-accountinfo111";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260906-accountinfo111";
+} from "./src/dailyMissions.js?v=20260906-inviteshare112";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260906-inviteshare112";
+import { readProfileState } from "./src/profileState.js?v=20260906-inviteshare112";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260906-inviteshare112";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260906-accountinfo111";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260906-accountinfo111";
-import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260906-accountinfo111";
-import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260906-accountinfo111";
+} from "./src/menuBgm.js?v=20260906-inviteshare112";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260906-inviteshare112";
+import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260906-inviteshare112";
+import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260906-inviteshare112";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -36,7 +36,7 @@ const onlineCodeInput = document.getElementById("online-code-input");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "medals"]);
-const ASSET_RETRY_VERSION = "20260906-accountinfo111";
+const ASSET_RETRY_VERSION = "20260906-inviteshare112";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 
@@ -111,6 +111,10 @@ const WEB_COPY = Object.freeze({
       roomCode: "초대 코드",
       copy: "코드 복사",
       copied: "초대 코드를 복사했습니다.",
+      share: "초대 공유",
+      shareTitle: "KUMA CHESS 온라인 대전",
+      shareMessage: (code) => `KUMA CHESS에서 함께 대국해요!\n초대 코드: ${code}`,
+      linkCopied: "초대 링크를 복사했습니다.",
       closeRoom: "방 닫기",
       connecting: "온라인 서비스에 연결 중입니다.",
       offline: "온라인 서비스에 연결할 수 없습니다.",
@@ -191,6 +195,10 @@ const WEB_COPY = Object.freeze({
       roomCode: "Invite Code",
       copy: "Copy Code",
       copied: "Invite code copied.",
+      share: "Share Invite",
+      shareTitle: "KUMA CHESS Online Match",
+      shareMessage: (code) => `Let's play KUMA CHESS!\nInvite code: ${code}`,
+      linkCopied: "Invite link copied.",
       closeRoom: "Close Room",
       connecting: "Connecting to online services.",
       offline: "Online services are unavailable.",
@@ -271,6 +279,10 @@ const WEB_COPY = Object.freeze({
       roomCode: "招待コード",
       copy: "コードをコピー",
       copied: "招待コードをコピーしました。",
+      share: "招待を共有",
+      shareTitle: "KUMA CHESS オンライン対戦",
+      shareMessage: (code) => `KUMA CHESSで対局しましょう！\n招待コード: ${code}`,
+      linkCopied: "招待リンクをコピーしました。",
       closeRoom: "ルームを閉じる",
       connecting: "オンラインサービスに接続中です。",
       offline: "オンラインサービスに接続できません。",
@@ -417,6 +429,7 @@ function renderHomeLanguage(language) {
   setText("#online-dialog [data-online-waiting-title]", online.waiting);
   setText("#online-dialog [data-online-room-label]", online.roomCode);
   setText("#online-dialog [data-online-copy] span", online.copy);
+  setText("#online-dialog [data-online-share] span", online.share);
   setText("#online-dialog [data-online-cancel-room] span", online.closeRoom);
   onlineCodeInput?.setAttribute("aria-label", online.inputTitle);
   applyMainPageContentLanguage(activeWebLanguage);
@@ -962,6 +975,26 @@ function openOnlineDialog(event) {
   if (session) watchOnlineRoom(session.code, session.color);
 }
 
+function openOnlineInviteDialog(code) {
+  const inviteCode = normalizeOnlineRoomCode(code);
+  if (inviteCode.length !== 6) return;
+  if (readOnlineSession()) {
+    openOnlineDialog();
+    return;
+  }
+  onlineTrigger = null;
+  onlineRoomCode = "";
+  onlinePlayerColor = "w";
+  setOnlineBusy(false);
+  setOnlineStatus("[data-online-entry-status]", "");
+  setOnlineStatus("[data-online-code-status]", "");
+  setOnlineStatus("[data-online-waiting-status]", "");
+  setOnlineView("code");
+  if (onlineCodeInput) onlineCodeInput.value = inviteCode;
+  openDialog(onlineDialog, null);
+  window.setTimeout(() => onlineCodeInput?.focus(), 0);
+}
+
 function closeOnlineDialog() {
   stopOnlineWatch();
   closeDialog(onlineDialog);
@@ -1053,6 +1086,38 @@ async function copyOnlineCode() {
     setOnlineStatus("[data-online-waiting-status]", currentWebCopy().onlineDialog.copied);
   } catch (_error) {
     setOnlineStatus("[data-online-waiting-status]", onlineRoomCode);
+  }
+}
+
+function onlineInviteShareData() {
+  const code = normalizeOnlineRoomCode(onlineRoomCode);
+  if (code.length !== 6) return null;
+  const url = new URL("./", window.location.href);
+  url.searchParams.set("invite", code);
+  const copy = currentWebCopy().onlineDialog;
+  return {
+    title: copy.shareTitle,
+    text: copy.shareMessage(code),
+    url: url.href,
+  };
+}
+
+async function shareOnlineInvite() {
+  const shareData = onlineInviteShareData();
+  if (!shareData) return;
+  if (typeof navigator.share === "function") {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+    setOnlineStatus("[data-online-waiting-status]", currentWebCopy().onlineDialog.linkCopied);
+  } catch (_error) {
+    setOnlineStatus("[data-online-waiting-status]", shareData.url);
   }
 }
 
@@ -1181,6 +1246,7 @@ function bindEvents() {
   onlineDialog?.querySelector("[data-online-back]")?.addEventListener("click", showOnlineEntry);
   onlineDialog?.querySelector("[data-online-close]")?.addEventListener("click", closeOnlineDialog);
   onlineDialog?.querySelector("[data-online-copy]")?.addEventListener("click", () => void copyOnlineCode());
+  onlineDialog?.querySelector("[data-online-share]")?.addEventListener("click", () => void shareOnlineInvite());
   onlineDialog?.querySelector("[data-online-cancel-room]")?.addEventListener("click", () => void cancelOnlineRoom());
   onlineDialog?.querySelector(".online-code-form")?.addEventListener("submit", (event) => void joinOnlineRoom(event));
   onlineCodeInput?.addEventListener("input", () => {
@@ -1292,14 +1358,23 @@ if (typeof window.requestIdleCallback === "function") {
 const initialUrl = new URL(window.location.href);
 const initialLaunch = initialUrl.searchParams.get("launch") || "";
 const initialMode = initialUrl.searchParams.get("mode") || "";
+const initialInviteCode = normalizeOnlineRoomCode(initialUrl.searchParams.get("invite"));
 const validInitialLaunches = new Set(["ai", "pvp", "puzzle", "road-puzzle", "info", "profile", "medals", "daily", "settings", "online", "tug", "crown", "road", "siege"]);
 const hasShellMarker = initialUrl.searchParams.has("shell");
+const hasInviteMarker = initialUrl.searchParams.has("invite");
 if (hasShellMarker) initialUrl.searchParams.delete("shell");
-if (validInitialLaunches.has(initialLaunch)) {
-  initialUrl.searchParams.delete("launch");
-  initialUrl.searchParams.delete("mode");
-  initialUrl.searchParams.delete("fromGame");
+if (hasInviteMarker) initialUrl.searchParams.delete("invite");
+if (validInitialLaunches.has(initialLaunch) || hasShellMarker || hasInviteMarker) {
+  if (validInitialLaunches.has(initialLaunch)) {
+    initialUrl.searchParams.delete("launch");
+    initialUrl.searchParams.delete("mode");
+    initialUrl.searchParams.delete("fromGame");
+  }
   window.history.replaceState(null, "", `${initialUrl.pathname}${initialUrl.search}${initialUrl.hash}`);
+}
+if (initialInviteCode.length === 6) {
+  window.setTimeout(() => openOnlineInviteDialog(initialInviteCode), 0);
+} else if (validInitialLaunches.has(initialLaunch)) {
   window.setTimeout(() => {
     if (initialLaunch === "online") {
       openOnlineDialog();
@@ -1318,6 +1393,4 @@ if (validInitialLaunches.has(initialLaunch)) {
     }
     openGameLaunch(initialLaunch, null, initialMode);
   }, 0);
-} else if (hasShellMarker) {
-  window.history.replaceState(null, "", `${initialUrl.pathname}${initialUrl.search}${initialUrl.hash}`);
 }

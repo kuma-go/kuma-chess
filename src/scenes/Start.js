@@ -6,11 +6,11 @@ import {
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260906-accountinfo111";
-import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260906-accountinfo111";
-import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260906-accountinfo111";
-import { setTopAdVisible } from "../adManager.js?v=20260906-accountinfo111";
-import { t } from "../i18n.js?v=20260906-accountinfo111";
+} from "../playerState.js?v=20260906-inviteshare112";
+import { hasNewMedals, markMedalsSeen, syncContextMedals } from "../medals.js?v=20260906-inviteshare112";
+import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260906-inviteshare112";
+import { setTopAdVisible } from "../adManager.js?v=20260906-inviteshare112";
+import { t } from "../i18n.js?v=20260906-inviteshare112";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -23,13 +23,13 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260906-accountinfo111";
-import { playFeedback } from "../feedback.js?v=20260906-accountinfo111";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260906-accountinfo111";
-import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260906-accountinfo111";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260906-accountinfo111";
-import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260906-accountinfo111";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260906-accountinfo111";
+} from "../ui/KumaUi.js?v=20260906-inviteshare112";
+import { playFeedback } from "../feedback.js?v=20260906-inviteshare112";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260906-inviteshare112";
+import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260906-inviteshare112";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260906-inviteshare112";
+import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260906-inviteshare112";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260906-inviteshare112";
 
 const BUTTONS = [
   { y: 704, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },

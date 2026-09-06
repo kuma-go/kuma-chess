@@ -1807,6 +1807,16 @@ html[lang="ja"] #mode-dialog .mode-home { font-size: 4.5cqi; }
 #online-dialog:not([data-online-view-state="entry"]) .online-dialog-actions.is-stacked {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+#online-dialog:not([data-online-view-state="entry"]) .online-waiting-actions {
+  grid-template-rows: repeat(2, clamp(66px, 16cqi, 88px));
+  height: auto;
+  row-gap: 10px;
+}
+#online-dialog:not([data-online-view-state="entry"]) .online-waiting-actions .online-room-close {
+  grid-column: 1 / -1;
+  width: 48.5%;
+  justify-self: center;
+}
 #online-dialog[data-online-busy="true"] [data-online-create],
 #online-dialog[data-online-busy="true"] [data-online-enter] {
   pointer-events: none;

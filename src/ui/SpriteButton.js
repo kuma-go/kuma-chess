@@ -1,4 +1,4 @@
-import { playFeedback } from "../feedback.js?v=20260906-accountinfo111";
+import { playFeedback } from "../feedback.js?v=20260906-inviteshare112";
 
 /**
  * SpriteButton

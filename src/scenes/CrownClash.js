@@ -1,16 +1,16 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260906-accountinfo111";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260906-accountinfo111";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260906-accountinfo111";
-import { t } from "../i18n.js?v=20260906-accountinfo111";
-import { recordMiniGameCompletion } from "../medals.js?v=20260906-accountinfo111";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260906-accountinfo111";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260906-inviteshare112";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260906-inviteshare112";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260906-inviteshare112";
+import { t } from "../i18n.js?v=20260906-inviteshare112";
+import { recordMiniGameCompletion } from "../medals.js?v=20260906-inviteshare112";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260906-inviteshare112";
 import {
   createCrownClashState,
   crownLegalMoves,
   moveCrownPiece,
   resolveCrownTurnIfStuck,
   rollCrownDice,
-} from "../crownClashLogic.js?v=20260906-accountinfo111";
+} from "../crownClashLogic.js?v=20260906-inviteshare112";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -19,7 +19,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260906-accountinfo111";
+} from "../ui/KumaUi.js?v=20260906-inviteshare112";
 
 const BOARD_OUTER_TOP = 250;
 const BOARD_OUTER_WIDTH = 712;

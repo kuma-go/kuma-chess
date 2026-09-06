@@ -15,7 +15,11 @@
     <meta property="og:description" content="체스와 왕국 미니게임, 수집과 기록이 이어지는 KUMA CHESS의 세계를 만나보세요." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://kumachess.com/" />
-    <meta property="og:image" content="https://kumachess.com/assets/icons/icon-512.png" />
+    <meta property="og:image" content="https://kumachess.com/assets/kuma/web/share_online_1200x630.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="KUMA CHESS 온라인 대전 초대" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://apis.google.com https://pagead2.googlesyndication.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://*.googlesyndication.com https://*.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://fundingchoicesmessages.google.com; frame-src 'self' https://kuma-chess.firebaseapp.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://fundingchoicesmessages.google.com; worker-src 'self'; manifest-src 'self'" />
     <title>KUMA CHESS</title>
@@ -25,7 +29,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
     <link rel="preload" href="./assets/kuma/web/main_img_B.png" as="image" fetchpriority="high" />
     <link rel="preload" href="./assets/kuma/web/main_logo_B.png" as="image" fetchpriority="high" />
-    <link rel="stylesheet" href="./main-page.css?v=20260906-accountinfo111" />
+    <link rel="stylesheet" href="./main-page.css?v=20260906-inviteshare112" />
   </head>
   <body data-kuma-shell="web">
     <aside class="ad-rail ad-rail-left" data-ad-position="left" aria-label="왼쪽 광고" hidden></aside>
@@ -289,7 +293,7 @@
         <p id="game-loading-message">게임을 준비하고 있습니다.</p>
         <button id="retry-game" type="button" hidden>다시 불러오기</button>
       </div>
-      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260906-accountinfo111"></iframe>
+      <iframe id="game-frame" title="KUMA CHESS 게임" allow="fullscreen; autoplay" data-src="./play.html?v=20260906-inviteshare112"></iframe>
       <button id="google-account-bridge" class="google-account-bridge" type="button" aria-label="Google 계정 연결" hidden></button>
     </div>
 
@@ -364,18 +368,19 @@
           <p class="dialog-summary" data-online-room-label>초대 코드</p>
           <strong class="online-room-code" data-online-room-code></strong>
           <p class="online-status" data-online-waiting-status role="status" aria-live="polite"></p>
-          <div class="online-dialog-actions is-stacked">
+          <div class="online-dialog-actions is-stacked online-waiting-actions">
             <button class="online-resource-button is-light" type="button" data-online-copy><span>코드 복사</span></button>
-            <button class="online-resource-button is-dark" type="button" data-online-cancel-room><span>방 닫기</span></button>
+            <button class="online-resource-button is-light" type="button" data-online-share><span>초대 공유</span></button>
+            <button class="online-resource-button is-dark online-room-close" type="button" data-online-cancel-room><span>방 닫기</span></button>
           </div>
         </section>
       </div>
     </dialog>
 
     <script src="./ads-config.js"></script>
-    <script src="./app-init.js?v=20260906-accountinfo111"></script>
-    <script type="module" src="./firebase-client.js?v=20260906-accountinfo111"></script>
-    <script type="module" src="./main-page.js?v=20260906-accountinfo111"></script>
-    <script defer src="./main-page-fallback.js?v=20260906-accountinfo111"></script>
+    <script src="./app-init.js?v=20260906-inviteshare112"></script>
+    <script type="module" src="./firebase-client.js?v=20260906-inviteshare112"></script>
+    <script type="module" src="./main-page.js?v=20260906-inviteshare112"></script>
+    <script defer src="./main-page-fallback.js?v=20260906-inviteshare112"></script>
   </body>
 </html>

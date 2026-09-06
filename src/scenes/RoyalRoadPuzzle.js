@@ -1,9 +1,9 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260906-accountinfo111";
-import { createPieceView } from "../pieceStyles.js?v=20260906-accountinfo111";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260906-accountinfo111";
-import { t } from "../i18n.js?v=20260906-accountinfo111";
-import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260906-accountinfo111";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260906-accountinfo111";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260906-inviteshare112";
+import { createPieceView } from "../pieceStyles.js?v=20260906-inviteshare112";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260906-inviteshare112";
+import { t } from "../i18n.js?v=20260906-inviteshare112";
+import { markMedalsSeen, recordMiniGameCompletion } from "../medals.js?v=20260906-inviteshare112";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260906-inviteshare112";
 import {
   createRoadPuzzleState,
   findRoadPuzzlePath,
@@ -14,10 +14,10 @@ import {
   roadPuzzleNeighbors,
   rotateRoadPuzzleTile,
   scoreRoadPuzzle,
-} from "../royalRoadPuzzleLogic.js?v=20260906-accountinfo111";
-import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260906-accountinfo111";
-import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260906-accountinfo111";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260906-accountinfo111";
+} from "../royalRoadPuzzleLogic.js?v=20260906-inviteshare112";
+import { getRoyalRoadPuzzleStage, ROYAL_ROAD_PUZZLE_STAGES } from "../royalRoadPuzzleStages.js?v=20260906-inviteshare112";
+import { readRoyalRoadPuzzleProgress, saveRoyalRoadPuzzleClear } from "../royalRoadPuzzleProgress.js?v=20260906-inviteshare112";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260906-inviteshare112";
 import {
   addDarkTopBar,
   addLargeTextButton,
@@ -27,7 +27,7 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260906-accountinfo111";
+} from "../ui/KumaUi.js?v=20260906-inviteshare112";
 
 const VIEW = Object.freeze({ x: 18, y: 214, width: 684, height: 882 });
 const PLAY_VIEW = Object.freeze({

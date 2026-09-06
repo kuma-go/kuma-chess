@@ -1,16 +1,16 @@
 import {
   getProfileCosmeticCollection,
   purchaseProfileLoadout,
-} from "../playerState.js?v=20260906-accountinfo111";
+} from "../playerState.js?v=20260906-inviteshare112";
 import {
   ensureProfileAssets,
   profileTextureKey,
-} from "../profileCatalog.js?v=20260906-accountinfo111";
+} from "../profileCatalog.js?v=20260906-inviteshare112";
 import {
   normalizeDisplayName,
   readProfileState,
   writeProfileState,
-} from "../profileState.js?v=20260906-accountinfo111";
+} from "../profileState.js?v=20260906-inviteshare112";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -19,8 +19,8 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260906-accountinfo111";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260906-accountinfo111";
+} from "./KumaUi.js?v=20260906-inviteshare112";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260906-inviteshare112";
 
 const GRID_COLUMNS = 4;
 const GRID_ROW_HEIGHT = 148;

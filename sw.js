@@ -1,5 +1,5 @@
-const CACHE_NAME = "kuma-chess-20260906-accountinfo111";
-const MODULE_VERSION = "20260906-accountinfo111";
+const CACHE_NAME = "kuma-chess-20260906-inviteshare112";
+const MODULE_VERSION = "20260906-inviteshare112";
 const APP_MODULE_PATHS = [
   "./src/ai/challengeEngine.js",
   "./src/ai/challengeWorker.js",

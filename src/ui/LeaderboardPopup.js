@@ -1,14 +1,14 @@
-import { getPlayStats } from "../playerState.js?v=20260906-accountinfo111";
-import { recordVerifiedLeaderboardPlacement } from "../medals.js?v=20260906-accountinfo111";
-import { readProfileState } from "../profileState.js?v=20260906-accountinfo111";
+import { getPlayStats } from "../playerState.js?v=20260906-inviteshare112";
+import { recordVerifiedLeaderboardPlacement } from "../medals.js?v=20260906-inviteshare112";
+import { readProfileState } from "../profileState.js?v=20260906-inviteshare112";
 import {
   addLargeTextButton,
   addThreePatchPanel,
   createModalBackdrop,
   KUMA_COLORS,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260906-accountinfo111";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260906-accountinfo111";
+} from "./KumaUi.js?v=20260906-inviteshare112";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260906-inviteshare112";
 
 const COPY = {
   ko: {

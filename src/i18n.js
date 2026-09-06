@@ -1,4 +1,4 @@
-import { readPlayerState } from "./playerState.js?v=20260906-accountinfo111";
+import { readPlayerState } from "./playerState.js?v=20260906-inviteshare112";
 
 const TEXT = {
   ko: {

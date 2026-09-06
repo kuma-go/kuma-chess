@@ -3,8 +3,12 @@
     || !("serviceWorker" in navigator)
     || (location.protocol !== "https:" && location.hostname !== "localhost")) return;
 
-  const shellVersion = "20260906-accountinfo111";
+  const shellVersion = "20260906-inviteshare112";
   const reloadKey = `kuma-sw-controller-${shellVersion}`;
+  const initialInviteCode = String(new URLSearchParams(window.location.search).get("invite") || "")
+    .toUpperCase()
+    .replace(/[^A-HJ-NP-Z2-9]/g, "")
+    .slice(0, 6);
   let reloading = false;
   let refreshPending = false;
 
@@ -20,6 +24,9 @@
     }
     reloading = true;
     const nextUrl = new URL(window.location.href);
+    if (initialInviteCode.length === 6 && !nextUrl.searchParams.has("invite")) {
+      nextUrl.searchParams.set("invite", initialInviteCode);
+    }
     nextUrl.searchParams.set("shell", shellVersion);
     window.location.replace(nextUrl.href);
   };

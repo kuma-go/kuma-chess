@@ -1,16 +1,16 @@
-import { Chess } from "../vendor-chess.js?v=20260906-accountinfo111";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260906-accountinfo111";
-import { playFeedback } from "../feedback.js?v=20260906-accountinfo111";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260906-accountinfo111";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260906-accountinfo111";
+import { Chess } from "../vendor-chess.js?v=20260906-inviteshare112";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260906-inviteshare112";
+import { playFeedback } from "../feedback.js?v=20260906-inviteshare112";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260906-inviteshare112";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260906-inviteshare112";
 import {
   markMedalsSeen,
   recordPuzzleCompletion,
   recordPuzzleHint,
-} from "../medals.js?v=20260906-accountinfo111";
-import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260906-accountinfo111";
-import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260906-accountinfo111";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260906-accountinfo111";
+} from "../medals.js?v=20260906-inviteshare112";
+import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260906-inviteshare112";
+import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260906-inviteshare112";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260906-inviteshare112";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -23,9 +23,9 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260906-accountinfo111";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260906-accountinfo111";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260906-accountinfo111";
+} from "../ui/KumaUi.js?v=20260906-inviteshare112";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260906-inviteshare112";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260906-inviteshare112";
 
 const FILES = "abcdefgh";
 
