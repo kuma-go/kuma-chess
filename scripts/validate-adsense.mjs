@@ -42,6 +42,7 @@ for (const page of ["index.html", "guide.html", "privacy.html"]) {
 const index = read("index.html");
 requireMatch(index, /href="#guide"/, "the home page needs a visible game-guide navigation link.");
 requireMatch(index, /href="\.\/privacy\.html"/, "the home page needs a visible privacy-policy link.");
+requireMatch(index, /<h1[^>]*>[\s\S]*?KUMA CHESS[\s\S]*?<\/h1>/, "the home page needs a KUMA CHESS h1.");
 
 const privacy = read("privacy.html");
 for (const keyword of ["AdSense", "Cookie", "CMP", "carksk@naver.com"]) {
@@ -55,6 +56,10 @@ for (const crawler of ["Mediapartners-Google", "Google-Display-Ads-Bot"]) {
     new RegExp(`User-agent:\\s*${crawler}\\s*\\nAllow:\\s*\\/`, "m"),
     `robots.txt must explicitly allow ${crawler}.`,
   );
+}
+requireMatch(robots, /User-agent:\s*\*\s*\nAllow:\s*\//m, "robots.txt must allow general search crawlers.");
+if (/Disallow:\s*\/(?:assets|src)\//.test(robots)) {
+  fail("robots.txt must not block public rendering resources.");
 }
 
 console.log(`AdSense review readiness passed for ${publisherId} (ads remain disabled).`);

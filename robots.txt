@@ -5,7 +5,6 @@ User-agent: Google-Display-Ads-Bot
 Allow: /
 
 User-agent: *
-Disallow: /assets/kuma/
-Disallow: /src/
+Allow: /
 
 Sitemap: https://kumachess.com/sitemap.xml
