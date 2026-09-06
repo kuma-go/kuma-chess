@@ -13,6 +13,7 @@ const target = positional[1] || "core";
 const includeHistory = rawArgs.includes("--history");
 
 const validators = {
+  adsense: ["validate-adsense.mjs", "security-check.mjs"],
   ai: ["validate-challenge-ai.mjs", "validate-medals.mjs", "validate-player-state.mjs"],
   core: ["validate-player-state.mjs"],
   crown: ["validate-crown-clash.mjs"],
@@ -31,6 +32,7 @@ const validators = {
 };
 
 const fullSuite = [
+  "validate-adsense.mjs",
   "validate-puzzles.mjs",
   "validate-player-state.mjs",
   "validate-piece-assets.mjs",

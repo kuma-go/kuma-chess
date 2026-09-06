@@ -9,6 +9,7 @@
     "qa:feature": "node scripts/qa.mjs feature",
     "qa:full": "node scripts/qa.mjs full",
     "qa:release": "node scripts/qa.mjs full --history",
+    "validate:adsense": "node scripts/validate-adsense.mjs",
     "validate:firebase": "node scripts/validate-firebase.mjs",
     "validate:ranking": "npm --prefix functions test && node scripts/validate-firebase.mjs && node scripts/validate-online.mjs",
     "validate:profiles": "node scripts/validate-profile-assets.mjs"
