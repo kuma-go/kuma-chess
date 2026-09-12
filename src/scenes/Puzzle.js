@@ -1,16 +1,15 @@
-import { Chess } from "../vendor-chess.js?v=20260906-inviteshare112";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260906-inviteshare112";
-import { playFeedback } from "../feedback.js?v=20260906-inviteshare112";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260906-inviteshare112";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260906-inviteshare112";
+import { Chess } from "../vendor-chess.js?v=20260912-attendance113";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260912-attendance113";
+import { playFeedback } from "../feedback.js?v=20260912-attendance113";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260912-attendance113";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260912-attendance113";
 import {
-  markMedalsSeen,
   recordPuzzleCompletion,
   recordPuzzleHint,
-} from "../medals.js?v=20260906-inviteshare112";
-import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260906-inviteshare112";
-import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260906-inviteshare112";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260906-inviteshare112";
+} from "../medals.js?v=20260912-attendance113";
+import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260912-attendance113";
+import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260912-attendance113";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260912-attendance113";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -23,9 +22,9 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260906-inviteshare112";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260906-inviteshare112";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260906-inviteshare112";
+} from "../ui/KumaUi.js?v=20260912-attendance113";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260912-attendance113";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260912-attendance113";
 
 const FILES = "abcdefgh";
 
@@ -777,10 +776,9 @@ export class Puzzle extends Phaser.Scene {
       const medalDelay = pieceNoticeDelay
         + (pieceUnlockNotices.length ? pieceUnlockSequenceDuration(pieceUnlockNotices) + 150 : 0);
       this.time.delayedCall(medalDelay, async () => {
-        const confirmedIds = await showMedalAwardSequence(this, newlyUnlocked, {
+        await showMedalAwardSequence(this, newlyUnlocked, {
           y: this.scale.height * 0.48,
         });
-        if (confirmedIds.length) markMedalsSeen(confirmedIds);
       });
     }
     if (pieceUnlockNotices.length) {
@@ -883,10 +881,9 @@ export class Puzzle extends Phaser.Scene {
     const medalResult = recordPuzzleHint({ sessionId: this.puzzleSessionId });
     if (medalResult.newlyUnlocked.length) {
       this.time.delayedCall(350, async () => {
-        const confirmedIds = await showMedalAwardSequence(this, medalResult.newlyUnlocked, {
+        await showMedalAwardSequence(this, medalResult.newlyUnlocked, {
           y: this.scale.height * 0.48,
         });
-        if (confirmedIds.length) markMedalsSeen(confirmedIds);
       });
     }
   }

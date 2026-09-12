@@ -8,6 +8,10 @@ globalThis.localStorage = {
 };
 
 const medals = await import(`../src/medals.js?validation=${Date.now()}`);
+for (const scene of ["Start", "Puzzle", "Result", "RoyalRoadPuzzle"]) {
+  const source = fs.readFileSync(new URL(`../src/scenes/${scene}.js`, import.meta.url), "utf8");
+  assert.ok(!source.includes("markMedalsSeen"), `${scene} award animation must preserve catalog NEW badges`);
+}
 const entries = medals.getMedalEntries("ko");
 
 assert.equal(entries.length, 87, "The catalog must contain all 87 medal definitions.");
@@ -54,10 +58,19 @@ for (const language of ["en", "ja"]) {
   }
 }
 
+const medalEvents = [];
+globalThis.CustomEvent = class { constructor(type) { this.type = type; } };
+globalThis.window = { dispatchEvent: (event) => medalEvents.push(event.type) };
 let result = medals.syncContextMedals({ coins: 10000, ownedSkinCount: 2, totalSkinCount: 18 });
 assert.ok(result.newlyUnlocked.includes("coin-master"), "Coin medal did not unlock.");
 assert.ok(medals.hasNewMedals(), "A newly unlocked medal must expose the NEW state.");
+assert.ok(medalEvents.includes("kuma-medals-changed"), "Same-document unlocks must notify the home badge.");
+medals.markMedalsSeen([]);
+assert.ok(medals.hasNewMedals(), "Closing an interrupted catalog award must preserve unconfirmed badges.");
+medals.markMedalsSeen(["unrelated-medal"]);
+assert.ok(medals.hasNewMedals(), "Confirming other medals must preserve unseen medals.");
 medals.markMedalsSeen();
+delete globalThis.window;
 assert.equal(medals.hasNewMedals(), false, "Confirming the catalog must clear every NEW badge.");
 memory.set("kumaChessMedalsV1", "{broken json");
 assert.ok(medals.readMedalState().unlockedAt["coin-master"], "Medals must recover from the backup key.");

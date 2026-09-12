@@ -3,22 +3,22 @@ import {
   claimDailyReward,
   grantCoinsOnce,
   readPlayerState,
-} from "./src/playerState.js?v=20260906-inviteshare112";
+} from "./src/playerState.js?v=20260912-attendance113";
 import {
   getDailyMissionSnapshot,
-} from "./src/dailyMissions.js?v=20260906-inviteshare112";
-import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260906-inviteshare112";
-import { readProfileState } from "./src/profileState.js?v=20260906-inviteshare112";
-import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260906-inviteshare112";
+} from "./src/dailyMissions.js?v=20260912-attendance113";
+import { getMedalSummary, recordAmbientMedalEvent } from "./src/medals.js?v=20260912-attendance113";
+import { readProfileState } from "./src/profileState.js?v=20260912-attendance113";
+import { installFeedbackUnlock, playFeedback } from "./src/feedback.js?v=20260912-attendance113";
 import {
   getMenuBgmPlaybackState,
   installMenuBgm,
   setMenuBgmPlaybackWanted,
   setMenuBgmVolume,
-} from "./src/menuBgm.js?v=20260906-inviteshare112";
-import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260906-inviteshare112";
-import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260906-inviteshare112";
-import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260906-inviteshare112";
+} from "./src/menuBgm.js?v=20260912-attendance113";
+import { applyMainPageContentLanguage } from "./main-page-content-i18n.js?v=20260912-attendance113";
+import { normalizeOnlineRoomCode } from "./src/onlineRoom.js?v=20260912-attendance113";
+import { clearOnlineSession, readOnlineSession, saveOnlineSession } from "./src/onlineSession.js?v=20260912-attendance113";
 
 const scrollCue = document.getElementById("scroll-cue");
 const scrollTop = document.getElementById("scroll-top");
@@ -36,7 +36,7 @@ const onlineCodeInput = document.getElementById("online-code-input");
 const installButton = document.getElementById("install-button");
 const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const POPUP_GAME_LAUNCHES = new Set(["daily", "settings", "info", "profile", "medals"]);
-const ASSET_RETRY_VERSION = "20260906-inviteshare112";
+const ASSET_RETRY_VERSION = "20260912-attendance113";
 
 window.KumaBgmHost = Object.freeze({ getPlaybackState: getMenuBgmPlaybackState });
 
@@ -1321,15 +1321,24 @@ function bindEvents() {
     renderHomeState();
     setMenuBgmVolume(readProfileState(readPlayerState()).bgmVolume);
   };
-  window.addEventListener("focus", refreshHomeState);
+  const resumeHome = () => {
+    if (document.hidden) return;
+    const reward = claimDailyReward();
+    refreshHomeState();
+    if (reward.claimed) showHomeRewardLine(currentWebCopy().dailyLoginReward(reward.amount));
+  };
+  window.addEventListener("focus", resumeHome);
+  window.addEventListener("pageshow", resumeHome);
   window.addEventListener("storage", refreshHomeState);
   window.addEventListener("kuma-state-changed", refreshHomeState);
+  window.addEventListener("kuma-medals-changed", refreshHomeState);
   window.addEventListener("kuma-profile-changed", refreshHomeState);
   window.addEventListener("kuma-install-state-changed", () => {
     consumeInstallReward();
     syncInstallButton();
   });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) renderHomeState(); });
+  document.addEventListener("visibilitychange", resumeHome);
+  window.setInterval(resumeHome, 60_000);
 }
 
 installFeedbackUnlock();

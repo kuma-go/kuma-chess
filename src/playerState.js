@@ -4,15 +4,15 @@ import {
   readProfileState,
   stripProfileFields,
   writeProfileState,
-} from "./profileState.js?v=20260906-inviteshare112";
+} from "./profileState.js?v=20260912-attendance113";
 import {
   FREE_PROFILE_FRAME_IDS,
   FREE_PROFILE_PORTRAIT_IDS,
   PROFILE_FRAMES,
   PROFILE_PORTRAITS,
   getProfileCosmetic,
-} from "./profileCatalog.js?v=20260906-inviteshare112";
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260906-inviteshare112";
+} from "./profileCatalog.js?v=20260912-attendance113";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260912-attendance113";
 
 export const PLAYER_STATE_KEY = "kumaChessPlayerState";
 export const PUZZLE_PROGRESS_KEY = "kumaChessPuzzleClears";
@@ -136,6 +136,7 @@ function normalizeState(state) {
   next.rewardClaims = Array.from(new Set(
     Array.isArray(next.rewardClaims) ? next.rewardClaims : []
   ));
+  next.attendanceDays = getAttendanceDays(next);
   for (const claimId of next.rewardClaims) {
     const match = /^profile-purchase:(portrait|frame):(.+):v1$/.exec(claimId);
     if (!match) continue;
@@ -268,12 +269,21 @@ function queuePieceUnlockNotice(state, notice) {
   ]);
 }
 
-function getDailyCompletedDays(state) {
-  return safeCount(state?.dailyMissions?.totalCompletedDays);
+function getAttendanceDays(state) {
+  const dates = new Set((state?.rewardClaims || [])
+    .filter((id) => /^daily-login:\d{4}-\d{2}-\d{2}$/.test(id)));
+  if (/^\d{4}-\d{2}-\d{2}$/.test(state?.lastDailyRewardDate || "")) {
+    dates.add(`daily-login:${state.lastDailyRewardDate}`);
+  }
+  // Preserve previously credited progress once when upgrading legacy saves.
+  const credited = state?.attendanceDays == null
+    ? safeCount(state?.dailyMissions?.totalCompletedDays)
+    : safeCount(state.attendanceDays);
+  return Math.max(credited, dates.size);
 }
 
 function goldBearPieceProgress(piece, state) {
-  if (piece.unlockType === "daily") return getDailyCompletedDays(state);
+  if (piece.unlockType === "daily") return getAttendanceDays(state);
   if (piece.unlockType === "ad") {
     return state.specialPieces.includes(specialPieceKey("goldBear", piece.id)) ? 1 : 0;
   }
@@ -284,8 +294,8 @@ function formatGoldBearRequirement(piece, progress, language) {
   if (piece.unlockType === "coin") return String(piece.cost);
   if (piece.unlockType === "daily") {
     const value = Math.min(progress, piece.target);
-    if (language === "en") return `Daily clears ${value}/${piece.target}`;
-    if (language === "ja") return `デイリー ${value}/${piece.target}`;
+    if (language === "en") return `Login days ${value}/${piece.target}`;
+    if (language === "ja") return `累計ログイン ${value}/${piece.target}日`;
     return `100일출석 (${value}/${piece.target})`;
   }
   if (language === "en") return progress ? "Ad reward complete" : "Ad reward";
@@ -451,6 +461,7 @@ export function claimDailyReward(date = new Date()) {
     return { claimed: false, amount: 0, coins: state.coins };
   }
 
+  state.attendanceDays = getAttendanceDays(state) + 1;
   state.lastDailyRewardDate = today;
   state.rewardClaims.push(claimId);
   state.coins += REWARDS.daily;
@@ -695,7 +706,7 @@ export function unlockGoldBearPiece(pieceId) {
     }
     state.coins -= piece.cost;
   } else if (piece.unlockType === "daily") {
-    const progress = getDailyCompletedDays(state);
+    const progress = getAttendanceDays(state);
     if (progress < piece.target) {
       return { ok: false, reason: "daily", progress, target: piece.target, coins: state.coins, piece };
     }

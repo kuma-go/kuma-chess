@@ -3,7 +3,7 @@
     || !("serviceWorker" in navigator)
     || (location.protocol !== "https:" && location.hostname !== "localhost")) return;
 
-  const shellVersion = "20260906-inviteshare112";
+  const shellVersion = "20260912-attendance113";
   const reloadKey = `kuma-sw-controller-${shellVersion}`;
   const initialInviteCode = String(new URLSearchParams(window.location.search).get("invite") || "")
     .toUpperCase()

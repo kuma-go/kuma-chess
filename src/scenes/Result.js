@@ -1,6 +1,6 @@
-import { createPieceView } from "../pieceStyles.js?v=20260906-inviteshare112";
-import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260906-inviteshare112";
-import { t } from "../i18n.js?v=20260906-inviteshare112";
+import { createPieceView } from "../pieceStyles.js?v=20260912-attendance113";
+import { AI_DIFFICULTIES, getPieceUnlockNotices, getAIDifficulty, grantCoinsOnce, readPlayerState } from "../playerState.js?v=20260912-attendance113";
+import { t } from "../i18n.js?v=20260912-attendance113";
 import {
   addDarkTopBar,
   addLargeTextButton,
@@ -9,12 +9,12 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260906-inviteshare112";
-import { markMedalsSeen, recordOnlineRematch } from "../medals.js?v=20260906-inviteshare112";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260906-inviteshare112";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260906-inviteshare112";
-import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260906-inviteshare112";
-import { saveOnlineSession } from "../onlineSession.js?v=20260906-inviteshare112";
+} from "../ui/KumaUi.js?v=20260912-attendance113";
+import { recordOnlineRematch } from "../medals.js?v=20260912-attendance113";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260912-attendance113";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260912-attendance113";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260912-attendance113";
+import { saveOnlineSession } from "../onlineSession.js?v=20260912-attendance113";
 
 const AI_WIN_REWARDS = Object.freeze({ easy: 5, normal: 15, hard: 35, challenge: 100 });
 const DIFFICULTY_LABELS = Object.freeze({
@@ -184,8 +184,7 @@ export class Result extends Phaser.Scene {
       // player has seen it so a fast retry cannot cancel the scheduled sequence.
       setActionsEnabled(false);
       this.time.delayedCall(500, async () => {
-        const confirmedIds = await showMedalAwardSequence(this, newlyUnlockedMedals, { y: height * 0.47 });
-        if (confirmedIds.length) markMedalsSeen(confirmedIds);
+        await showMedalAwardSequence(this, newlyUnlockedMedals, { y: height * 0.47 });
         if (!this.scene.isActive()) return;
         setActionsEnabled(true);
         showSecondaryNotices();
@@ -282,10 +281,9 @@ export class Result extends Phaser.Scene {
         eventId: `${room.code}:round:${Math.max(1, Number(room.round) || 1)}`,
       });
       if (medalResult.newlyUnlocked.length) {
-        const confirmedIds = await showMedalAwardSequence(this, medalResult.newlyUnlocked, {
+        await showMedalAwardSequence(this, medalResult.newlyUnlocked, {
           y: this.scale.height * 0.47,
         });
-        if (confirmedIds.length) markMedalsSeen(confirmedIds);
         if (!this.scene.isActive()) return;
       }
       this.scene.start("OnlineGame", { code: room.code, room, playerColor });

@@ -1,10 +1,10 @@
-import { t as translate } from "../i18n.js?v=20260906-inviteshare112";
+import { t as translate } from "../i18n.js?v=20260912-attendance113";
 import {
   addLargeTextButton,
   addPanel,
   createModalBackdrop,
   KUMA_FONT_SANS,
-} from "./KumaUi.js?v=20260906-inviteshare112";
+} from "./KumaUi.js?v=20260912-attendance113";
 
 /**
  * 공용 Confirm Popup

@@ -1,4 +1,4 @@
-import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260906-inviteshare112";
+import { readJsonFromStorage, writeJsonToStorage } from "./storage.js?v=20260912-attendance113";
 
 const STORAGE_KEY = "kumaChessMedalsV1";
 const BACKUP_STORAGE_KEY = "kumaChessMedalsBackupV1";
@@ -509,6 +509,9 @@ function normalizeState(source) {
 function saveState(state) {
   const normalized = normalizeState(state);
   writeJsonToStorage([STORAGE_KEY, BACKUP_STORAGE_KEY], normalized);
+  if (typeof globalThis.window?.dispatchEvent === "function") {
+    window.dispatchEvent(new CustomEvent("kuma-medals-changed"));
+  }
   return normalized;
 }
 

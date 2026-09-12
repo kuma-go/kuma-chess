@@ -50,6 +50,28 @@ const cycledDailyReward = state.claimDailyReward(new Date(2026, 7, 28, 12));
 assert(!cycledDailyReward.claimed, "cycling the device date backward must not grant the same daily reward again");
 const dailyClaims = state.readPlayerState().rewardClaims.filter((claim) => claim.startsWith("daily-login:"));
 assert(dailyClaims.length === 2, "daily rewards must keep one stable claim for each awarded date");
+const rookProgress = () => state.getGoldBearProgress().pieces.find((piece) => piece.id === "r").progress;
+assert(rookProgress() === 2, "gold bear attendance must count logins without completing missions");
+assert(!state.claimDailyReward(new Date(2026, 7, 29, 23, 59)).claimed,
+  "resuming on the same local date must not double count attendance");
+assert(rookProgress() === 2, "duplicate login must not increase attendance");
+assert(state.claimDailyReward(new Date(2026, 7, 31, 0, 1)).claimed,
+  "attendance must resume after a missed day without requiring a streak");
+assert(rookProgress() === 3, "missed dates must not receive attendance credit");
+state.writePlayerState({ ...state.readPlayerState(), attendanceDays: undefined,
+  dailyMissions: { totalCompletedDays: 7 } });
+assert(rookProgress() === 7, "migration must preserve previously credited mission days");
+state.claimDailyReward(new Date(2026, 8, 1));
+assert(rookProgress() === 8, "new login must advance migrated attendance immediately");
+state.writePlayerState({ ...state.readPlayerState(), dailyMissions: { totalCompletedDays: 20 } });
+assert(rookProgress() === 8, "mission completions must no longer increment migrated attendance");
+state.writePlayerState({ ...state.readPlayerState(), attendanceDays: undefined,
+  rewardClaims: Array.from({ length: 100 }, (_, index) => {
+    const date = new Date(2026, 0, index + 1);
+    return `daily-login:${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }), lastDailyRewardDate: "2026-04-10", dailyMissions: { totalCompletedDays: 0 } });
+assert(rookProgress() === 100, "migration must recover historical daily login claims");
+assert(state.unlockGoldBearPiece("r").ok, "100 login dates must unlock the gold rook without missions");
 
 state.writePlayerState({ ...migrated, soundEnabled: true, bgmVolume: 0 });
 const explicitlyMutedBgm = state.readPlayerState();
@@ -161,6 +183,7 @@ state.writePlayerState({
   specialPieces: [],
   unlockedSkinColors: ["classic:w", "classic:b"],
   dailyMissions: { totalCompletedDays: 100 },
+  attendanceDays: undefined,
 });
 for (const piece of ["p", "n", "r", "b", "k"]) {
   const result = state.unlockGoldBearPiece(piece);

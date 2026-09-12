@@ -1,12 +1,12 @@
-import { Chess } from "../vendor-chess.js?v=20260906-inviteshare112";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260906-inviteshare112";
-import { readProfileState } from "../profileState.js?v=20260906-inviteshare112";
-import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260906-inviteshare112";
-import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260906-inviteshare112";
-import { playFeedback } from "../feedback.js?v=20260906-inviteshare112";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260906-inviteshare112";
-import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260906-inviteshare112";
-import { recordOnlineGameCompletion } from "../medals.js?v=20260906-inviteshare112";
+import { Chess } from "../vendor-chess.js?v=20260912-attendance113";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260912-attendance113";
+import { readProfileState } from "../profileState.js?v=20260912-attendance113";
+import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260912-attendance113";
+import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260912-attendance113";
+import { playFeedback } from "../feedback.js?v=20260912-attendance113";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260912-attendance113";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260912-attendance113";
+import { recordOnlineGameCompletion } from "../medals.js?v=20260912-attendance113";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -18,7 +18,7 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260906-inviteshare112";
+} from "../ui/KumaUi.js?v=20260912-attendance113";
 
 const FILES = "abcdefgh";
 const COPY = Object.freeze({
