@@ -1,5 +1,5 @@
 const PROFILE_ASSET_ROOT = "assets/kuma/ui/profile/";
-const PROFILE_ASSET_VERSION = "20260912-attendance113";
+const PROFILE_ASSET_VERSION = "20260912-profile114";
 
 export const DEFAULT_PROFILE_PORTRAIT_ID = "portrait-basic-01";
 export const DEFAULT_PROFILE_FRAME_ID = "frame-basic-01";

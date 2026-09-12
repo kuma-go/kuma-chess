@@ -6,11 +6,11 @@ import {
   grantCoinsOnce,
   readPlayerState,
   REWARDS,
-} from "../playerState.js?v=20260912-attendance113";
-import { hasNewMedals, syncContextMedals } from "../medals.js?v=20260912-attendance113";
-import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260912-attendance113";
-import { setTopAdVisible } from "../adManager.js?v=20260912-attendance113";
-import { t } from "../i18n.js?v=20260912-attendance113";
+} from "../playerState.js?v=20260912-profile114";
+import { hasNewMedals, syncContextMedals } from "../medals.js?v=20260912-profile114";
+import { getDailyMissionSnapshot } from "../dailyMissions.js?v=20260912-profile114";
+import { setTopAdVisible } from "../adManager.js?v=20260912-profile114";
+import { t } from "../i18n.js?v=20260912-profile114";
 import {
   addCoinPill,
   addLargeTextButton,
@@ -23,13 +23,13 @@ import {
   showRewardLine,
   showInstallGuide,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260912-attendance113";
-import { playFeedback } from "../feedback.js?v=20260912-attendance113";
-import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260912-attendance113";
-import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260912-attendance113";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260912-attendance113";
-import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260912-attendance113";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260912-attendance113";
+} from "../ui/KumaUi.js?v=20260912-profile114";
+import { playFeedback } from "../feedback.js?v=20260912-profile114";
+import { showPlayInfoPopup } from "../ui/PlayInfoPopup.js?v=20260912-profile114";
+import { showProfileEditorPopup } from "../ui/ProfileEditorPopup.js?v=20260912-profile114";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260912-profile114";
+import { showDailyMissionPopup } from "../ui/DailyMissionPopup.js?v=20260912-profile114";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260912-profile114";
 
 const BUTTONS = [
   { y: 704, labelKey: "start.puzzle", subKey: "start.puzzleSub", scene: "PuzzleSelect", mode: null },

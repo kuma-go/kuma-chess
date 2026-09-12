@@ -15,6 +15,9 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+assert(/import\s*\{\s*showConfirm\s*\}\s*from\s*["']\.\/ConfirmPopup\.js(?:\?[^"']*)?["']/.test(editorSource),
+  "profile purchases must import the confirmation dialog before invoking it");
+
 function pngDimensions(filePath) {
   const buffer = fs.readFileSync(filePath);
   assert(buffer.toString("ascii", 1, 4) === "PNG", `${filePath} is not a PNG`);
