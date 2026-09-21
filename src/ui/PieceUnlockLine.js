@@ -1,7 +1,7 @@
-import { ensurePieceAssetsLoaded } from "../pieceAssets.js?v=20260912-profile114";
-import { createPieceView } from "../pieceStyles.js?v=20260912-profile114";
-import { acknowledgePieceUnlockNotices, readPlayerState } from "../playerState.js?v=20260912-profile114";
-import { showRewardLine } from "./KumaUi.js?v=20260912-profile114";
+import { ensurePieceAssetsLoaded } from "../pieceAssets.js?v=20260922-profile-road115";
+import { createPieceView } from "../pieceStyles.js?v=20260922-profile-road115";
+import { acknowledgePieceUnlockNotices, readPlayerState } from "../playerState.js?v=20260922-profile-road115";
+import { showRewardLine } from "./KumaUi.js?v=20260922-profile-road115";
 
 const SKIN_NAMES = Object.freeze({
   ko: Object.freeze({ cat: "고양이", brownBear: "브라운 곰", goldBear: "황금 곰" }),

@@ -1,8 +1,8 @@
-import { Chess } from "../vendor-chess.js?v=20260912-profile114";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260912-profile114";
-import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260912-profile114";
-import { playFeedback } from "../feedback.js?v=20260912-profile114";
-import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260912-profile114";
+import { Chess } from "../vendor-chess.js?v=20260922-profile-road115";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260922-profile-road115";
+import { alignBoardPieceView, createPieceView } from "../pieceStyles.js?v=20260922-profile-road115";
+import { playFeedback } from "../feedback.js?v=20260922-profile-road115";
+import { allowScreenSleep, keepScreenAwakeDuringMatch } from "../screenWakeLock.js?v=20260922-profile-road115";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -11,7 +11,7 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260912-profile114";
+} from "../ui/KumaUi.js?v=20260922-profile-road115";
 
 const FILES = "abcdefgh";
 

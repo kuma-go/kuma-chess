@@ -1,5 +1,5 @@
-import { createPieceView } from "../pieceStyles.js?v=20260912-profile114";
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260912-profile114";
+import { createPieceView } from "../pieceStyles.js?v=20260922-profile-road115";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260922-profile-road115";
 import {
   getGoldBearProgress,
   getPieceUnlockNotices,
@@ -9,9 +9,9 @@ import {
   SKIN_SHOP,
   unlockGoldBearPiece,
   unlockSkin,
-} from "../playerState.js?v=20260912-profile114";
-import { skinName, t } from "../i18n.js?v=20260912-profile114";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260912-profile114";
+} from "../playerState.js?v=20260922-profile-road115";
+import { skinName, t } from "../i18n.js?v=20260922-profile-road115";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260922-profile-road115";
 import {
   addBackButton,
   addCoinPill,
@@ -29,8 +29,8 @@ import {
   KUMA_FONT_SERIF,
   showRewardLine,
   showSettingsPanel,
-} from "../ui/KumaUi.js?v=20260912-profile114";
-import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260912-profile114";
+} from "../ui/KumaUi.js?v=20260922-profile-road115";
+import { showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260922-profile-road115";
 
 const SHOP = SKIN_SHOP;
 const COMPACT_SHOP = SHOP.length > 9;

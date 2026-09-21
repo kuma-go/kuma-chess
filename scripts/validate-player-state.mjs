@@ -131,8 +131,8 @@ assert(profile.readProfileState().avatar.portraitId === "portrait-180",
   "the selected image 784 portrait must migrate to the corrected Frame 180 portrait");
 
 const profileCollection = state.getProfileCosmeticCollection();
-assert(profileCollection.portraits.length === 199, "profile catalog must expose 199 portraits");
-assert(profileCollection.frames.length === 15, "profile catalog must expose 15 frames");
+assert(profileCollection.portraits.length === 221, "profile catalog must expose 221 portraits");
+assert(profileCollection.frames.length === 50, "profile catalog must expose 50 frames");
 assert(profileCollection.portraits.filter((item) => item.cost === 0 && item.owned).length === 8,
   "all eight default portraits must be owned");
 assert(profileCollection.frames.filter((item) => item.cost === 0 && item.owned).length === 4,
@@ -170,6 +170,24 @@ assert(loadoutPurchase.ok && loadoutPurchase.coins === 0 && loadoutPurchase.item
 const duplicateLoadoutPurchase = state.purchaseProfileLoadout("portrait-80", "frame-a-01");
 assert(duplicateLoadoutPurchase.ok && duplicateLoadoutPurchase.coins === 0 && duplicateLoadoutPurchase.cost === 0,
   "an owned profile loadout must not charge coins again");
+
+state.writePlayerState({ ...state.readPlayerState(), coins: 2399 });
+const addedInsufficient = state.purchaseProfileLoadout("portrait-extra-b-01", "frame-extra-c-01");
+assert(!addedInsufficient.ok && addedInsufficient.cost === 2400 && state.readPlayerState().coins === 2399,
+  "new profile tiers must reject combined purchases without changing coins");
+assert(!state.isProfileCosmeticOwned("portrait","portrait-extra-b-01") && !state.isProfileCosmeticOwned("frame","frame-extra-c-01"),
+  "failed new-tier purchase must not grant either item");
+state.writePlayerState({ ...state.readPlayerState(), coins: 2400 });
+const addedPurchase = state.purchaseProfileLoadout("portrait-extra-b-01", "frame-extra-c-01");
+assert(addedPurchase.ok && addedPurchase.coins === 0 && addedPurchase.cost === 2400,
+  "new b portrait and c frame must purchase at their configured total");
+assert(state.purchaseProfileLoadout("portrait-extra-b-01","frame-extra-c-01").cost === 0,
+  "new cosmetics must never charge twice");
+for(const [type,id,cost] of [["portrait","portrait-extra-a-01",600],["frame","frame-extra-a-01",600],["frame","frame-extra-b-01",900]]){
+  state.writePlayerState({...state.readPlayerState(),coins:cost});
+  const bought=state.purchaseProfileCosmetic(type,id);
+  assert(bought.ok && bought.coins===0 && state.isProfileCosmeticOwned(type,id),`new tier purchase/reload failed: ${id}`);
+}
 
 const coinsBeforeTugReward = state.readPlayerState().coins;
 const tugReward = state.grantCoinsOnce("ai-win:tug-validation-hard", state.AI_DIFFICULTIES.hard.reward);

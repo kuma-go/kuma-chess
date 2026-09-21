@@ -1,9 +1,10 @@
 const PROFILE_ASSET_ROOT = "assets/kuma/ui/profile/";
-const PROFILE_ASSET_VERSION = "20260912-profile114";
+const PROFILE_ASSET_VERSION = "20260922-profile-road115";
 
 export const DEFAULT_PROFILE_PORTRAIT_ID = "portrait-basic-01";
 export const DEFAULT_PROFILE_FRAME_ID = "frame-basic-01";
 export const PROFILE_PORTRAIT_PRICE = 60;
+export const PROFILE_ADDITION_PRICES = Object.freeze({ a: 600, b: 900, c: 1500 });
 
 function numberedItems(count, create) {
   return Array.from({ length: count }, (_, index) => create(index + 1));
@@ -34,6 +35,11 @@ export const PROFILE_PORTRAITS = Object.freeze([
   ...defaultPortraits,
   ...numberedPortraits,
   ...alternatePortraits,
+  ...Object.entries({ a: 9, b: 13 }).flatMap(([tier,count]) => numberedItems(count, number => portrait(
+    `portrait-extra-${tier}-${String(number).padStart(2,"0")}`,
+    `프로필_캐릭터추가_${tier}_${String(number).padStart(2,"0")}.png`,
+    PROFILE_ADDITION_PRICES[tier],
+  ))),
 ]);
 
 export const PROFILE_FRAMES = Object.freeze([
@@ -55,6 +61,16 @@ export const PROFILE_FRAMES = Object.freeze([
     pixels / 130,
   )),
   frame("frame-c", "프로필_테두리_C.png", 500, 224 / 130),
+  ...Object.entries({
+    a: [162,154,160,164,152,152,152],
+    b: [152,152,166,160,162,151,168,168,150,160,180,160,160,164],
+    c: [170,152,170,160,164,164,174,174,164,164,180,180,180,180],
+  }).flatMap(([tier,sizes]) => sizes.map((pixels,index) => frame(
+    `frame-extra-${tier}-${String(index+1).padStart(2,"0")}`,
+    `프로필_테두리_추가_${tier}_${String(index+1).padStart(2,"0")}.png`,
+    PROFILE_ADDITION_PRICES[tier],
+    pixels / 130,
+  ))),
 ]);
 
 const PORTRAIT_BY_ID = new Map(PROFILE_PORTRAITS.map((item) => [item.id, item]));

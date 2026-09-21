@@ -1,4 +1,4 @@
-import { normalizeOnlineRoomCode } from "./onlineRoom.js?v=20260912-profile114";
+import { normalizeOnlineRoomCode } from "./onlineRoom.js?v=20260922-profile-road115";
 
 const ONLINE_SESSION_KEY = "kumaChessOnlineSessionV1";
 

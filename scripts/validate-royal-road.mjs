@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
+  activeRoadForcedTarget,
   advanceRoadKing,
   applyRoadClockEffect,
   beginNextRoadInterval,
@@ -13,6 +15,44 @@ import {
   roadVisualTileId,
   roadWinner,
 } from "../src/royalRoadLogic.js";
+
+function extractSceneMethod(source, methodName, scope = {}) {
+  const signaturePattern = new RegExp(`\\n\\s*${methodName}\\(ownerColor\\) \\{`);
+  const signatureMatch = signaturePattern.exec(source);
+  const signatureStart = signatureMatch ? signatureMatch.index + signatureMatch[0].indexOf(methodName) : -1;
+  assert.notEqual(signatureStart, -1, `RoyalRoad must retain ${methodName}`);
+  const bodyStart = source.indexOf("{", signatureStart);
+  let depth = 0;
+  for (let index = bodyStart; index < source.length; index += 1) {
+    if (source[index] === "{") depth += 1;
+    if (source[index] === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        const methodSource = source.slice(signatureStart, index + 1);
+        return Function(...Object.keys(scope), `return ({ ${methodSource} }).${methodName}`)(...Object.values(scope));
+      }
+    }
+  }
+  assert.fail(`Could not extract ${methodName}`);
+}
+
+const normalizeQueuePreview = extractSceneMethod(
+  readFileSync(new URL("../src/scenes/RoyalRoad.js", import.meta.url), "utf8"),
+  "normalizeQueuePreview",
+  { activeRoadForcedTarget }
+);
+
+function makeQueueHarness(sides, forcedTargets, queues) {
+  return {
+    sides,
+    forcedTargets,
+    queues,
+    randomTile: () => "straight",
+    randomNonResumeTile: () => "straight",
+    forcedResumeFor: (tileId) => tileId === "left" ? "resumeLeft" : tileId === "right" ? "resumeRight" : null,
+    normalizeQueuePreview,
+  };
+}
 
 assert.equal(ROAD_ROWS, 12, "Royal Road must use twelve vertical rows");
 
@@ -33,6 +73,49 @@ assert.equal(getRoadPlacement(white, "resumeLeft").valid, true);
 assert.equal(placeRoadTile(white, "resumeLeft").valid, true);
 assert.deepEqual(white.endpoint, { row: 8, col: 0 });
 assert.equal(white.lateral, 0, "The forced corner must restore forward movement");
+
+const staleForcedTarget = createRoadSide("w");
+placeRoadTile(staleForcedTarget, "left");
+assert.equal(activeRoadForcedTarget({ w: staleForcedTarget }, "w"), "w");
+placeRoadTile(staleForcedTarget, "crossroad");
+assert.equal(staleForcedTarget.lateral, 0);
+assert.equal(
+  activeRoadForcedTarget({ w: staleForcedTarget }, "w"),
+  null,
+  "A universal tile must release a stale forced target so the queue can recover"
+);
+
+const staleWhite = createRoadSide("w");
+const staleBlack = createRoadSide("b");
+placeRoadTile(staleWhite, "left");
+placeRoadTile(staleWhite, "crossroad");
+placeRoadTile(staleBlack, "right");
+placeRoadTile(staleBlack, "crossroad");
+const recoveredQueues = makeQueueHarness(
+  { w: staleWhite, b: staleBlack },
+  { w: "w", b: "b" },
+  { w: ["resumeLeft", "resumeRight"], b: ["resumeRight", "resumeLeft"] }
+);
+recoveredQueues.normalizeQueuePreview("w");
+recoveredQueues.normalizeQueuePreview("b");
+assert.deepEqual(recoveredQueues.forcedTargets, { w: null, b: null });
+for (const color of ["w", "b"]) {
+  assert.notEqual(recoveredQueues.queues[color][0], "resumeLeft");
+  assert.notEqual(recoveredQueues.queues[color][0], "resumeRight");
+  assert.equal(getRoadPlacement(recoveredQueues.sides[color], recoveredQueues.queues[color][0]).valid, true);
+}
+
+const activeCorner = createRoadSide("w");
+placeRoadTile(activeCorner, "left");
+const activeCornerQueue = makeQueueHarness(
+  { w: activeCorner, b: createRoadSide("b") },
+  { w: "w", b: null },
+  { w: ["straight", "straight"], b: ["straight", "straight"] }
+);
+activeCornerQueue.normalizeQueuePreview("w");
+assert.equal(activeCornerQueue.forcedTargets.w, "w", "An active corner must retain its forced target");
+assert.equal(activeCornerQueue.queues.w[0], "resumeLeft");
+assert.equal(getRoadPlacement(activeCornerQueue.sides.w, activeCornerQueue.queues.w[0]).valid, true);
 
 for (const tileId of ["crossroad", "bomb", "spike", "trap"]) {
   const universal = createRoadSide("w");

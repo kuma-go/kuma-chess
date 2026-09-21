@@ -1,11 +1,12 @@
-import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260912-profile114";
-import { createPieceView } from "../pieceStyles.js?v=20260912-profile114";
-import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260912-profile114";
-import { t } from "../i18n.js?v=20260912-profile114";
-import { recordMiniGameCompletion } from "../medals.js?v=20260912-profile114";
-import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260912-profile114";
+import { ensurePieceSetsLoaded } from "../pieceAssets.js?v=20260922-profile-road115";
+import { createPieceView } from "../pieceStyles.js?v=20260922-profile-road115";
+import { playFeedback, vibrateFeedback } from "../feedback.js?v=20260922-profile-road115";
+import { t } from "../i18n.js?v=20260922-profile-road115";
+import { recordMiniGameCompletion } from "../medals.js?v=20260922-profile-road115";
+import { recordDailyMiniGameCompletion } from "../dailyMissions.js?v=20260922-profile-road115";
 import {
   advanceRoadKing,
+  activeRoadForcedTarget,
   applyRoadClockEffect,
   beginNextRoadInterval,
   cloneRoadSide,
@@ -22,14 +23,14 @@ import {
   roadRemainingTiles,
   roadVisualTileId,
   roadWinner,
-} from "../royalRoadLogic.js?v=20260912-profile114";
+} from "../royalRoadLogic.js?v=20260922-profile-road115";
 import {
   addDarkTopBar,
   addScreenBg,
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260912-profile114";
+} from "../ui/KumaUi.js?v=20260922-profile-road115";
 
 const BOARD_TOP = 350;
 const BOARD_VIEW_HEIGHT = 672;
@@ -247,7 +248,8 @@ export class RoyalRoad extends Phaser.Scene {
     const queue = this.queues[ownerColor];
     while (queue.length < 2) queue.push(this.randomTile());
     queue.length = 2;
-    const forcedTarget = this.forcedTargets[ownerColor];
+    const forcedTarget = activeRoadForcedTarget(this.sides, this.forcedTargets[ownerColor]);
+    this.forcedTargets[ownerColor] = forcedTarget;
     if (forcedTarget) {
       queue[0] = this.sides[forcedTarget].lateral < 0 ? "resumeLeft" : "resumeRight";
     } else if (queue[0] === "resumeLeft" || queue[0] === "resumeRight") {

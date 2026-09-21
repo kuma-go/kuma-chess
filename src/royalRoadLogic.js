@@ -171,3 +171,7 @@ export function cloneRoadSide(side) {
     endpoint: { ...side.endpoint },
   };
 }
+
+export function activeRoadForcedTarget(sides, forcedTarget) {
+  return forcedTarget && sides?.[forcedTarget]?.lateral ? forcedTarget : null;
+}

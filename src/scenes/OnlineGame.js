@@ -1,12 +1,12 @@
-import { Chess } from "../vendor-chess.js?v=20260912-profile114";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260912-profile114";
-import { readProfileState } from "../profileState.js?v=20260912-profile114";
-import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260912-profile114";
-import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260912-profile114";
-import { playFeedback } from "../feedback.js?v=20260912-profile114";
-import { showConfirm } from "../ui/ConfirmPopup.js?v=20260912-profile114";
-import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260912-profile114";
-import { recordOnlineGameCompletion } from "../medals.js?v=20260912-profile114";
+import { Chess } from "../vendor-chess.js?v=20260922-profile-road115";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260922-profile-road115";
+import { readProfileState } from "../profileState.js?v=20260922-profile-road115";
+import { onlineMovePayload, onlineRoomResult } from "../onlineRoom.js?v=20260922-profile-road115";
+import { clearOnlineSession, saveOnlineSession } from "../onlineSession.js?v=20260922-profile-road115";
+import { playFeedback } from "../feedback.js?v=20260922-profile-road115";
+import { showConfirm } from "../ui/ConfirmPopup.js?v=20260922-profile-road115";
+import { addProfileAvatar } from "../ui/ProfileAvatar.js?v=20260922-profile-road115";
+import { recordOnlineGameCompletion } from "../medals.js?v=20260922-profile-road115";
 import {
   addChessBoard,
   addDarkTopBar,
@@ -18,7 +18,7 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260912-profile114";
+} from "../ui/KumaUi.js?v=20260922-profile-road115";
 
 const FILES = "abcdefgh";
 const COPY = Object.freeze({

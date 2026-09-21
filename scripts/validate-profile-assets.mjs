@@ -24,8 +24,8 @@ function pngDimensions(filePath) {
   return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
 }
 
-assert(PROFILE_PORTRAITS.length === 199, `expected 199 portraits, found ${PROFILE_PORTRAITS.length}`);
-assert(PROFILE_FRAMES.length === 15, `expected 15 frames, found ${PROFILE_FRAMES.length}`);
+assert(PROFILE_PORTRAITS.length === 221, `expected 221 portraits, found ${PROFILE_PORTRAITS.length}`);
+assert(PROFILE_FRAMES.length === 50, `expected 50 frames, found ${PROFILE_FRAMES.length}`);
 assert(FREE_PROFILE_PORTRAIT_IDS.length === 8, "exactly eight portraits must be free defaults");
 assert(FREE_PROFILE_FRAME_IDS.length === 4, "exactly four frames must be free defaults");
 assert(editorSource.indexOf("const listHit") < editorSource.indexOf("const listLayer"),
@@ -65,6 +65,12 @@ for (const item of all) {
   const filePath = path.join(root, item.fileName);
   assert(fs.existsSync(filePath), `missing profile asset: ${item.fileName}`);
   const { width, height } = pngDimensions(filePath);
+  if(item.id.includes('-extra-')){
+    const tier=item.id.split('-')[2];
+    assert(item.cost==={a:600,b:900,c:1500}[tier], `wrong added tier price: ${item.id}`);
+    assert(item.cost>500, `new cosmetics must exceed previous maximum: ${item.id}`);
+    if(item.type==='frame')assert(Math.abs(item.displayScale-width/130)<1e-9 && width===height, `new frame scale must match source dimensions: ${item.id}`);
+  }
   assert(width >= 80 && width <= 240 && height >= 80 && height <= 240,
     `unexpected dimensions for ${item.fileName}: ${width}x${height}`);
 }

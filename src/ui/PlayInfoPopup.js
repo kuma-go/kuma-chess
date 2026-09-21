@@ -4,10 +4,10 @@ import {
   getPlayStats,
   getSkinUnlockState,
   readPlayerState,
-} from "../playerState.js?v=20260912-profile114";
-import { readProfileState } from "../profileState.js?v=20260912-profile114";
-import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260912-profile114";
-import { getMedalSummary } from "../medals.js?v=20260912-profile114";
+} from "../playerState.js?v=20260922-profile-road115";
+import { readProfileState } from "../profileState.js?v=20260922-profile-road115";
+import { getClearedPuzzleIds, PUZZLES } from "../puzzles.js?v=20260922-profile-road115";
+import { getMedalSummary } from "../medals.js?v=20260922-profile-road115";
 import {
   addLargeTextButton,
   addOutlinedTextButton,
@@ -16,10 +16,10 @@ import {
   KUMA_COLORS,
   KUMA_FONT_SANS,
   showRewardLine,
-} from "./KumaUi.js?v=20260912-profile114";
-import { addProfileAvatar } from "./ProfileAvatar.js?v=20260912-profile114";
-import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260912-profile114";
-import { showConfirm } from "./ConfirmPopup.js?v=20260912-profile114";
+} from "./KumaUi.js?v=20260922-profile-road115";
+import { addProfileAvatar } from "./ProfileAvatar.js?v=20260922-profile-road115";
+import { showProfileEditorPopup } from "./ProfileEditorPopup.js?v=20260922-profile-road115";
+import { showConfirm } from "./ConfirmPopup.js?v=20260922-profile-road115";
 
 const COPY = {
   ko: {

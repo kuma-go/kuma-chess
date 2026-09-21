@@ -1,15 +1,15 @@
-import { Chess } from "../vendor-chess.js?v=20260912-profile114";
-import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260912-profile114";
-import { playFeedback } from "../feedback.js?v=20260912-profile114";
-import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260912-profile114";
-import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260912-profile114";
+import { Chess } from "../vendor-chess.js?v=20260922-profile-road115";
+import { alignBoardPieceView, createPieceView, setSelectedOutline } from "../pieceStyles.js?v=20260922-profile-road115";
+import { playFeedback } from "../feedback.js?v=20260922-profile-road115";
+import { puzzleGlossary, puzzleText, t } from "../i18n.js?v=20260922-profile-road115";
+import { getClearedPuzzleIds, getPuzzle, markPuzzleCleared, PUZZLES } from "../puzzles.js?v=20260922-profile-road115";
 import {
   recordPuzzleCompletion,
   recordPuzzleHint,
-} from "../medals.js?v=20260912-profile114";
-import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260912-profile114";
-import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260912-profile114";
-import { SpriteButton } from "../ui/SpriteButton.js?v=20260912-profile114";
+} from "../medals.js?v=20260922-profile-road115";
+import { recordDailyPuzzleCompletion } from "../dailyMissions.js?v=20260922-profile-road115";
+import { getPieceUnlockNotices, COSTS, spendCoins } from "../playerState.js?v=20260922-profile-road115";
+import { SpriteButton } from "../ui/SpriteButton.js?v=20260922-profile-road115";
 import {
   addDarkTopBar,
   addChessBoard,
@@ -22,9 +22,9 @@ import {
   KUMA_FONT_SANS,
   KUMA_FONT_SERIF,
   showRewardLine,
-} from "../ui/KumaUi.js?v=20260912-profile114";
-import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260912-profile114";
-import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260912-profile114";
+} from "../ui/KumaUi.js?v=20260922-profile-road115";
+import { showMedalAwardSequence } from "../ui/MedalAward.js?v=20260922-profile-road115";
+import { pieceUnlockSequenceDuration, showPieceUnlockNoticeSequence } from "../ui/PieceUnlockLine.js?v=20260922-profile-road115";
 
 const FILES = "abcdefgh";
 
